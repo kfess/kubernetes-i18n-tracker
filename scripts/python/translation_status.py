@@ -215,9 +215,7 @@ class TranslationStatusTracker:
         )
         severity = self._calculate_severity(change_stats["total_change_lines"])
 
-        ref_english_commit = self._get_reference_commit(
-            translated_path, english_latest["commit"]
-        )
+        ref_english_commit = self._get_reference_commit(translated_path, english_latest)
 
         return TranslationStatusResult(
             target_path=translated_path,
@@ -234,8 +232,8 @@ class TranslationStatusTracker:
             status=status,
             severity=severity,
             missing_commits=missing_commits,
-            english_latest_commit_hash=english_latest["commit"],
-            ref_english_commit_hash=ref_english_commit["commit"],
+            english_latest_commit_hash=english_latest["hash"],
+            ref_english_commit_hash=ref_english_commit["hash"],
         )
 
     def _create_missing_translation_result(
@@ -286,7 +284,7 @@ class TranslationStatusTracker:
             status=TranslationStatus.NOT_TRANSLATED,
             severity=self._calculate_severity(total_english_changes),
             missing_commits=file_history,
-            english_latest_commit_hash=english_latest["commit"],
+            english_latest_commit_hash=english_latest["hash"],
             ref_english_commit_hash=None,
         )
 
