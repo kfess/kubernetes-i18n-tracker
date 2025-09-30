@@ -1591,6 +1591,13 @@
           languageName: node
           linkType: hard
         
+        "abbrev@npm:1":
+          version: 1.1.1
+          resolution: "abbrev@npm:1.1.1"
+          checksum: 10c0/3f762677702acb24f65e813070e306c61fafe25d4b2583f9dfc935131f774863f3addd5741572ed576bd69cabe473c5af18e1e108b829cb7b6b4747884f726e6
+          languageName: node
+          linkType: hard
+        
         "abbrev@npm:^3.0.0":
           version: 3.0.1
           resolution: "abbrev@npm:3.0.1"
@@ -2365,6 +2372,27 @@
           version: 1.1.0
           resolution: "detect-node-es@npm:1.1.0"
           checksum: 10c0/e562f00de23f10c27d7119e1af0e7388407eb4b06596a25f6d79a360094a109ff285de317f02b090faae093d314cf6e73ac3214f8a5bb3a0def5bece94557fbe
+          languageName: node
+          linkType: hard
+        
+        "diff2html@npm:^3.4.52":
+          version: 3.4.52
+          resolution: "diff2html@npm:3.4.52"
+          dependencies:
+            diff: "npm:^7.0.0"
+            highlight.js: "npm:11.9.0"
+            hogan.js: "npm:3.0.2"
+          dependenciesMeta:
+            highlight.js:
+              optional: true
+          checksum: 10c0/068404bfeb0b740207397d5ac968c8d7a3458fa69afc05891b1033a2e8896624e8ef168b5c67b30505b61ec56ce9a4b9a3e2aa79fb463bc1ab08df2533528e85
+          languageName: node
+          linkType: hard
+        
+        "diff@npm:^7.0.0":
+          version: 7.0.0
+          resolution: "diff@npm:7.0.0"
+          checksum: 10c0/251fd15f85ffdf814cfc35a728d526b8d2ad3de338dcbd011ac6e57c461417090766b28995f8ff733135b5fbc3699c392db1d5e27711ac4e00244768cd1d577b
           languageName: node
           linkType: hard
         
@@ -3431,6 +3459,25 @@
           languageName: node
           linkType: hard
         
+        "highlight.js@npm:11.9.0":
+          version: 11.9.0
+          resolution: "highlight.js@npm:11.9.0"
+          checksum: 10c0/27cfa8717dc9d200aecbdb383eb122d5f45ce715d2f468583785d36fbfe5076ce033abb02486dc13b407171721cda6f474ed3f3a5a8e8c3d91367fa5f51ee374
+          languageName: node
+          linkType: hard
+        
+        "hogan.js@npm:3.0.2":
+          version: 3.0.2
+          resolution: "hogan.js@npm:3.0.2"
+          dependencies:
+            mkdirp: "npm:0.3.0"
+            nopt: "npm:1.0.10"
+          bin:
+            hulk: ./bin/hulk
+          checksum: 10c0/fa5c9d2eaf3fa712e72e67cce5e3435a1c5823282b81051514aefdca7d4b706cc4dbef7a34be19ee320c6ebaf3687d5781f12bc0aac04d3d902aa26861493679
+          languageName: node
+          linkType: hard
+        
         "hookified@npm:^1.8.1":
           version: 1.8.2
           resolution: "hookified@npm:1.8.2"
@@ -4233,6 +4280,7 @@
             "@types/react": "npm:^19.0.12"
             "@types/react-dom": "npm:^19.0.4"
             "@vitejs/plugin-react": "npm:^4.3.4"
+            diff2html: "npm:^3.4.52"
             eslint: "npm:^9.23.0"
             eslint-config-mantine: "npm:^4.0.3"
             eslint-plugin-jsx-a11y: "npm:^6.10.2"
@@ -4451,6 +4499,13 @@
           languageName: node
           linkType: hard
         
+        "mkdirp@npm:0.3.0":
+          version: 0.3.0
+          resolution: "mkdirp@npm:0.3.0"
+          checksum: 10c0/cd9e54878490571df79770de1cdceba48ab6682c004616666d23a38315feaf5822d443aeb500ac298a12d7f6f5e11dc05cea3207d500e547d938218bf22d8629
+          languageName: node
+          linkType: hard
+        
         "mkdirp@npm:^3.0.1":
           version: 3.0.1
           resolution: "mkdirp@npm:3.0.1"
@@ -4514,6 +4569,17 @@
           version: 2.0.19
           resolution: "node-releases@npm:2.0.19"
           checksum: 10c0/52a0dbd25ccf545892670d1551690fe0facb6a471e15f2cfa1b20142a5b255b3aa254af5f59d6ecb69c2bec7390bc643c43aa63b13bf5e64b6075952e716b1aa
+          languageName: node
+          linkType: hard
+        
+        "nopt@npm:1.0.10":
+          version: 1.0.10
+          resolution: "nopt@npm:1.0.10"
+          dependencies:
+            abbrev: "npm:1"
+          bin:
+            nopt: ./bin/nopt.js
+          checksum: 10c0/ddfbd892116a125fd68849ef564dd5b1f0a5ba0dbbf18782e9499e2efad8f4d3790635b47c6b5d3f7e014069e7b3ce5b8112687e9ae093fcd2678188c866fe28
           languageName: node
           linkType: hard
         

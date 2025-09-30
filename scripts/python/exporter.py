@@ -157,6 +157,8 @@ def create_matrix_data(
             "average_session_duration": page_view.average_session_duration,
             "issues": issues_by_file.get(target_path, []),
             "prs": prs_by_file.get(target_path, []),
+            "english_latest_commit_hash": result.get("english_latest_commit_hash"),
+            "ref_english_commit_hash": result.get("ref_english_commit_hash"),
         }
 
         articles_by_english_path[english_path][language] = translation_data
@@ -220,6 +222,8 @@ def create_detail_data(
         "missing_commits": result["missing_commits"],
         "issues": issues_by_file.get(result["target_path"], []),
         "prs": prs_by_file.get(result["target_path"], []),
+        "english_latest_commit_hash": result.get("english_latest_commit_hash"),
+        "ref_english_commit_hash": result.get("ref_english_commit_hash"),
     }
 
 

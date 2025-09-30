@@ -63,6 +63,8 @@ class TranslationStatusResult(TypedDict):
     status: TranslationStatus
     severity: OutdatedSeverity
     missing_commits: list[GitFileRevision]
+    english_latest_commit_hash: str | None
+    ref_english_commit_hash: str | None
 
 
 @dataclass
@@ -213,6 +215,10 @@ class TranslationStatusTracker:
         )
         severity = self._calculate_severity(change_stats["total_change_lines"])
 
+        ref_english_commit = self._get_reference_commit(
+            translated_path, english_latest["commit"]
+        )
+
         return TranslationStatusResult(
             target_path=translated_path,
             english_path=english_path,
@@ -228,6 +234,8 @@ class TranslationStatusTracker:
             status=status,
             severity=severity,
             missing_commits=missing_commits,
+            english_latest_commit_hash=english_latest["commit"],
+            ref_english_commit_hash=ref_english_commit["commit"],
         )
 
     def _create_missing_translation_result(
@@ -278,6 +286,8 @@ class TranslationStatusTracker:
             status=TranslationStatus.NOT_TRANSLATED,
             severity=self._calculate_severity(total_english_changes),
             missing_commits=file_history,
+            english_latest_commit_hash=english_latest["commit"],
+            ref_english_commit_hash=None,
         )
 
     def _get_commits_since(
@@ -381,3 +391,39 @@ class TranslationStatusTracker:
             return "overall"
 
         return "unknown"
+
+    def _get_reference_commit(
+        self,
+        translated_path: str,
+        english_latest: GitFileRevision | None,
+    ) -> GitFileRevision | None:
+        """Get the reference commit for comparison.
+
+        Args:
+        ----
+            translated_path (str): The path of the translated file.
+            english_latest (GitFileRevision | None): The latest English commit.
+
+        Returns:
+        -------
+            GitFileRevision | None: The reference commit, or None if not found.
+
+        """
+        translated_latest = self.file_history_tracker.get_latest_commit(translated_path)
+
+        if not translated_latest:
+            return None
+
+        translated_latest_date = self._parse_date(translated_latest["date"])
+
+        english_commits = self.file_history_tracker.get_history(english_latest["path"])
+        commits_before_translation = [
+            commit
+            for commit in english_commits
+            if self._parse_date(commit["date"]) <= translated_latest_date
+        ]
+
+        if not commits_before_translation:
+            return None
+
+        return commits_before_translation[-1]
