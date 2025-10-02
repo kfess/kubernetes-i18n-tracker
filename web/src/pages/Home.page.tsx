@@ -194,6 +194,7 @@ export function HomePage() {
             articles={currentArticles}
             languageFilter={languageFilter}
             selectedLanguages={selectedLanguages || []}
+            selectedArticleCategory={selectedArticleCategory}
           />
         ) : (
           <MobileTranslationStatusMatrix

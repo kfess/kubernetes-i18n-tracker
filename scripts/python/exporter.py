@@ -5,7 +5,9 @@ from datetime import datetime, timezone
 from pathlib import Path, PurePosixPath
 from typing import Any
 
+from diff import diff
 from issue import GitHubIssue, get_issues_by_file
+from log import logger
 from page_view import PageView, summarize_view
 from pull_requests import GitHubPullRequest, get_prs_by_file
 from translation_status import TranslationStatusResult
@@ -157,6 +159,9 @@ def create_matrix_data(
             "average_session_duration": page_view.average_session_duration,
             "issues": issues_by_file.get(target_path, []),
             "prs": prs_by_file.get(target_path, []),
+            "english_latest_commit_hash": result.get("english_latest_commit_hash"),
+            "ref_english_commit_hash": result.get("ref_english_commit_hash"),
+            "ref_english_commit_date": result.get("ref_english_commit_date"),
         }
 
         articles_by_english_path[english_path][language] = translation_data
@@ -220,6 +225,9 @@ def create_detail_data(
         "missing_commits": result["missing_commits"],
         "issues": issues_by_file.get(result["target_path"], []),
         "prs": prs_by_file.get(result["target_path"], []),
+        "english_latest_commit_hash": result.get("english_latest_commit_hash"),
+        "ref_english_commit_hash": result.get("ref_english_commit_hash"),
+        "ref_english_commit_date": result.get("ref_english_commit_date"),
     }
 
 
@@ -300,6 +308,65 @@ def save_detail_files(
                 )
 
 
+def save_diff(matrix_data: dict[str, dict[str, Any]], output_dir: str = "data") -> None:
+    """Save diff data grouped by category."""
+    diff_dir = Path(output_dir) / "diff"
+    diff_dir.mkdir(parents=True, exist_ok=True)
+
+    # カテゴリーごとにデータを整理
+    diffs_by_category = defaultdict(dict)
+
+    for category, data in matrix_data.items():
+        for article in data["articles"]:
+            english_path = article["english_path"]
+
+            for language, translation in article["translations"].items():
+                status = translation.get("status")
+                if status != "outdated":
+                    continue
+
+                ref_hash = translation.get("ref_english_commit_hash")
+                latest_hash = translation.get("english_latest_commit_hash")
+
+                if ref_hash and latest_hash and ref_hash != latest_hash:
+                    diff_output = diff(ref_hash, latest_hash, english_path)
+
+                    # Get actual translation file path from translation data
+                    target_path = translation.get("target_path")
+                    if not target_path:
+                        # Fallback: simple replacement
+                        target_path = english_path.replace(
+                            "content/en/", f"content/{language}/"
+                        )
+
+                    # Use translation file path as key, organized by category
+                    diffs_by_category[category][target_path] = {
+                        "english_path": english_path,
+                        "language": language,
+                        "ref_english_commit_hash": ref_hash,
+                        "english_latest_commit_hash": latest_hash,
+                        "diff": diff_output,
+                    }
+
+    # カテゴリーごとにファイルを保存
+    for category, diffs in diffs_by_category.items():
+        if not diffs:  # 空の場合はスキップ
+            continue
+
+        file_path = diff_dir / f"{category}_diff.json"
+        with file_path.open("w", encoding="utf-8") as f:
+            converted_diffs = {
+                file_path: convert_keys_to_camel_case(diff_data)
+                for file_path, diff_data in diffs.items()
+            }
+            json.dump(
+                converted_diffs,
+                f,
+                indent=2,
+                default=serialize_datetime,
+            )
+
+
 def process_translation_results(
     results: dict[str, TranslationStatusResult],
     existing_urls: set[str],
@@ -339,9 +406,15 @@ def process_translation_results(
         prs_by_file,
         existing_urls,
     )
+
+    logger.info("Saving diff files...")
+    save_diff(matrix_data, output_dir)
+
+    logger.info("Saving matrix files...")
     save_matrix_files(matrix_data, output_dir)
 
     # Save detailed translation results
+    logger.info("Saving detail files...")
     save_detail_files(
         filtered_results,
         issues_by_file,

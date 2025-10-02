@@ -81,6 +81,7 @@ def get_prs_by_file(
     file_to_prs: dict[str, list[GitHubPullRequest]] = defaultdict(list)
 
     prs = _get_prs(repo_name)
+
     for pr in prs:
         for file_path in pr.files:
             file_to_prs[file_path].append(asdict(pr))
