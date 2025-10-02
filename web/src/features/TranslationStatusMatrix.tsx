@@ -5,16 +5,22 @@ import {
   type LanguageCode,
   type LanguageCodeWithAll,
 } from '@/features/language/languageCodes';
-import { type ArticleTranslation } from '@/features/translations';
+import { ArticleCategory, type ArticleTranslation } from '@/features/translations';
 import { TranslationStatusCell } from '@/features/TranslationStatusCell';
 
 interface Props {
   articles: ArticleTranslation[];
   languageFilter: LanguageCodeWithAll;
   selectedLanguages: LanguageCode[];
+  selectedArticleCategory: ArticleCategory;
 }
 
-export const TranslationStatusMatrix = ({ articles, languageFilter, selectedLanguages }: Props) => {
+export const TranslationStatusMatrix = ({
+  articles,
+  languageFilter,
+  selectedLanguages,
+  selectedArticleCategory,
+}: Props) => {
   const sortedLangCodes = getSortedLangCodes(selectedLanguages);
 
   return (
@@ -44,7 +50,12 @@ export const TranslationStatusMatrix = ({ articles, languageFilter, selectedLang
                   <EnglishSourceInfo article={article} />
                 </Table.Td>
                 {sortedLangCodes.map((code) => (
-                  <TranslationStatusCell key={code.value} article={article} langCode={code.value} />
+                  <TranslationStatusCell
+                    key={code.value}
+                    article={article}
+                    langCode={code.value}
+                    category={selectedArticleCategory}
+                  />
                 ))}
               </Table.Tr>
             ))

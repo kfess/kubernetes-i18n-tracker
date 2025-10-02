@@ -65,6 +65,7 @@ class TranslationStatusResult(TypedDict):
     missing_commits: list[GitFileRevision]
     english_latest_commit_hash: str | None
     ref_english_commit_hash: str | None
+    ref_english_commit_date: datetime | None
 
 
 @dataclass
@@ -216,6 +217,9 @@ class TranslationStatusTracker:
         severity = self._calculate_severity(change_stats["total_change_lines"])
 
         ref_english_commit = self._get_reference_commit(translated_path, english_latest)
+        ref_english_commit_date = (
+            self._parse_date(ref_english_commit["date"]) if ref_english_commit else None
+        )
 
         return TranslationStatusResult(
             target_path=translated_path,
@@ -234,6 +238,7 @@ class TranslationStatusTracker:
             missing_commits=missing_commits,
             english_latest_commit_hash=english_latest["hash"],
             ref_english_commit_hash=ref_english_commit["hash"],
+            ref_english_commit_date=ref_english_commit_date,
         )
 
     def _create_missing_translation_result(
@@ -286,6 +291,7 @@ class TranslationStatusTracker:
             missing_commits=file_history,
             english_latest_commit_hash=english_latest["hash"],
             ref_english_commit_hash=None,
+            ref_english_commit_date=None,
         )
 
     def _get_commits_since(
@@ -424,4 +430,4 @@ class TranslationStatusTracker:
         if not commits_before_translation:
             return None
 
-        return commits_before_translation[-1]
+        return commits_before_translation[0]

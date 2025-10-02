@@ -1,5 +1,6 @@
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { NavigationBar } from '@/features/NavigationBar';
+import { DetailPage } from './pages/DetailPage';
 import { DevPage } from './pages/DevPage';
 import { HomePage } from './pages/Home.page';
 
@@ -12,6 +13,14 @@ const router = createBrowserRouter(
       element: (
         <NavigationBar>
           <HomePage />
+        </NavigationBar>
+      ),
+    },
+    {
+      path: '/detail/:id',
+      element: (
+        <NavigationBar>
+          <DetailPage />
         </NavigationBar>
       ),
     },

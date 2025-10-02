@@ -1,20 +1,37 @@
-import { IconExternalLink } from '@tabler/icons-react';
+import { IconExternalLink, IconGitBranch } from '@tabler/icons-react';
+import { useNavigate } from 'react-router-dom';
 import { ActionIcon, Anchor, Group, rem, Table, Text, Tooltip } from '@mantine/core';
 import { type LanguageCode } from '@/features/language/languageCodes';
 import { StatusBadge } from '@/features/StatusBadge';
-import { type ArticleTranslation } from '@/features/translations';
+import { ArticleCategory, type ArticleTranslation } from '@/features/translations';
 import { formatDateISO } from '@/utils/date';
 
 export const TranslationStatusCell = ({
   article,
   langCode,
+  category,
 }: {
   article: ArticleTranslation;
   langCode: LanguageCode;
+  category: ArticleCategory;
 }) => {
+  const navigate = useNavigate();
   const { status, daysBehind, totalChangeLines, commitsBehind, targetLatestDate } =
     article.translations[langCode];
   const translationPath = article.englishPath.replace('/en/', `/${langCode}/`);
+
+  const handleDiffClick = () => {
+    const detailId = btoa(`${article.englishPath}:${langCode}`).slice(0, 12);
+    navigate(`/detail/${detailId}`, {
+      state: {
+        category,
+        translationPath,
+        language: langCode,
+        articleData: article,
+        translationData: article.translations[langCode],
+      },
+    });
+  };
 
   const bgColor =
     status === 'up_to_date'
@@ -75,6 +92,19 @@ export const TranslationStatusCell = ({
               title="Kubernetes documentation"
             >
               <IconExternalLink size={14} />
+            </ActionIcon>
+          )}
+          {article.translations[langCode].status === 'outdated' && (
+            <ActionIcon
+              onClick={handleDiffClick}
+              size="xs"
+              radius="xs"
+              c="blue"
+              variant="subtle"
+              title="View translation diff"
+              style={{ cursor: 'pointer' }}
+            >
+              <IconGitBranch size={14} />
             </ActionIcon>
           )}
         </Group>

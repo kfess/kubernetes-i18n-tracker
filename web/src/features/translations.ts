@@ -32,6 +32,9 @@ interface TranslationInfo {
   averageSessionDuration: number;
   issues: Issue[];
   prs: PullRequest[];
+  englishLatestCommitHash: string | null;
+  refEnglishCommitHash: string | null;
+  refEnglishCommitDate: string | null;
 }
 
 export interface ArticleTranslation {
@@ -63,3 +66,13 @@ export const articleCategories = [
 ] as const;
 
 export type ArticleCategory = (typeof articleCategories)[number]['value'];
+
+export type Diff = {
+  [key: string]: {
+    englishPath: string;
+    language: string;
+    refEnglishCommitHash: string;
+    englishLatestCommitHash: string;
+    diff: string;
+  };
+};
