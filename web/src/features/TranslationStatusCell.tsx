@@ -21,16 +21,12 @@ export const TranslationStatusCell = ({
   const translationPath = article.englishPath.replace('/en/', `/${langCode}/`);
 
   const handleDiffClick = () => {
-    const detailId = btoa(`${article.englishPath}:${langCode}`).slice(0, 12);
-    navigate(`/detail/${detailId}`, {
-      state: {
-        category,
-        translationPath,
-        language: langCode,
-        articleData: article,
-        translationData: article.translations[langCode],
-      },
+    const params = new URLSearchParams({
+      category,
+      translationPath,
+      language: langCode,
     });
+    navigate(`/detail?${params.toString()}`);
   };
 
   const bgColor =

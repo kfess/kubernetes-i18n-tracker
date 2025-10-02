@@ -12,16 +12,13 @@ export const DetailPage = () => {
   const isMobile = useMediaQuery('(max-width: 768px)');
 
   const location = useLocation();
-  const state = location.state as {
-    category: string;
-    translationPath: string;
-    language: string;
-    articleData: any;
-    translationData: any;
-  };
+  const params = new URLSearchParams(location.search);
+  const category = params.get('category') || '';
+  const translationPath = decodeURIComponent(params.get('translationPath') || '');
+  const language = params.get('language') || '';
 
-  const diff = useFetchDiff(state.category);
-  const diffString = diff[state.translationPath].diff;
+  const diff = useFetchDiff(category);
+  const diffString = diff[translationPath].diff;
 
   const containerRef = useRef(null);
   useEffect(() => {
@@ -30,7 +27,6 @@ export const DetailPage = () => {
         drawFileList: true,
         matching: 'lines',
         outputFormat: isMobile ? 'line-by-line' : 'side-by-side',
-        // fileListToggle: false,
       });
       diff2htmlUi.draw();
     }
@@ -49,7 +45,7 @@ export const DetailPage = () => {
         <div>
           This page shows the differences between the English version at the time when the
           translation was last updated and the latest English version. These changes represent what
-          needs to be translated to bring the "{state.language}" version up to date with the latest
+          needs to be translated to bring the "{language}" version up to date with the latest
           English content.
         </div>
         <div>Please note that this is still an experimental feature and may contain errors.</div>
