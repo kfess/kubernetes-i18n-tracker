@@ -17,7 +17,7 @@ const router = createBrowserRouter(
       ),
     },
     {
-      path: '/detail/:id',
+      path: '/detail',
       element: (
         <NavigationBar>
           <DetailPage />
