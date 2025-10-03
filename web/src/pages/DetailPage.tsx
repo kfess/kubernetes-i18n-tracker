@@ -15,6 +15,7 @@ import {
   Title,
 } from '@mantine/core';
 import { useMediaQuery } from '@mantine/hooks';
+import { basename } from '@/const';
 import { useFetchDiff } from '@/features/hooks/useFetchDiff';
 import { useFetchTranslationArticles } from '@/features/hooks/useFetchTranslationArticles';
 import { StatusBadge } from '@/features/StatusBadge';
@@ -33,8 +34,8 @@ export const DetailPage = () => {
   const language = params.get('language') || '';
 
   const breadcrumbItems = [
-    { title: 'Home', href: '/' },
-    { title: 'Detail', href: location.pathname + location.search },
+    { title: 'Home', href: basename },
+    { title: 'Detail', href: basename + location.pathname + location.search },
   ].map((item, index) => (
     <Anchor href={item.href} key={index}>
       {item.title}

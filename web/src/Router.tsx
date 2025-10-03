@@ -1,10 +1,9 @@
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { NavigationBar } from '@/features/NavigationBar';
+import { basename } from './const';
 import { DetailPage } from './pages/DetailPage';
 import { DevPage } from './pages/DevPage';
 import { HomePage } from './pages/Home.page';
-
-const basename = import.meta.env.MODE === 'production' ? '/kubernetes-i18n-tracker' : '/';
 
 const router = createBrowserRouter(
   [
