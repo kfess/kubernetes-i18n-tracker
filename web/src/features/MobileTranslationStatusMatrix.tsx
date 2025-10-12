@@ -1,4 +1,5 @@
-import { IconExternalLink } from '@tabler/icons-react';
+import { IconExternalLink, IconGitBranch } from '@tabler/icons-react';
+import { useNavigate } from 'react-router-dom';
 import { ActionIcon, Anchor, Box, Card, Divider, Group, Stack, Text, Tooltip } from '@mantine/core';
 import { EnglishSourceInfo } from '@/features/EnglishSourceInfo';
 import {
@@ -16,7 +17,18 @@ interface Props {
 }
 
 export const MobileTranslationStatusMatrix = ({ articles, selectedLanguages }: Props) => {
+  const navigate = useNavigate();
+
   const sortedLangCodes = languageCodes.filter((code) => selectedLanguages.includes(code.value));
+
+  const handleDiffClick = () => {
+    const params = new URLSearchParams({
+      // category,
+      // translationPath,
+      // language: langCode,
+    });
+    navigate(`/detail?${params.toString()}`);
+  };
 
   if (articles.length === 0) {
     return (
@@ -188,7 +200,7 @@ export const MobileTranslationStatusMatrix = ({ articles, selectedLanguages }: P
                                   underline="hover"
                                   c="inherit"
                                 >
-                                  <Text fw={600} c="dark" size="sm">
+                                  <Text fw={600} c="dark" size="sm" pb={2}>
                                     {getLanguageName(code.value)}
                                   </Text>
                                 </Anchor>
@@ -196,23 +208,39 @@ export const MobileTranslationStatusMatrix = ({ articles, selectedLanguages }: P
                                   Updated at{' '}
                                   {translation?.targetLatestDate
                                     ? formatDateISO(translation.targetLatestDate)
-                                    : ''}
+                                    : ''}{' '}
+                                  (UTC)
                                 </Text>
-                                {translation?.translationUrl && (
-                                  <ActionIcon
-                                    component="a"
-                                    href={translation.translationUrl || ''}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    size="xs"
-                                    radius="xs"
-                                    c="gray"
-                                    variant="subtle"
-                                    title="View on Kubernetes site"
-                                  >
-                                    <IconExternalLink size={14} />
-                                  </ActionIcon>
-                                )}
+                                <Group gap="0">
+                                  {translation?.translationUrl && (
+                                    <ActionIcon
+                                      component="a"
+                                      href={translation.translationUrl || ''}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      size="xs"
+                                      radius="xs"
+                                      c="gray"
+                                      variant="subtle"
+                                      title="View on Kubernetes site"
+                                    >
+                                      <IconExternalLink size={14} />
+                                    </ActionIcon>
+                                  )}
+                                  {translation.status === 'outdated' && (
+                                    <ActionIcon
+                                      onClick={handleDiffClick}
+                                      size="xs"
+                                      radius="xs"
+                                      c="blue"
+                                      variant="subtle"
+                                      title="View translation diff"
+                                      style={{ cursor: 'pointer' }}
+                                    >
+                                      <IconGitBranch size={14} />
+                                    </ActionIcon>
+                                  )}
+                                </Group>
                               </Group>
                             </Group>
                             <Text size="xs" c="dimmed">
