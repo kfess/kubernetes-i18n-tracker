@@ -44,27 +44,165 @@ fetch_history_jsonl() {
     commit_range="${start_commit}..${end_commit}"
   fi
 
-  git log --pretty=format:'%H%x1F%an%x1F%ad%x1F%s' --first-parent --numstat --date=iso --cc ${commit_range} -- content/ | \
+# find_last_commit() {
+#   local merge_commit=$1
+#   local file=$2
+  
+#   # ^1 と ^2 の両方から検索
+#   local from_first=$(git log --pretty=format:'%H' "${merge_commit}^1" ^"${merge_commit}^2" -- "$file" | head -n 1)
+#   local from_second=$(git log --pretty=format:'%H' "${merge_commit}^2" ^"${merge_commit}^1" -- "$file" | head -n 1)
+  
+#   # 両方が空の場合
+#   if [ -z "$from_first" ] && [ -z "$from_second" ]; then
+#     echo ""
+#     return
+#   fi
+  
+#   # どちらか一方のみの場合
+#   if [ -z "$from_first" ]; then
+#     local last="$from_second"
+#   elif [ -z "$from_second" ]; then
+#     local last="$from_first"
+#   else
+#     # 両方見つかった場合、より新しい方（コミット日時）を選択
+#     local date_first=$(git log --pretty=format:'%at' -n 1 "$from_first")
+#     local date_second=$(git log --pretty=format:'%at' -n 1 "$from_second")
+    
+#     if [ "$date_second" -gt "$date_first" ]; then
+#       local last="$from_second"
+#     else
+#       local last="$from_first"
+#     fi
+#   fi
+  
+#   # マージコミットの場合は再帰
+#   local parent_count=$(git rev-list --parents -n 1 "$last" | wc -w)
+  
+#   if [ "$parent_count" -gt 2 ]; then
+#     find_last_commit "$last" "$file"
+#   else
+#     echo "$last"
+#   fi
+# }
+
+find_last_commit() {
+  local merge_commit=$1
+  local file=$2
+  local original_main_parent=$3  # 元のマージコミットのmain側の親
+  
+  # 初回呼び出しの場合、original_main_parentを設定
+  if [ -z "$original_main_parent" ]; then
+    original_main_parent="${merge_commit}^1"
+  fi
+  
+  # ^1 と ^2 の両方から検索
+  local from_first=$(git log --pretty=format:'%H' "${merge_commit}^1" ^"${merge_commit}^2" -- "$file" | head -n 1)
+  local from_second=$(git log --pretty=format:'%H' "${merge_commit}^2" ^"${merge_commit}^1" -- "$file" | head -n 1)
+  
+  # 両方が空の場合
+  if [ -z "$from_first" ] && [ -z "$from_second" ]; then
+    echo ""
+    return
+  fi
+  
+  # mainブランチの第1親 (元のマージコミットのものを使用)
+  local main_parent="$original_main_parent"
+  
+  # feature branchのコミットを選択
+  local last=""
+  
+  if [ -n "$from_first" ] && [ -n "$from_second" ]; then
+    # 両方見つかった場合、mainに含まれない方を選択
+    if git merge-base --is-ancestor "$from_first" "$main_parent" 2>/dev/null; then
+      # from_first はmainに含まれる → from_second を採用
+      last="$from_second"
+    elif git merge-base --is-ancestor "$from_second" "$main_parent" 2>/dev/null; then
+      # from_second はmainに含まれる → from_first を採用
+      last="$from_first"
+    else
+      # 両方ともmainに含まれない → より新しい方を選択
+      local date_first=$(git log --pretty=format:'%at' -n 1 "$from_first")
+      local date_second=$(git log --pretty=format:'%at' -n 1 "$from_second")
+      
+      if [ "$date_second" -gt "$date_first" ]; then
+        last="$from_second"
+      else
+        last="$from_first"
+      fi
+    fi
+  elif [ -n "$from_first" ]; then
+    # from_first のみ存在
+    if ! git merge-base --is-ancestor "$from_first" "$main_parent" 2>/dev/null; then
+      last="$from_first"
+    fi
+  elif [ -n "$from_second" ]; then
+    # from_second のみ存在
+    if ! git merge-base --is-ancestor "$from_second" "$main_parent" 2>/dev/null; then
+      last="$from_second"
+    fi
+  fi
+  
+  # feature branchのコミットが見つからなかった場合
+  if [ -z "$last" ]; then
+    echo ""
+    return
+  fi
+  
+  # マージコミットの場合は再帰
+  local parent_count=$(git rev-list --parents -n 1 "$last" | wc -w)
+  
+  if [ "$parent_count" -gt 2 ]; then
+    find_last_commit "$last" "$file" "$original_main_parent"
+  else
+    echo "$last"
+  fi
+}
+
+
+git log --first-parent main --pretty=format:'%H' -- content/ | \
+while read -r commit_hash; do
+  parent_count=$(git rev-list --parents -n 1 "$commit_hash" | wc -w)
+
+  if [ "$parent_count" -gt 2 ]; then
+    merge_subject=$(git log --pretty=format:'%s' -n 1 "$commit_hash")
+    
+    diff_output=$(git diff --numstat "${commit_hash}^1" "${commit_hash}" -- content/)
+    
+    while IFS=$'\t' read -r added removed file; do
+      # last_commit=$(find_last_commit "$commit_hash" "$file")
+      last_commit=$(find_last_commit "$commit_hash" "$file" "")
+
+
+      if [ -n "$last_commit" ]; then
+        git show --pretty=format:'%H%x1F%an%x1F%ad%x1F'"${merge_subject}" -s --date=iso "$last_commit"
+        echo ""
+        echo -e "$added\t$removed\t$file"
+      else
+        git show --pretty=format:'%H%x1F%an%x1F%ad%x1F%s' -s --date=iso "$commit_hash"
+        echo ""
+        echo -e "$added\t$removed\t$file"
+      fi
+      echo ""
+    done <<< "$diff_output"
+  else
+    git show --pretty=format:'%H%x1F%an%x1F%ad%x1F%s' --numstat --date=iso "$commit_hash" -- content/
+    echo ""
+  fi
+done | tee /tmp/raw_output.txt | \
   awk '
     BEGIN {
       RS="";
       FS="\n";
+      ORS="";
     }
     {
       if (NF == 0) next;
 
-      # 最初の行はコミット情報
       split($1, meta, "\x1F");
       hash = meta[1];
       author = meta[2];
       date = meta[3];
       message = meta[4];
-
-      # ファイル変更情報を配列に格納
-      delete files;
-      total_files = 0;
-      total_insertions = 0;
-      total_deletions = 0;
 
       for (i = 2; i <= NF; i++) {
         if ($i ~ /^[0-9\-]/ && $i ~ /content/) {
@@ -73,106 +211,45 @@ fetch_history_jsonl() {
           deletions = stats[2];
           filepath = stats[3];
 
-          # バイナリファイルの場合の処理
           if (insertions == "-") {
-            insertions_num = 0;
             insertions_val = "null";
           } else {
-            insertions_num = insertions;
             insertions_val = insertions;
-            total_insertions += insertions_num;
           }
 
           if (deletions == "-") {
-            deletions_num = 0;
             deletions_val = "null";
           } else {
-            deletions_num = deletions;
             deletions_val = deletions;
-            total_deletions += deletions_num;
           }
 
-          # リネーム処理の改善
-          old_path = "";
-          new_path = filepath;
-          
           if (filepath ~ /{.*=>.*}/) {
-            # 波括弧記法の解析
             old_path = parse_rename_path(filepath, "old");
             new_path = parse_rename_path(filepath, "new");
           } else {
+            old_path = "";
             new_path = clean_path(filepath);
           }
 
-          # ファイル情報を配列に格納
-          file_data = new_path "|" insertions_val "|" deletions_val;
+          json_hash = "\"" hash "\"";
+          json_author = "\"" escape_json(author) "\"";
+          json_date = "\"" date "\"";
+          json_message = "\"" escape_json(message) "\"";
+
+          file_json = "{\"path\":\"" escape_json(new_path) "\",\"insertions\":" insertions_val ",\"deletions\":" deletions_val;
+
           if (old_path != "") {
-            file_data = file_data "|" old_path;
-          }
-          files[total_files] = file_data;
-          total_files++;
-        }
-      }
-
-      if (total_files > 0) {
-        # JSONの各部分を準備
-        json_hash = "\"" hash "\"";
-        json_author = "\"" escape_json(author) "\"";
-        json_date = "\"" date "\"";
-        json_message = "\"" escape_json(message) "\"";
-
-        # files配列をJSONに変換
-        files_json = "[";
-        for (j = 0; j < total_files; j++) {
-          split(files[j], file_parts, "|");
-          file_path = file_parts[1];
-          file_insertions = file_parts[2];
-          file_deletions = file_parts[3];
-          file_old_path = (length(file_parts) > 3) ? file_parts[4] : "";
-
-          if (j > 0) files_json = files_json ",";
-
-          files_json = files_json "{" \
-            "\"path\":\"" escape_json(file_path) "\"," \
-            "\"insertions\":" file_insertions "," \
-            "\"deletions\":" file_deletions;
-
-          # リネームの場合は元のパスも追加
-          if (file_old_path != "") {
-            files_json = files_json ",\"old_path\":\"" escape_json(file_old_path) "\"";
+            file_json = file_json ",\"old_path\":\"" escape_json(old_path) "\"";
           }
 
-          files_json = files_json "}";
+          file_json = file_json "}";
+
+          printf "{\"hash\":%s,\"author\":%s,\"date\":%s,\"message\":%s,\"file\":%s}\n", json_hash, json_author, json_date, json_message, file_json;
         }
-        files_json = files_json "]";
-
-        total_changes = total_insertions + total_deletions;
-
-        # 最終的なJSONを構築
-        json_output = "{" \
-          "\"hash\":" json_hash "," \
-          "\"author\":" json_author "," \
-          "\"date\":" json_date "," \
-          "\"message\":" json_message "," \
-          "\"files\":" files_json "," \
-          "\"summary\":{" \
-            "\"total_files\":" total_files "," \
-            "\"total_insertions\":" total_insertions "," \
-            "\"total_deletions\":" total_deletions "," \
-            "\"total_changes\":" total_changes \
-          "}" \
-        "}";
-
-        print json_output;
       }
     }
 
-    # 波括弧記法のリネームパスを解析する関数
     function parse_rename_path(path, type) {
-      # path: "content/zh-cn/blog/_posts/{2025-02-03-introducing-jobset => 2025-03-23-introducing-jobset}/index.md"
-      # type: "old" または "new"
-      
-      # 波括弧の位置を特定
       brace_start = index(path, "{");
       brace_end = index(path, "}");
       
@@ -180,12 +257,10 @@ fetch_history_jsonl() {
         return clean_path(path);
       }
       
-      # 前部分、波括弧内部分、後部分に分割
       prefix = substr(path, 1, brace_start - 1);
       brace_content = substr(path, brace_start + 1, brace_end - brace_start - 1);
       suffix = substr(path, brace_end + 1);
       
-      # " => " で分割
       arrow_pos = index(brace_content, " => ");
       if (arrow_pos == 0) {
         return clean_path(path);
@@ -194,7 +269,6 @@ fetch_history_jsonl() {
       old_part = substr(brace_content, 1, arrow_pos - 1);
       new_part = substr(brace_content, arrow_pos + 4);
       
-      # 前後の空白を除去
       gsub(/^ +| +$/, "", old_part);
       gsub(/^ +| +$/, "", new_part);
       
@@ -205,32 +279,22 @@ fetch_history_jsonl() {
       }
     }
 
-    # パスのクリーニング関数
     function clean_path(path) {
-      # 先頭と末尾のクォートを除去
       if (path ~ /^".*"$/) {
         path = substr(path, 2, length(path) - 2);
       }
       return path;
     }
 
-    # JSON文字列のエスケープ関数
     function escape_json(str) {
-      # バックスラッシュを最初に処理
       gsub(/\\/, "\\\\", str);
-      # ダブルクォート
       gsub(/"/, "\\\"", str);
-      # 改行・タブ・復帰文字
       gsub(/\r/, "\\r", str);
       gsub(/\n/, "\\n", str);
       gsub(/\t/, "\\t", str);
       gsub(/\b/, "\\b", str);
       gsub(/\f/, "\\f", str);
-
-      # 制御文字を16進数で検出して置換
-      # ベル文字 (ASCII 7)
       gsub(/\007/, "\\u0007", str);
-      # 垂直タブ (ASCII 11)
       gsub(/\013/, "\\u000B", str);
 
       return str;

@@ -57,7 +57,7 @@ export const EnglishSourceInfo = ({ article }: Props) => {
       </Anchor>
       <Group gap="3" align="center" wrap="nowrap" c="dimmed">
         <Text size="xs">
-          Updated at {formatDateISO(article.translations.en?.englishLatestDate)}
+          Updated at {formatDateISO(article.translations.en?.englishLatestDate)} (UTC)
         </Text>
         {article.englishUrl && (
           <ActionIcon
