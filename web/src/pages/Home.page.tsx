@@ -200,6 +200,7 @@ export function HomePage() {
           <MobileTranslationStatusMatrix
             articles={currentArticles}
             selectedLanguages={selectedLanguages || []}
+            selectedArticleCategory={selectedArticleCategory}
           />
         )}
         {deployedAt && (

@@ -8,27 +8,23 @@ import {
   type LanguageCode,
 } from '@/features/language/languageCodes';
 import { StatusBadge } from '@/features/StatusBadge';
-import { type ArticleTranslation } from '@/features/translations';
+import { type ArticleCategory, type ArticleTranslation } from '@/features/translations';
 import { formatDateISO } from '@/utils/date';
 
 interface Props {
   articles: ArticleTranslation[];
   selectedLanguages: LanguageCode[];
+  selectedArticleCategory: ArticleCategory;
 }
 
-export const MobileTranslationStatusMatrix = ({ articles, selectedLanguages }: Props) => {
+export const MobileTranslationStatusMatrix = ({
+  articles,
+  selectedLanguages,
+  selectedArticleCategory,
+}: Props) => {
   const navigate = useNavigate();
 
   const sortedLangCodes = languageCodes.filter((code) => selectedLanguages.includes(code.value));
-
-  const handleDiffClick = () => {
-    const params = new URLSearchParams({
-      // category,
-      // translationPath,
-      // language: langCode,
-    });
-    navigate(`/detail?${params.toString()}`);
-  };
 
   if (articles.length === 0) {
     return (
@@ -179,6 +175,16 @@ export const MobileTranslationStatusMatrix = ({ articles, selectedLanguages }: P
                         '/en/',
                         `/${code.value}/`
                       );
+
+                      const handleDiffClick = () => {
+                        const params = new URLSearchParams({
+                          category: selectedArticleCategory,
+                          translationPath,
+                          language: code.value,
+                        });
+                        navigate(`/detail?${params.toString()}`);
+                      };
+
                       return (
                         <Box
                           key={code.value}
