@@ -221,6 +221,9 @@ class TranslationStatusTracker:
             self._parse_date(ref_english_commit["date"]) if ref_english_commit else None
         )
 
+        # if ref_english_commit is None:
+        #     print(f"Warning: No reference commit found for {translated_path}")
+
         return TranslationStatusResult(
             target_path=translated_path,
             english_path=english_path,
@@ -237,8 +240,12 @@ class TranslationStatusTracker:
             severity=severity,
             missing_commits=missing_commits,
             english_latest_commit_hash=english_latest["hash"],
-            ref_english_commit_hash=ref_english_commit["hash"],
-            ref_english_commit_date=ref_english_commit_date,
+            ref_english_commit_hash=ref_english_commit["hash"]
+            if ref_english_commit
+            else None,
+            ref_english_commit_date=ref_english_commit_date
+            if ref_english_commit_date
+            else None,
         )
 
     def _create_missing_translation_result(

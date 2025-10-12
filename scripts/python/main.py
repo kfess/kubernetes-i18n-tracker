@@ -31,6 +31,44 @@ def sanitize(line: str) -> str:
     return re.compile(r'\\(?![\\bfnrt"/])').sub(r"\\\\", line)
 
 
+def transform_records(records: list[dict]) -> list[dict]:
+    """Transform a list of Git commit records into a structured format."""
+    result = []
+    grouped = {}
+
+    for record in records:
+        key = (record["hash"], record["author"], record["date"], record["message"])
+        if key not in grouped:
+            grouped[key] = []
+        grouped[key].append(record["file"])
+
+    for (hash_val, author, date, message), files in grouped.items():
+        total_insertions = sum(
+            f["insertions"] for f in files if f["insertions"] is not None
+        )
+        total_deletions = sum(
+            f["deletions"] for f in files if f["deletions"] is not None
+        )
+
+        result.append(
+            {
+                "hash": hash_val,
+                "author": author,
+                "date": date,
+                "message": message,
+                "files": files,
+                "summary": {
+                    "total_files": len(files),
+                    "total_insertions": total_insertions,
+                    "total_deletions": total_deletions,
+                    "total_changes": total_insertions + total_deletions,
+                },
+            }
+        )
+
+    return result
+
+
 def load_json_records(filepath: Path | str) -> list[GitCommitDict]:
     """Load JSON records from a file, handling potential formatting issues.
 
@@ -78,6 +116,8 @@ def load_json_records(filepath: Path | str) -> list[GitCommitDict]:
                     continue
 
             records.append(obj)
+
+    records = transform_records(records)
 
     logger.info("Successfully loaded %d records from %s", len(records), INPUT_FILE)
     return records
