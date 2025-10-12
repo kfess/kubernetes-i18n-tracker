@@ -53,5 +53,6 @@
       "label": "Debugger"
     }
   },
-  "remoteUser": "vscode"
+  "remoteUser": "vscode",
+  "updateRemoteUserUID": true
 }

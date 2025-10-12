@@ -5,6 +5,7 @@ RUN apt-get update && apt-get install -y \
     make \
     curl \
     vim \
+    bash-completion \
     && rm -rf /var/lib/apt/lists/*
 
 RUN go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest && \
@@ -15,16 +16,14 @@ RUN go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest && \
 
 WORKDIR /workspace
 
-ENV GOCACHE=/go/cache
-ENV GOMODCACHE=/go/pkg/mod
+ENV GOCACHE=/workspace/.cache/go-build
+ENV GOMODCACHE=/workspace/.cache/go-mod
 
 ARG USERNAME=vscode
 ARG USER_UID=1000
-ARG USER_GID=$USER_UID
+ARG USER_GID=1000
 
 RUN groupadd --gid $USER_GID $USERNAME \
-    && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME \
-    && mkdir -p /go/cache /go/pkg/mod \
-    && chown -R $USERNAME:$USERNAME /go
+    && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME -s /bin/bash
 
 USER $USERNAME
