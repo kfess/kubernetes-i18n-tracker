@@ -73,7 +73,7 @@ export const TranslationStatusCell = ({
       {(status === 'outdated' || status === 'up_to_date') && targetLatestDate && (
         <Group gap="2" justify="center" align="center">
           <Text size="xs" c="dimmed">
-            Updated at {formatDateISO(targetLatestDate)}
+            Updated: {formatDateISO(targetLatestDate)} (UTC)
           </Text>
           {article.translations[langCode].translationUrl && (
             <ActionIcon

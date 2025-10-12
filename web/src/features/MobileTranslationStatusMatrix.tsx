@@ -102,7 +102,8 @@ export const MobileTranslationStatusMatrix = ({
                                 Updated at{' '}
                                 {translation?.targetLatestDate
                                   ? formatDateISO(translation.targetLatestDate)
-                                  : ''}
+                                  : ''}{' '}
+                                (UTC)
                               </Text>
                               {translation?.translationUrl && (
                                 <ActionIcon
