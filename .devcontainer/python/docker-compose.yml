@@ -5,7 +5,7 @@ services:
       context: .
       dockerfile: Dockerfile
     volumes:
-      - .:/workspace:cached
+      - ../../:/workspace:cached
     # command: sleep infinity
     command: /bin/sh -c "cd /workspace/web && yarn && exec sleep infinity"
     network_mode: host

@@ -1,0 +1,22 @@
+version: "3.8"
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ../../:/workspace:cached
+      - go-mod-cache:/go/pkg/mod
+      - go-build-cache:/go/cache
+    command: sleep infinity
+    environment:
+      - GO111MODULE=on
+      - CGO_ENABLED=0
+    ports:
+      - "8080:8080"
+      - "2345:2345"
+
+volumes:
+  go-mod-cache:
+  go-build-cache:
