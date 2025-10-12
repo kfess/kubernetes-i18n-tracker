@@ -97,7 +97,7 @@ export const DetailPage = () => {
               </Title>
               {translationInfo?.targetLatestDate && (
                 <Text size="xs" c="dimmed">
-                  Last updated: {formatDateISO(translationInfo.targetLatestDate)}
+                  Last updated: {formatDateISO(translationInfo.targetLatestDate)} (UTC)
                 </Text>
               )}
             </Group>
@@ -120,7 +120,7 @@ export const DetailPage = () => {
                     <Group gap={4} wrap="nowrap">
                       <IconGitBranch size={12} />
                       Ref English: {translationInfo.refEnglishCommitHash.substring(0, 7)} (
-                      {formatDateISO(translationInfo.refEnglishCommitDate)})
+                      {formatDateISO(translationInfo.refEnglishCommitDate)} UTC)
                     </Group>
                   </Anchor>
                 )}
@@ -137,7 +137,7 @@ export const DetailPage = () => {
                     <Group gap={4} wrap="nowrap">
                       <IconGitBranch size={12} />
                       Latest English: {translationInfo.englishLatestCommitHash.substring(0, 7)} (
-                      {formatDateISO(translationInfo.englishLatestDate)})
+                      {formatDateISO(translationInfo.englishLatestDate)} UTC)
                     </Group>
                   </Anchor>
                 )}
