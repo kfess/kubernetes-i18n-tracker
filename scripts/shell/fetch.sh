@@ -44,47 +44,6 @@ fetch_history_jsonl() {
     commit_range="${start_commit}..${end_commit}"
   fi
 
-# find_last_commit() {
-#   local merge_commit=$1
-#   local file=$2
-  
-#   # ^1 と ^2 の両方から検索
-#   local from_first=$(git log --pretty=format:'%H' "${merge_commit}^1" ^"${merge_commit}^2" -- "$file" | head -n 1)
-#   local from_second=$(git log --pretty=format:'%H' "${merge_commit}^2" ^"${merge_commit}^1" -- "$file" | head -n 1)
-  
-#   # 両方が空の場合
-#   if [ -z "$from_first" ] && [ -z "$from_second" ]; then
-#     echo ""
-#     return
-#   fi
-  
-#   # どちらか一方のみの場合
-#   if [ -z "$from_first" ]; then
-#     local last="$from_second"
-#   elif [ -z "$from_second" ]; then
-#     local last="$from_first"
-#   else
-#     # 両方見つかった場合、より新しい方（コミット日時）を選択
-#     local date_first=$(git log --pretty=format:'%at' -n 1 "$from_first")
-#     local date_second=$(git log --pretty=format:'%at' -n 1 "$from_second")
-    
-#     if [ "$date_second" -gt "$date_first" ]; then
-#       local last="$from_second"
-#     else
-#       local last="$from_first"
-#     fi
-#   fi
-  
-#   # マージコミットの場合は再帰
-#   local parent_count=$(git rev-list --parents -n 1 "$last" | wc -w)
-  
-#   if [ "$parent_count" -gt 2 ]; then
-#     find_last_commit "$last" "$file"
-#   else
-#     echo "$last"
-#   fi
-# }
-
 find_last_commit() {
   local merge_commit=$1
   local file=$2
@@ -188,7 +147,7 @@ while read -r commit_hash; do
     git show --pretty=format:'%H%x1F%an%x1F%ad%x1F%s' --numstat --date=iso "$commit_hash" -- content/
     echo ""
   fi
-done | tee /tmp/raw_output.txt | \
+done | \
   awk '
     BEGIN {
       RS="";
