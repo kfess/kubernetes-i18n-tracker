@@ -8,6 +8,19 @@ RUN apt-get update && apt-get install -y \
     bash-completion \
     && rm -rf /var/lib/apt/lists/*
 
+ARG USERNAME=vscode
+ARG USER_UID=1000
+ARG USER_GID=1000
+
+RUN groupadd --gid $USER_GID $USERNAME \
+    && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME -s /bin/bash
+
+USER $USERNAME
+
+# ユーザーのホームディレクトリにGOPATHを設定
+ENV GOPATH=/home/vscode/go
+ENV PATH=$PATH:$GOPATH/bin
+
 RUN go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest && \
     go install github.com/air-verse/air@latest && \
     go install github.com/go-delve/delve/cmd/dlv@latest && \
@@ -18,12 +31,3 @@ WORKDIR /workspace
 
 ENV GOCACHE=/workspace/.cache/go-build
 ENV GOMODCACHE=/workspace/.cache/go-mod
-
-ARG USERNAME=vscode
-ARG USER_UID=1000
-ARG USER_GID=1000
-
-RUN groupadd --gid $USER_GID $USERNAME \
-    && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME -s /bin/bash
-
-USER $USERNAME
