@@ -5,11 +5,15 @@ import (
 	// "fmt"
 	// "os"
 
+	// "context"
+
 	"context"
 
 	"github.com/joho/godotenv"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/logger"
-	"github.com/kfess/kubernetes-i18n-tracker/internal/url"
+
+	// "github.com/kfess/kubernetes-i18n-tracker/internal/url"
+	"github.com/kfess/kubernetes-i18n-tracker/internal/diff"
 )
 
 func main() {
@@ -20,6 +24,7 @@ func main() {
 		return
 	}
 
+	// Pull Request
 	// token := os.Getenv("KUBERNETES_WEBSITE_READ_GITHUB_TOKEN")
 	// client := pr.NewClient(token, "kubernetes", "website")
 	// fetcher := pr.NewFetcher(client)
@@ -38,11 +43,22 @@ func main() {
 	// 	}
 	// }
 
-	client := url.NewClient("https://kubernetes.io")
-	urls, err := client.FetchAllSitemaps(context.Background())
+	// URL
+	// client := url.NewClient("https://kubernetes.io")
+	// urls, err := client.FetchAllSitemaps(context.Background())
+	// if err != nil {
+	// 	logger.Errorf("Error fetching sitemaps: %v", err)
+	// 	return
+	// }
+	// logger.Infof("Fetched URLs for English: %v", urls["en"])
+
+	// Diff
+	oldCommitHash := "17f080049278a691d417c44decddbdb297f744b5"
+	newCommitHash := "43b5c46f2a625ee95fd65e770d7a7ac66ea1d440"
+	diff, err := diff.CalculateDiff(context.Background(), "./k8s-repo/website", oldCommitHash, newCommitHash, "content/ja/docs/concepts/architecture/_index.md")
 	if err != nil {
-		logger.Errorf("Error fetching sitemaps: %v", err)
+		logger.Errorf("Error calculating diff: %v", err)
 		return
 	}
-	logger.Infof("Fetched URLs for English: %v", urls["en"])
+	logger.Infof("Diff between %s..%s:\n%s\nEnglish File Path: %s", oldCommitHash, newCommitHash, diff.Language, diff.EnglishFilePath)
 }
