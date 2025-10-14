@@ -74,13 +74,13 @@ func (c *Client) fetchSitemap(ctx context.Context, lang string) ([]string, error
 
 // FetchAllSitemaps fetches sitemaps for all supported languages concurrently
 // and returns a map of language codes to their URLs.
-func (c *Client) FetchAllSitemaps(ctx context.Context) (map[string][]string, error) {
+func (c *Client) FetchAllSitemaps(ctx context.Context) ([]string, error) {
 
 	g, ctx := errgroup.WithContext(ctx)
 	g.SetLimit(10)
 
 	var mu sync.Mutex
-	var allUrls map[string][]string = make(map[string][]string)
+	var allUrls = []string{}
 
 	for _, lang := range language.SupportedLanguages {
 		lang := lang
@@ -99,7 +99,7 @@ func (c *Client) FetchAllSitemaps(ctx context.Context) (map[string][]string, err
 			}
 
 			mu.Lock()
-			allUrls[lang] = urls
+			allUrls = append(allUrls, urls...)
 			mu.Unlock()
 			return nil
 		})
