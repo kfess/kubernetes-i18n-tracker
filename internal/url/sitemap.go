@@ -73,7 +73,7 @@ func (c *Client) fetchSitemap(ctx context.Context, lang string) ([]string, error
 }
 
 // FetchAllSitemaps fetches sitemaps for all supported languages concurrently
-// and returns a map of language codes to their URLs.
+// and returns a combined list of URLs.
 func (c *Client) FetchAllSitemaps(ctx context.Context) ([]string, error) {
 
 	g, ctx := errgroup.WithContext(ctx)
