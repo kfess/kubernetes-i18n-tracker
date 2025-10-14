@@ -1,22 +1,24 @@
 package language
 
+// SupportedLanguages lists the languages currently supported by the Kubernetes documentation site.
+// Languagess are sorted by their website traffic (highest to lowest).
 var SupportedLanguages = []string{
+	"en",
+	"zh-cn",
+	"ko",
+	"ja",
 	"bn",
 	"de",
-	"en",
 	"es",
 	"fr",
 	"hi",
 	"id",
 	"it",
-	"ja",
-	"ko",
 	"pl",
 	"pt-br",
 	"ru",
 	"uk",
 	"vi",
-	"zh-cn",
 }
 
 var DeprecatedLanguages = []string{

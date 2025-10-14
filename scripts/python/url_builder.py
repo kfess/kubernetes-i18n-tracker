@@ -228,7 +228,7 @@ def _build_blog_url(  # noqa: PLR0911, PLR0912, C901
     Args:
     ----
         file_path (str): Path to the markdown file.
-        parts (tuple): Parts of the path split by '/'.
+        partsPri (tuple): Parts of the path split by '/'.
         existing_urls (set): Set of existing URLs to check against.
         lang_prefix (str): Language prefix for the URL.
         base_url (str): Base URL for the site.

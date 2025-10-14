@@ -14,7 +14,7 @@ type Client struct {
 }
 
 // NewClient creates a new GitHub client for the given repository
-func NewClient(token, owner, repo string) *Client {
+func NewClient(token string, owner string, repo string) *Client {
 	return &Client{
 		gh:    github.NewClient(nil).WithAuthToken(token),
 		owner: owner,

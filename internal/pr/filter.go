@@ -13,7 +13,7 @@ const (
 )
 
 // shouldSkipPR determines if a PR should be filtered out based on labels and change metrics.
-func shouldSkipPR(pr *github.PullRequest, fileCount, commitCount int) bool {
+func shouldSkipPR(pr *github.PullRequest, fileCount int, commitCount int) bool {
 	labels := extractLabels(pr)
 
 	// Skip draft PRs (still being worked on)
