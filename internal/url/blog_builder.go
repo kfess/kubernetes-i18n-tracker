@@ -158,27 +158,6 @@ func (b *BlogUrlBuilder) tryFilename(path string, langPrefix string) string {
 	return ""
 }
 
-// textToSlug converts text to URL-friendly slug by removing symbols & replacing spaces with -.
-func (b *BlogUrlBuilder) textToSlug(text string) string {
-	// Remove all characters except alphanumeric, spaces, dots, slashes, and hyphens
-	reClean := regexp.MustCompile(`[^a-zA-Z0-9\s\./\-]`)
-	cleaned := reClean.ReplaceAllString(text, "")
-
-	// Replace spaces with hyphens and convert to lowercase
-	reSpaces := regexp.MustCompile(`\s+`)
-	hyphenated := reSpaces.ReplaceAllString(cleaned, "-")
-	hyphenated = strings.ToLower(hyphenated)
-
-	// Normalize multiple consecutive hyphens to single hyphen
-	reHyphens := regexp.MustCompile(`-+`)
-	normalized := reHyphens.ReplaceAllString(hyphenated, "-")
-
-	// Trim leading and trailing hyphens
-	normalized = strings.Trim(normalized, "-")
-
-	return normalized
-}
-
 func (b *BlogUrlBuilder) tryTitleWithDate(fm *FrontMatter, langPrefix string) string {
 	title := b.textToSlug(fm.Title) // Convert title to URL-friendly slug
 	date := fm.Date                 // Expecting format "YYYY-MM-DD"
@@ -218,4 +197,25 @@ func (b *BlogUrlBuilder) tryFilenameAsIs(path string, langPrefix string) string 
 	}
 
 	return ""
+}
+
+// textToSlug converts text to URL-friendly slug by removing symbols & replacing spaces with -.
+func (b *BlogUrlBuilder) textToSlug(text string) string {
+	// Remove all characters except alphanumeric, spaces, dots, slashes, and hyphens
+	reClean := regexp.MustCompile(`[^a-zA-Z0-9\s\./\-]`)
+	cleaned := reClean.ReplaceAllString(text, "")
+
+	// Replace spaces with hyphens and convert to lowercase
+	reSpaces := regexp.MustCompile(`\s+`)
+	hyphenated := reSpaces.ReplaceAllString(cleaned, "-")
+	hyphenated = strings.ToLower(hyphenated)
+
+	// Normalize multiple consecutive hyphens to single hyphen
+	reHyphens := regexp.MustCompile(`-+`)
+	normalized := reHyphens.ReplaceAllString(hyphenated, "-")
+
+	// Trim leading and trailing hyphens
+	normalized = strings.Trim(normalized, "-")
+
+	return normalized
 }
