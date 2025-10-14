@@ -30,6 +30,21 @@ func BuildUrl(ctx context.Context, baseUrl string, path string, existingUrls []s
 		return "", err
 	}
 
+	if isIndexFile(path) {
+		langPrefix := ""
+		if lang != "en" {
+			langPrefix = lang + "/"
+		}
+		// e.g. content/en/blog/_index.md -> https://kubernetes.io/blog/
+		// e.g. content/ja/blog/_index.md -> https://kubernetes.io/ja/blog/
+		prefix := fmt.Sprintf("content/%s/", lang)
+		remainder := strings.TrimPrefix(path, prefix)
+		remainder = strings.TrimSuffix(remainder, "/_index.md")
+		remainder = strings.TrimSuffix(remainder, "/_index.html")
+
+		return fmt.Sprintf("%s/%s%s/", baseUrl, langPrefix, remainder), nil
+	}
+
 	// directly instantiate the appropriate builder based on section
 	switch section {
 	case "blog":
@@ -120,4 +135,12 @@ func extractLangAndSection(path string) (string, string, error) {
 	lang := parts[1]
 	section := parts[2]
 	return lang, section, nil
+}
+
+func isIndexFile(path string) bool {
+	base := filepath.Base(path)
+	ext := filepath.Ext(base)
+	name := strings.TrimSuffix(base, ext)
+
+	return name == "_index" && (ext == ".md" || ext == ".html")
 }
