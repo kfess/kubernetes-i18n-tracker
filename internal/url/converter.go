@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
+	"slices"
 	"strings"
 )
 
@@ -95,30 +96,15 @@ func parseContentPath(path string, validLangs []string, validExts []string, vali
 
 func hasValidExtension(path string, validExts []string) bool {
 	ext := filepath.Ext(path)
-	for _, validExt := range validExts {
-		if ext == validExt {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(validExts, ext)
 }
 
 func isValidLanguage(lang string, validLangs []string) bool {
-	for _, validLang := range validLangs {
-		if lang == validLang {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(validLangs, lang)
 }
 
 func isValidSection(section string, validSections []string) bool {
-	for _, validSec := range validSections {
-		if section == validSec {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(validSections, section)
 }
 
 func isIndexFile(path string) bool {
