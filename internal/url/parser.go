@@ -43,7 +43,7 @@ func (p *YamlFrontMatterParser) Parse(path string) (*FrontMatter, error) {
 	}
 
 	fm := &FrontMatter{}
-	if err := yaml.Unmarshal([]byte(content), fm); err != nil {
+	if err := yaml.UnmarshalWithOptions([]byte(content), fm, yaml.AllowDuplicateMapKey()); err != nil {
 		return nil, err
 	}
 

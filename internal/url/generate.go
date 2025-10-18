@@ -11,6 +11,15 @@ func generateUrl(baseUrl string, cp contentPath, fm *FrontMatter, existingUrls m
 		return generateIndexUrl(baseUrl, cp, existingUrls), nil
 	}
 
+	// Handle root files (e.g., content/ja/search.md)
+	if cp.section == "" {
+		url := generateRootUrl(baseUrl, cp, existingUrls)
+		if url != "" {
+			return url, nil
+		}
+		return "", fmt.Errorf("no valid URL found for top-level path: %s", cp.raw)
+	}
+
 	switch cp.section {
 	case "blog":
 		url := generateBlogUrl(baseUrl, cp, fm, existingUrls)
@@ -112,4 +121,23 @@ func matchUrl(candidate string, existingUrls map[string]bool) string {
 	}
 
 	return ""
+}
+
+// generateRootUrl generates URLs for root content files
+// e.g., content/ja/search.md -> https://kubernetes.io/ja/search/
+func generateRootUrl(baseUrl string, cp contentPath, existingUrls map[string]bool) string {
+	lang := cp.language
+	langPrefix := ""
+	if lang != "en" {
+		langPrefix = lang + "/"
+	}
+
+	prefix := fmt.Sprintf("content/%s/", lang)
+	remainder := strings.TrimPrefix(cp.raw, prefix)
+	remainder = strings.TrimSuffix(remainder, ".md")
+	remainder = strings.TrimSuffix(remainder, ".html")
+
+	candidate := fmt.Sprintf("%s/%s%s/", baseUrl, langPrefix, remainder)
+
+	return matchUrl(candidate, existingUrls)
 }

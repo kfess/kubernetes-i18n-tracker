@@ -10,14 +10,14 @@ type FrontMatter struct {
 }
 
 type BuildSettings struct {
-	Render interface{} `yaml:"render"` // string "never" または bool false の両方に対応
+	Render interface{} `yaml:"render"`
 }
 
 // IsPublic determines if the content should be publicly accessible based on the Build settings.
 // Returns false only if Build.Render is explicitly set to "never" or false.
 // Default behavior is to consider content as public.
 func (fm *FrontMatter) IsPublic() bool {
-	if fm.Build != nil {
+	if fm.Build == nil {
 		return true
 	}
 

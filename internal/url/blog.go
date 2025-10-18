@@ -132,20 +132,14 @@ func tryFilenameAsIs(path string, langPrefix string, baseURL string, existingUrl
 
 // textToSlug converts text to URL-friendly slug by removing symbols & replacing spaces with -
 func textToSlug(text string) string {
-	// Remove all characters except alphanumeric, spaces, dots, slashes, and hyphens
-	reClean := regexp.MustCompile(`[^a-zA-Z0-9\s\./\-]`)
-	cleaned := reClean.ReplaceAllString(text, "")
+	reSymbolsAndSpaces := regexp.MustCompile(`[\s\p{P}\p{S}]+`)
+	hyphenated := reSymbolsAndSpaces.ReplaceAllString(text, "-")
 
-	// Replace spaces with hyphens and convert to lowercase
-	reSpaces := regexp.MustCompile(`\s+`)
-	hyphenated := reSpaces.ReplaceAllString(cleaned, "-")
 	hyphenated = strings.ToLower(hyphenated)
 
-	// Normalize multiple consecutive hyphens to single hyphen
 	reHyphens := regexp.MustCompile(`-+`)
 	normalized := reHyphens.ReplaceAllString(hyphenated, "-")
 
-	// Trim leading and trailing hyphens
 	normalized = strings.Trim(normalized, "-")
 
 	return normalized

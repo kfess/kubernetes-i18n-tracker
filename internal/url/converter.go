@@ -34,8 +34,11 @@ func (c *Converter) Convert(ctx context.Context, path string) (string, error) {
 		return "", err
 	}
 
-	fm, _ := c.parser.Parse(path)
-	if fm != nil && !fm.IsPublic() {
+	fm, err := c.parser.Parse(path)
+	if err != nil {
+		return "", err
+	}
+	if !fm.IsPublic() {
 		return "", fmt.Errorf("file %s is not public, skipping URL generation", path)
 	}
 
@@ -43,6 +46,7 @@ func (c *Converter) Convert(ctx context.Context, path string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
 	return url, nil
 }
 
@@ -52,10 +56,11 @@ type contentPath struct {
 	section  string
 	segments []string
 	isIndex  bool
+	ext      string
 }
 
 // parseContentPath parses and validates a content file path
-// Expected format: content/{lang}/{section}/{...path}
+// Expected format: content/{lang}/{section}/{...path} or content/{lang}/{file} (top-level)
 func parseContentPath(path string, validLangs []string, validExts []string, validSections []string) (*contentPath, error) {
 	if !hasValidExtension(path, validExts) {
 		return nil, fmt.Errorf("invalid file extension: %s (allowed: %v)", filepath.Ext(path), validExts)
@@ -67,23 +72,31 @@ func parseContentPath(path string, validLangs []string, validExts []string, vali
 
 	segments := strings.Split(path, "/")
 
-	// Need at least: content/{lang}/{category}/{file}
-	if len(segments) < 4 {
-		return nil, fmt.Errorf("invalid path structure: %s (expected content/{lang}/{category}/{file})", path)
+	// Need at least: content/{lang}/{file} (3 segments minimum)
+	if len(segments) < 3 {
+		return nil, fmt.Errorf("invalid path structure: %s (expected content/{lang}/{file} or content/{lang}/{section}/{file})", path)
 	}
 
 	lang := segments[1]
-	section := segments[2]
+	var section string
+
+	// root files: content/{lang}/{file}
+	if len(segments) == 3 {
+		section = ""
+	} else {
+		// regular files: content/{lang}/{section}/{...path}
+		section = segments[2]
+		if !isValidSection(section, validSections) {
+			return nil, fmt.Errorf("unsupported section '%s' in path: %s", section, path)
+		}
+	}
 
 	if !isValidLanguage(lang, validLangs) {
 		return nil, fmt.Errorf("unsupported language code '%s' in path: %s", lang, path)
 	}
 
-	if !isValidSection(section, validSections) {
-		return nil, fmt.Errorf("unsupported section '%s' in path: %s", section, path)
-	}
-
 	isIndex := isIndexFile(path)
+	ext := filepath.Ext(path)
 
 	return &contentPath{
 		raw:      path,
@@ -91,6 +104,7 @@ func parseContentPath(path string, validLangs []string, validExts []string, vali
 		section:  section,
 		segments: segments,
 		isIndex:  isIndex,
+		ext:      ext,
 	}, nil
 }
 
