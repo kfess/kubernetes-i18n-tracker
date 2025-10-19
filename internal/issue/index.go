@@ -2,20 +2,21 @@ package issue
 
 // Index provides efficient lookup of issues by file path.
 type Index struct {
-	issuesByFile map[string][]Issue
+	issuesByFile map[string][]*Issue
 }
 
 // NewIndex creates a new Index from a list of issues.
 func NewIndex(issues []Issue, existingPaths map[string]bool) *Index {
-	issuesByFile := make(map[string][]Issue)
+	issuesByFile := make(map[string][]*Issue)
 
-	for _, issue := range issues {
-		lang := GuessLanguage(issue)
+	for i := range issues {
+		issue := &issues[i]
+		lang := GuessLanguage(*issue)
 		if lang == "" {
 			continue
 		}
 
-		path := GuessPath(issue, lang, existingPaths)
+		path := GuessPath(*issue, lang, existingPaths)
 		if path != "" {
 			issuesByFile[path] = append(issuesByFile[path], issue)
 		}
@@ -27,7 +28,7 @@ func NewIndex(issues []Issue, existingPaths map[string]bool) *Index {
 }
 
 // GetIssuesForFile returns all issues associated with a specific file path.
-func (idx *Index) GetIssuesForFile(path string) []Issue {
+func (idx *Index) GetIssuesForFile(path string) []*Issue {
 	return idx.issuesByFile[path]
 }
 

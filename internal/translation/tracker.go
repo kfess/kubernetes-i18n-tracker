@@ -7,6 +7,7 @@ import (
 
 	"github.com/kfess/kubernetes-i18n-tracker/internal/diff"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/history"
+	"github.com/kfess/kubernetes-i18n-tracker/internal/issue"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/pr"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/url"
 )
@@ -16,10 +17,9 @@ type Tracker struct {
 	history       *history.History
 	urlConverter  *url.Converter
 	prIndex       *pr.Index
+	issueIndex    *issue.Index
 	repoPath      string
 	existingPaths map[string]bool
-
-	// add issue index later
 }
 
 // Config contains configuration for creating a Tracker.
@@ -33,6 +33,7 @@ func NewTracker(
 	historyTracker *history.History,
 	urlConverter *url.Converter,
 	prIndex *pr.Index,
+	issueIndex *issue.Index,
 	config Config,
 ) *Tracker {
 	pathMap := make(map[string]bool, len(config.ExistingPaths))
@@ -44,6 +45,7 @@ func NewTracker(
 		history:       historyTracker,
 		urlConverter:  urlConverter,
 		prIndex:       prIndex,
+		issueIndex:    issueIndex,
 		repoPath:      config.RepoPath,
 		existingPaths: pathMap,
 	}
@@ -134,7 +136,6 @@ func (t *Tracker) buildComparisonHistory(
 	translationCommits []*history.Commit,
 	translationLatest *history.Commit,
 ) *HistoryAnalysis {
-	// Use history methods to filter commits
 	missingCommits := t.history.GetCommitsAfter(englishPath, translationLatest.Date)
 	stats := calculateChangeStats(missingCommits)
 
@@ -170,7 +171,16 @@ func (t *Tracker) buildPullRequests(path string) []*pr.PullRequest {
 	if t.prIndex == nil {
 		return nil
 	}
+
 	return t.prIndex.GetPRsForFile(path)
+}
+
+func (t *Tracker) buildIssues(path string) []*issue.Issue {
+	if t.issueIndex == nil {
+		return nil
+	}
+
+	return t.issueIndex.GetIssuesForFile(path)
 }
 
 // buildURL builds URL information for the file.
