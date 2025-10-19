@@ -6,43 +6,43 @@ import (
 )
 
 // Tracker builds and maintains file histories from git events.
-type Tracker struct {
+type History struct {
 	// Map from final file path to its commit history (sorted by date, oldest to newest)
 	histories map[string][]*Commit
 	// Rename chain for path resolution
 	renames *renameChain
 }
 
-// Build creates a new Tracker from a list of events.
+// Build creates a new history from a list of events.
 // It processes all events, resolves renames, groups commits by final file path,
 // and sorts them chronologically.
-func Build(events []*Event) *Tracker {
-	tracker := &Tracker{
+func Build(events []*Event) *History {
+	history := &History{
 		histories: make(map[string][]*Commit),
 		renames:   buildRenameChain(events),
 	}
 
 	for _, event := range events {
-		commit := tracker.eventToCommit(event)
+		commit := history.eventToCommit(event)
 		if commit == nil {
 			continue
 		}
 
-		finalPath := tracker.renames.resolveFinalPath(commit.Path, commit.Date)
-		tracker.histories[finalPath] = append(tracker.histories[finalPath], commit)
+		finalPath := history.renames.resolveFinalPath(commit.Path, commit.Date)
+		history.histories[finalPath] = append(history.histories[finalPath], commit)
 	}
 
-	for _, commits := range tracker.histories {
+	for _, commits := range history.histories {
 		sort.Slice(commits, func(i, j int) bool {
 			return commits[i].Date.Before(commits[j].Date)
 		})
 	}
 
-	return tracker
+	return history
 }
 
 // eventToCommit converts an Event to a Commit.
-func (t *Tracker) eventToCommit(event *Event) *Commit {
+func (h *History) eventToCommit(event *Event) *Commit {
 	date, err := time.Parse("2006-01-02 15:04:05 -0700", event.Date)
 	if err != nil {
 		return nil
@@ -74,14 +74,14 @@ func (t *Tracker) eventToCommit(event *Event) *Commit {
 
 // GetCommits returns the commit history for a specific file path.
 // Returns nil if the path has no history.
-func (t *Tracker) GetCommits(path string) []*Commit {
-	return t.histories[path]
+func (h *History) GetCommits(path string) []*Commit {
+	return h.histories[path]
 }
 
 // AllPaths returns all file paths that have history.
-func (t *Tracker) AllPaths() []string {
-	paths := make([]string, 0, len(t.histories))
-	for path := range t.histories {
+func (h *History) AllPaths() []string {
+	paths := make([]string, 0, len(h.histories))
+	for path := range h.histories {
 		paths = append(paths, path)
 	}
 	sort.Strings(paths)
@@ -89,8 +89,8 @@ func (t *Tracker) AllPaths() []string {
 }
 
 // Stats calculates statistics for a specific file path.
-func (t *Tracker) Stats(path string) *Stats {
-	commits := t.histories[path]
+func (h *History) Stats(path string) *Stats {
+	commits := h.histories[path]
 	if len(commits) == 0 {
 		return nil
 	}
@@ -116,13 +116,13 @@ func (t *Tracker) Stats(path string) *Stats {
 
 // GetHistoricalPaths returns all historical paths for a given current path,
 // from newest to oldest.
-func (t *Tracker) GetHistoricalPaths(currentPath string) []string {
-	return t.renames.getHistoricalPaths(currentPath)
+func (h *History) GetHistoricalPaths(currentPath string) []string {
+	return h.renames.getHistoricalPaths(currentPath)
 }
 
 // GetOldestCommit returns the oldest commit for a specific file path.
-func (t *Tracker) GetOldestCommit(path string) *Commit {
-	commits := t.histories[path]
+func (h *History) GetOldestCommit(path string) *Commit {
+	commits := h.histories[path]
 	if len(commits) == 0 {
 		return nil
 	}
@@ -131,8 +131,8 @@ func (t *Tracker) GetOldestCommit(path string) *Commit {
 }
 
 // GetLatestCommit returns the latest commit for a specific file path.
-func (t *Tracker) GetLatestCommit(path string) *Commit {
-	commits := t.histories[path]
+func (h *History) GetLatestCommit(path string) *Commit {
+	commits := h.histories[path]
 	if len(commits) == 0 {
 		return nil
 	}
@@ -142,8 +142,8 @@ func (t *Tracker) GetLatestCommit(path string) *Commit {
 
 // GetCommitsSince returns all commits for a file path that occurred after the specified time.
 // Returns nil if the path has no history or no commits match the time filter.
-func (t *Tracker) GetCommitsSince(path string, since time.Time) []*Commit {
-	commits := t.histories[path]
+func (h *History) GetCommitsSince(path string, since time.Time) []*Commit {
+	commits := h.histories[path]
 	if len(commits) == 0 {
 		return nil
 	}
