@@ -16,7 +16,7 @@ type HistoryBuilder struct {
 // Build creates a new HistoryBuilder from a list of events.
 // It processes all events, resolves renames, groups commits by final file path,
 // and sorts them chronologically.
-func Build(events []*Event) *HistoryBuilder {
+func NewHistoryBuilder(events []*Event) *HistoryBuilder {
 	builder := &HistoryBuilder{
 		histories: make(map[string][]*Commit),
 		renames:   buildRenameChain(events),

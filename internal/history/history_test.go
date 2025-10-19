@@ -31,7 +31,7 @@ func TestBuild_SimpleHistory(t *testing.T) {
 		},
 	}
 
-	builder := Build(events)
+	builder := NewHistoryBuilder(events)
 
 	commits := builder.GetCommits("content/en/docs/guide.md")
 	if len(commits) != 2 {
@@ -85,7 +85,7 @@ func TestBuild_WithRename(t *testing.T) {
 		},
 	}
 
-	builder := Build(events)
+	builder := NewHistoryBuilder(events)
 
 	// All commits should be under the final path
 	commits := builder.GetCommits("new_name.md")
@@ -151,7 +151,7 @@ func TestBuild_ChainedRenames(t *testing.T) {
 		},
 	}
 
-	builder := Build(events)
+	builder := NewHistoryBuilder(events)
 
 	// All commits should be under final path file_c.md
 	commits := builder.GetCommits("file_c.md")
@@ -217,7 +217,7 @@ func TestBuild_MultipleFiles(t *testing.T) {
 		},
 	}
 
-	builder := Build(events)
+	builder := NewHistoryBuilder(events)
 
 	// Check that we have 2 distinct files
 	paths := builder.AllPaths()
@@ -276,7 +276,7 @@ func TestStats(t *testing.T) {
 		},
 	}
 
-	builder := Build(events)
+	builder := NewHistoryBuilder(events)
 	stats := builder.Stats("test_renamed.md")
 
 	if stats == nil {
@@ -326,7 +326,7 @@ func TestStats_NonexistentFile(t *testing.T) {
 		},
 	}
 
-	builder := Build(events)
+	builder := NewHistoryBuilder(events)
 	stats := builder.Stats("nonexistent.md")
 
 	if stats != nil {
