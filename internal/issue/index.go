@@ -40,3 +40,8 @@ func (idx *Index) AllPaths() []string {
 	}
 	return paths
 }
+
+// TotalFiles returns the number of unique files that have associated issues.
+func (idx *Index) TotalFiles() int {
+	return len(idx.issuesByFile)
+}

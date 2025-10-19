@@ -8,6 +8,7 @@ import (
 	"github.com/kfess/kubernetes-i18n-tracker/internal/diff"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/history"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/issue"
+	"github.com/kfess/kubernetes-i18n-tracker/internal/logger"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/pr"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/url"
 )
@@ -170,18 +171,29 @@ func (t *Tracker) buildComparisonHistory(
 // buildPullRequests builds PR list for the file.
 func (t *Tracker) buildPullRequests(path string) []*pr.PullRequest {
 	if t.prIndex == nil {
-		return nil
+		return []*pr.PullRequest{} // Return empty slice instead of nil
 	}
 
-	return t.prIndex.GetPRsForFile(path)
+	prs := t.prIndex.GetPRsForFile(path)
+	if prs == nil {
+		return []*pr.PullRequest{} // Return empty slice instead of nil
+	}
+	if len(prs) > 0 {
+		logger.Debugf("Found %d PRs for %s", len(prs), path)
+	}
+	return prs
 }
 
 func (t *Tracker) buildIssues(path string) []*issue.Issue {
 	if t.issueIndex == nil {
-		return nil
+		return []*issue.Issue{} // Return empty slice instead of nil
 	}
 
-	return t.issueIndex.GetIssuesForFile(path)
+	issues := t.issueIndex.GetIssuesForFile(path)
+	if issues == nil {
+		return []*issue.Issue{} // Return empty slice instead of nil
+	}
+	return issues
 }
 
 // buildURL builds URL information for the file.

@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/joho/godotenv"
+	"github.com/kfess/kubernetes-i18n-tracker/internal/exporter"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/history"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/issue"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/language"
@@ -162,7 +163,7 @@ func main() {
 			logger.Errorf("Failed to fetch PRs: %v", err)
 		} else {
 			prIndex = pr.BuildPRIndex(prs)
-			logger.Infof("Fetched and indexed %d PRs", len(prs))
+			logger.Infof("Fetched and indexed %d PRs covering %d files", len(prs), prIndex.TotalFiles())
 		}
 	}
 
@@ -177,7 +178,7 @@ func main() {
 			logger.Errorf("Failed to fetch issues: %v", err)
 		} else {
 			issueIndex = issue.NewIndex(issues, existingPathsMap)
-			logger.Infof("Fetched and indexed %d issues", len(issues))
+			logger.Infof("Fetched and indexed %d issues covering %d files", len(issues), issueIndex.TotalFiles())
 		}
 	}
 
@@ -222,30 +223,47 @@ func main() {
 	logger.Info("Analyzing translation status...")
 	results := make(map[string]*translation.TranslationStatus)
 
+	// Collect English files
+	englishFiles := []string{}
 	for _, path := range allPaths {
-		// Skip English files
 		if strings.HasPrefix(path, "content/en/") {
-			continue
+			ext := filepath.Ext(path)
+			if ext == ".md" || ext == ".html" {
+				englishFiles = append(englishFiles, path)
+			}
 		}
+	}
 
-		// Skip not markdown/html files
-		if filepath.Ext(path) != ".md" && filepath.Ext(path) != ".html" {
-			continue
+	// For each English file, check all supported languages
+	supportedLangs := []string{"bn", "de", "es", "fr", "hi", "id", "it", "ja", "ko", "pl", "pt-br", "ru", "uk", "vi", "zh-cn"}
+	for _, englishPath := range englishFiles {
+		for _, lang := range supportedLangs {
+			// Convert English path to translation path
+			translationPath := strings.Replace(englishPath, "content/en/", "content/"+lang+"/", 1)
+
+			status, err := tracker.GetStatus(ctx, translationPath)
+			if err != nil {
+				logger.Warnf("Failed to get status for %s: %v", translationPath, err)
+				continue
+			}
+
+			results[translationPath] = status
 		}
-
-		status, err := tracker.GetStatus(ctx, path)
-		if err != nil {
-			logger.Warnf("Failed to get status for %s: %v", path, err)
-			continue
-		}
-
-		results[path] = status
 	}
 
 	logger.Infof("Analyzed %d translation files", len(results))
 
-	// Step 10: Save results
-	logger.Info("Saving results...")
+	// Step 10: Export results to diff_go and matrix_go
+	logger.Info("Exporting results...")
+	exp := exporter.NewExporter(exporter.ExportOptions{
+		OutputDir: outputDir,
+	})
+	if err := exp.Export(results); err != nil {
+		log.Fatalf("Failed to export results: %w", err)
+	}
+
+	// Step 11: Save complete results to JSON
+	logger.Info("Saving complete results...")
 	if err := saveResults(results); err != nil {
 		log.Fatalf("Failed to save results: %v", err)
 	}
