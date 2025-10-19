@@ -3,6 +3,7 @@ package pageview
 import (
 	"encoding/csv"
 	"fmt"
+	"io"
 	"os"
 	"strconv"
 )
@@ -23,13 +24,24 @@ func AggregatePageViews(csvPath string, existingUrls map[string]bool, baseURL st
 	}
 	defer file.Close()
 
-	reader := csv.NewReader(file)
+	return AggregateFromReader(file, existingUrls, baseURL)
+}
+
+// AggregateFromReader reads from an io.Reader and aggregates page view data
+// This function is more testable as it doesn't require file system access
+func AggregateFromReader(r io.Reader, existingUrls map[string]bool, baseURL string) (map[string]*PageViewStats, error) {
+	reader := csv.NewReader(r)
 
 	rows, err := reader.ReadAll()
 	if err != nil {
 		return nil, fmt.Errorf("failed to read CSV: %w", err)
 	}
 
+	return aggregateRows(rows, existingUrls, baseURL)
+}
+
+// aggregateRows processes CSV rows and aggregates page view data
+func aggregateRows(rows [][]string, existingUrls map[string]bool, baseURL string) (map[string]*PageViewStats, error) {
 	if len(rows) < 2 {
 		return nil, fmt.Errorf("CSV file is empty or has no data rows")
 	}
@@ -46,44 +58,59 @@ func AggregatePageViews(csvPath string, existingUrls map[string]bool, baseURL st
 			continue // Skip malformed rows
 		}
 
-		path := row[0]
-
-		views, err := strconv.Atoi(row[1])
+		stats, url, err := parseRow(row, i+2, existingUrls, baseURL)
 		if err != nil {
-			return nil, fmt.Errorf("invalid views value at row %d: %w", i+2, err)
+			return nil, err
 		}
 
-		newUsers, err := strconv.Atoi(row[2])
-		if err != nil {
-			return nil, fmt.Errorf("invalid new users value at row %d: %w", i+2, err)
-		}
-
-		avgSessionDuration, err := strconv.ParseFloat(row[4], 64)
-		if err != nil {
-			return nil, fmt.Errorf("invalid average session duration at row %d: %w", i+2, err)
-		}
-
-		url := buildURLFromPath(path, existingUrls, baseURL)
 		if url == "" {
 			continue
 		}
 
-		if stats, exists := data[url]; exists {
-			stats.Views += views
-			stats.NewUsers += newUsers
-			stats.AverageSessionDuration += avgSessionDuration
+		// Aggregate data for the same URL
+		if existing, exists := data[url]; exists {
+			existing.Views += stats.Views
+			existing.NewUsers += stats.NewUsers
+			existing.AverageSessionDuration += stats.AverageSessionDuration
 		} else {
-			data[url] = &PageViewStats{
-				Views:                  views,
-				NewUsers:               newUsers,
-				AverageSessionDuration: avgSessionDuration,
-			}
+			data[url] = stats
 		}
 	}
 
 	return data, nil
 }
 
+// parseRow parses a single CSV row and returns stats and URL
+func parseRow(row []string, lineNum int, existingUrls map[string]bool, baseURL string) (*PageViewStats, string, error) {
+	path := row[0]
+
+	views, err := strconv.Atoi(row[1])
+	if err != nil {
+		return nil, "", fmt.Errorf("invalid views value at row %d: %w", lineNum, err)
+	}
+
+	newUsers, err := strconv.Atoi(row[2])
+	if err != nil {
+		return nil, "", fmt.Errorf("invalid new users value at row %d: %w", lineNum, err)
+	}
+
+	avgSessionDuration, err := strconv.ParseFloat(row[4], 64)
+	if err != nil {
+		return nil, "", fmt.Errorf("invalid average session duration at row %d: %w", lineNum, err)
+	}
+
+	url := buildURLFromPath(path, existingUrls, baseURL)
+
+	stats := &PageViewStats{
+		Views:                  views,
+		NewUsers:               newUsers,
+		AverageSessionDuration: avgSessionDuration,
+	}
+
+	return stats, url, nil
+}
+
+// buildURLFromPath constructs a full URL from a path
 func buildURLFromPath(path string, existingUrls map[string]bool, baseURL string) string {
 	fullURL := baseURL + path
 
