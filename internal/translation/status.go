@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/kfess/kubernetes-i18n-tracker/internal/history"
+	"github.com/kfess/kubernetes-i18n-tracker/internal/issue"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/language"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/pr"
 )
@@ -30,6 +31,7 @@ type TranslationStatus struct {
 	// Analysis results (nil if not available/applicable)
 	History      *HistoryAnalysis  `json:"history,omitempty"`
 	PullRequests []*pr.PullRequest `json:"pull_requests,omitempty"`
+	Issues       []*issue.Issue    `json:"issues,omitempty"`
 	URL          *URL              `json:"url,omitempty"`
 	Diff         *Diff             `json:"diff,omitempty"`
 

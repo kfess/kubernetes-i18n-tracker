@@ -67,6 +67,7 @@ func (t *Tracker) GetStatus(ctx context.Context, translationPath string) (*Trans
 	// Build each component
 	status.History = t.buildHistory(englishPath, translationPath)
 	status.PullRequests = t.buildPullRequests(translationPath)
+	status.Issues = t.buildIssues(translationPath)
 	status.URL = t.buildURL(ctx, translationPath)
 
 	// Build diff only if outdated (heavy operation)
