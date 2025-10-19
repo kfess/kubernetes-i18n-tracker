@@ -243,8 +243,8 @@ func main() {
 	fmt.Printf("Loaded %d events from %s\n\n", len(events), "./data/master/git_history.jsonl")
 
 	// Build file histories
-	builder := history.NewHistoryBuilder(events)
-	commits := builder.GetCommits("content/en/docs/concepts/containers/images.md")
+	tracker := history.Build(events)
+	commits := tracker.GetCommits("content/en/docs/concepts/containers/images.md")
 	for _, commit := range commits {
 		fmt.Printf("- %s | %s | +%d -%d | %s | %s\n", commit.Hash, commit.Date.Format("2006-01-02"), commit.Insertions, commit.Deletions, commit.Message, commit.RenamedFrom)
 	}
