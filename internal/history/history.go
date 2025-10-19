@@ -139,3 +139,21 @@ func (b *HistoryBuilder) GetLatestCommit(path string) *Commit {
 
 	return commits[len(commits)-1]
 }
+
+// GetCommitsSince returns all commits for a file path that occurred after the specified time.
+// Returns nil if the path has no history or no commits match the time filter.
+func (b *HistoryBuilder) GetCommitsSince(path string, since time.Time) []*Commit {
+	commits := b.histories[path]
+	if len(commits) == 0 {
+		return nil
+	}
+
+	var result []*Commit
+	for _, c := range commits {
+		if c.Date.After(since) {
+			result = append(result, c)
+		}
+	}
+
+	return result
+}
