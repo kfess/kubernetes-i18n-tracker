@@ -1,19 +1,63 @@
 package main
 
 import (
-	"context"
+	"bufio"
+	// "context"
 	"fmt"
+	"log"
 
 	"encoding/json"
 	"os"
-	"strings"
+
+	// "strings"
 
 	"github.com/joho/godotenv"
-	"github.com/kfess/kubernetes-i18n-tracker/internal/language"
+	"github.com/kfess/kubernetes-i18n-tracker/internal/history"
+
+	// "github.com/kfess/kubernetes-i18n-tracker/internal/language"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/logger"
-	"github.com/kfess/kubernetes-i18n-tracker/internal/pageview"
-	"github.com/kfess/kubernetes-i18n-tracker/internal/url"
+	// "github.com/kfess/kubernetes-i18n-tracker/internal/pageview"
+	// "github.com/kfess/kubernetes-i18n-tracker/internal/url"
 )
+
+// loadEvents reads events from a JSONL file
+func loadEvents(path string) ([]*history.Event, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open file: %w", err)
+	}
+	defer file.Close()
+
+	var events []*history.Event
+	scanner := bufio.NewScanner(file)
+
+	// Increase buffer size for large lines
+	buf := make([]byte, 0, 64*1024)
+	scanner.Buffer(buf, 1024*1024)
+
+	lineNum := 0
+	for scanner.Scan() {
+		lineNum++
+		line := scanner.Bytes()
+		if len(line) == 0 {
+			continue
+		}
+
+		var event history.Event
+		if err := json.Unmarshal(line, &event); err != nil {
+			log.Printf("Warning: failed to parse line %d: %v", lineNum, err)
+			continue
+		}
+
+		events = append(events, &event)
+	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, fmt.Errorf("error reading file: %w", err)
+	}
+
+	return events, nil
+}
 
 func main() {
 	logger.Init()
@@ -42,143 +86,143 @@ func main() {
 	// 	}
 	// }
 
-	// URL
-	// 全パスの読み込み
-	f, err := os.ReadFile("./data/master/all_files.csv")
-	if err != nil {
-		logger.Errorf("Error reading all_files.csv: %v", err)
-		return
-	}
-	lines := string(f)
-	var allPaths []string
-	for _, line := range strings.Split(lines, "\n") {
-		line = strings.TrimSpace(line)
-		if line != "" {
-			allPaths = append(allPaths, line)
-		}
-	}
+	// // URL
+	// // 全パスの読み込み
+	// f, err := os.ReadFile("./data/master/all_files.csv")
+	// if err != nil {
+	// 	logger.Errorf("Error reading all_files.csv: %v", err)
+	// 	return
+	// }
+	// lines := string(f)
+	// var allPaths []string
+	// for _, line := range strings.Split(lines, "\n") {
+	// 	line = strings.TrimSpace(line)
+	// 	if line != "" {
+	// 		allPaths = append(allPaths, line)
+	// 	}
+	// }
 
-	client := url.NewClient("https://kubernetes.io")
-	urls, err := client.FetchAllSitemaps(context.Background())
-	if err != nil {
-		logger.Errorf("Error fetching sitemaps: %v", err)
-		return
-	}
+	// client := url.NewClient("https://kubernetes.io")
+	// urls, err := client.FetchAllSitemaps(context.Background())
+	// if err != nil {
+	// 	logger.Errorf("Error fetching sitemaps: %v", err)
+	// 	return
+	// }
 
-	urlMap := make(map[string]bool, len(urls))
-	for _, url := range urls {
-		urlMap[url] = true
-	}
+	// urlMap := make(map[string]bool, len(urls))
+	// for _, url := range urls {
+	// 	urlMap[url] = true
+	// }
 
-	parser := url.NewYAMLFrontMatterParser("./k8s-repo/website")
-	config := url.Config{
-		BaseUrl:        "https://kubernetes.io",
-		ExistingUrls:   urlMap,
-		SupportedLangs: language.SupportedLanguages,
-		SupportedExts:  []string{".md", ".html"},
-		ValidSections: []string{
-			"docs",
-			"blog",
-			"case-studies",
-			"careers",
-			"community",
-			"examples",
-			"partners",
-			"releases",
-			"training",
-			"_common-resources",
-			"includes",
-		},
-	}
-	converter := url.NewConverter(config, parser)
-	generatedurl, err := converter.Convert(context.Background(), "content/ko/blog/_posts/2018-11-07-grpc-load-balancing-with-linkerd.md")
-	fmt.Println(generatedurl)
+	// parser := url.NewYAMLFrontMatterParser("./k8s-repo/website")
+	// config := url.Config{
+	// 	BaseUrl:        "https://kubernetes.io",
+	// 	ExistingUrls:   urlMap,
+	// 	SupportedLangs: language.SupportedLanguages,
+	// 	SupportedExts:  []string{".md", ".html"},
+	// 	ValidSections: []string{
+	// 		"docs",
+	// 		"blog",
+	// 		"case-studies",
+	// 		"careers",
+	// 		"community",
+	// 		"examples",
+	// 		"partners",
+	// 		"releases",
+	// 		"training",
+	// 		"_common-resources",
+	// 		"includes",
+	// 	},
+	// }
+	// converter := url.NewConverter(config, parser)
+	// generatedurl, err := converter.Convert(context.Background(), "content/ko/blog/_posts/2018-11-07-grpc-load-balancing-with-linkerd.md")
+	// fmt.Println(generatedurl)
 
-	// URL変換結果を保存する構造体
-	type URLResult struct {
-		Path  string `json:"path"`
-		URL   string `json:"url,omitempty"`
-		Error string `json:"error,omitempty"`
-	}
+	// // URL変換結果を保存する構造体
+	// type URLResult struct {
+	// 	Path  string `json:"path"`
+	// 	URL   string `json:"url,omitempty"`
+	// 	Error string `json:"error,omitempty"`
+	// }
 
-	var results []URLResult
-	successCount := 0
-	errorCount := 0
+	// var results []URLResult
+	// successCount := 0
+	// errorCount := 0
 
-	logger.Info("Starting URL conversion...")
-	for _, path := range allPaths {
-		generatedURL, err := converter.Convert(context.Background(), path)
-		if err != nil {
-			results = append(results, URLResult{
-				Path:  path,
-				Error: err.Error(),
-			})
-			errorCount++
-			logger.Warnf("Error converting URL for path %s: %v", path, err)
-			continue
-		}
-		results = append(results, URLResult{
-			Path: path,
-			URL:  generatedURL,
-		})
-		successCount++
-	}
+	// logger.Info("Starting URL conversion...")
+	// for _, path := range allPaths {
+	// 	generatedURL, err := converter.Convert(context.Background(), path)
+	// 	if err != nil {
+	// 		results = append(results, URLResult{
+	// 			Path:  path,
+	// 			Error: err.Error(),
+	// 		})
+	// 		errorCount++
+	// 		logger.Warnf("Error converting URL for path %s: %v", path, err)
+	// 		continue
+	// 	}
+	// 	results = append(results, URLResult{
+	// 		Path: path,
+	// 		URL:  generatedURL,
+	// 	})
+	// 	successCount++
+	// }
 
-	logger.Infof("Conversion completed: %d successful, %d errors", successCount, errorCount)
+	// logger.Infof("Conversion completed: %d successful, %d errors", successCount, errorCount)
 
-	// 結果をJSONファイルに出力
-	outputPath := "./data/output/url_conversion_results.json"
-	outputFile, err := os.Create(outputPath)
-	if err != nil {
-		logger.Errorf("Error creating output file: %v", err)
-		return
-	}
-	defer outputFile.Close()
+	// // 結果をJSONファイルに出力
+	// outputPath := "./data/output/url_conversion_results.json"
+	// outputFile, err := os.Create(outputPath)
+	// if err != nil {
+	// 	logger.Errorf("Error creating output file: %v", err)
+	// 	return
+	// }
+	// defer outputFile.Close()
 
-	encoder := json.NewEncoder(outputFile)
-	encoder.SetIndent("", "  ")
-	if err := encoder.Encode(results); err != nil {
-		logger.Errorf("Error encoding results to JSON: %v", err)
-		return
-	}
+	// encoder := json.NewEncoder(outputFile)
+	// encoder.SetIndent("", "  ")
+	// if err := encoder.Encode(results); err != nil {
+	// 	logger.Errorf("Error encoding results to JSON: %v", err)
+	// 	return
+	// }
 
-	logger.Infof("Results saved to %s", outputPath)
+	// logger.Infof("Results saved to %s", outputPath)
 
 	// Page View データの集計
-	logger.Info("Starting page view aggregation...")
-	pageViewPath := "./data/master/page_view.csv"
-	pageViewStats, err := pageview.AggregatePageViews(pageViewPath, urlMap, "https://kubernetes.io")
-	if err != nil {
-		logger.Errorf("Error aggregating page views: %v", err)
-		return
-	}
+	// logger.Info("Starting page view aggregation...")
+	// pageViewPath := "./data/master/page_view.csv"
+	// pageViewStats, err := pageview.AggregatePageViews(pageViewPath, urlMap, "https://kubernetes.io")
+	// if err != nil {
+	// 	logger.Errorf("Error aggregating page views: %v", err)
+	// 	return
+	// }
 
-	logger.Infof("Page view data aggregated: %d unique URLs", len(pageViewStats))
+	// logger.Infof("Page view data aggregated: %d unique URLs", len(pageViewStats))
 
-	// ページビュー結果をJSONファイルに出力
-	pageViewOutputPath := "./data/output/page_view_stats.json"
-	pageViewOutputFile, err := os.Create(pageViewOutputPath)
-	if err != nil {
-		logger.Errorf("Error creating page view output file: %v", err)
-		return
-	}
-	defer pageViewOutputFile.Close()
+	// // ページビュー結果をJSONファイルに出力
+	// pageViewOutputPath := "./data/output/page_view_stats.json"
+	// pageViewOutputFile, err := os.Create(pageViewOutputPath)
+	// if err != nil {
+	// 	logger.Errorf("Error creating page view output file: %v", err)
+	// 	return
+	// }
+	// defer pageViewOutputFile.Close()
 
-	pageViewEncoder := json.NewEncoder(pageViewOutputFile)
-	pageViewEncoder.SetIndent("", "  ")
-	if err := pageViewEncoder.Encode(pageViewStats); err != nil {
-		logger.Errorf("Error encoding page view stats to JSON: %v", err)
-		return
-	}
+	// pageViewEncoder := json.NewEncoder(pageViewOutputFile)
+	// pageViewEncoder.SetIndent("", "  ")
+	// if err := pageViewEncoder.Encode(pageViewStats); err != nil {
+	// 	logger.Errorf("Error encoding page view stats to JSON: %v", err)
+	// 	return
+	// }
 
-	logger.Infof("Page view stats saved to %s", pageViewOutputPath)
+	// logger.Infof("Page view stats saved to %s", pageViewOutputPath)
 
-	generatedUrl, err := converter.Convert(context.Background(), "content/en/blog/_posts/2020-06-30-SIG-Windows-Spotlight/index.md")
-	if err != nil {
-		logger.Errorf("Error converting URL: %v", err)
-		return
-	}
-	logger.Infof("Generated URL: %s", generatedUrl)
+	// generatedUrl, err := converter.Convert(context.Background(), "content/en/blog/_posts/2020-06-30-SIG-Windows-Spotlight/index.md")
+	// if err != nil {
+	// 	logger.Errorf("Error converting URL: %v", err)
+	// 	return
+	// }
+	// logger.Infof("Generated URL: %s", generatedUrl)
 
 	// Diff
 	// oldCommitHash := "17f080049278a691d417c44decddbdb297f744b5"
@@ -189,4 +233,19 @@ func main() {
 	// 	return
 	// }
 	// logger.Infof("Diff between %s..%s:\n%s\nEnglish File Path: %s", oldCommitHash, newCommitHash, diff.Language, diff.EnglishFilePath)
+
+	// Load events from JSONL file
+	events, err := loadEvents("./data/master/git_history.jsonl")
+	if err != nil {
+		log.Fatalf("Failed to load events: %v", err)
+	}
+
+	fmt.Printf("Loaded %d events from %s\n\n", len(events), "./data/master/git_history.jsonl")
+
+	// Build file histories
+	builder := history.Build(events)
+	commits := builder.GetCommits("content/en/docs/concepts/containers/images.md")
+	for _, commit := range commits {
+		fmt.Printf("- %s | %s | +%d -%d | %s | %s\n", commit.Hash, commit.Date.Format("2006-01-02"), commit.Insertions, commit.Deletions, commit.Message, commit.RenamedFrom)
+	}
 }
