@@ -167,7 +167,15 @@ func TestGuessPath(t *testing.T) {
 			expected: "content/ko/docs/tasks/configure-pod.md",
 		},
 		{
-			name: "no match",
+			name: "new file creation issue (file doesn't exist yet)",
+			issue: Issue{
+				Title: "[ja] Translated /docs/concepts/cluster-administration/compatibility-version.md into Japanese",
+			},
+			lang:     language.LanguageJapanese,
+			expected: "", // File doesn't exist, so no match expected
+		},
+		{
+			name: "no path extractable from title",
 			issue: Issue{
 				Title: "[ja] Update nonexistent file",
 			},

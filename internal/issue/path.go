@@ -119,7 +119,7 @@ func GeneratePathCandidates(path string, lang language.Language) []string {
 	// Convert underscores to hyphens (except for _index files)
 	hyphenatedPath := convertUnderscoresToHyphens(path)
 
-	// Common path prefixes
+	// Common path prefixes (matching Python implementation)
 	prefixes := []string{
 		"",
 		"content/",
@@ -127,38 +127,62 @@ func GeneratePathCandidates(path string, lang language.Language) []string {
 		"content/" + string(lang) + "/docs/",
 		"content/" + string(lang) + "/docs/concepts/",
 		"content/" + string(lang) + "/docs/contribute/",
+		"content/" + string(lang) + "/docs/doc-contributor-tools/",
+		"content/" + string(lang) + "/docs/home/",
+		"content/" + string(lang) + "/docs/images/",
 		"content/" + string(lang) + "/docs/reference/",
 		"content/" + string(lang) + "/docs/setup/",
 		"content/" + string(lang) + "/docs/tasks/",
 		"content/" + string(lang) + "/docs/tutorials/",
 		"content/" + string(lang) + "/blog/",
+		"content/" + string(lang) + "/blog/_posts/",
+		"content/" + string(lang) + "/careers/",
 		"content/" + string(lang) + "/case-studies/",
 		"content/" + string(lang) + "/community/",
+		"content/" + string(lang) + "/examples/",
+		"content/" + string(lang) + "/includes/",
+		"content/" + string(lang) + "/partners/",
+		"content/" + string(lang) + "/releases/",
+		"content/" + string(lang) + "/training/",
 	}
 
 	candidates := make(map[string]bool)
 
-	// Add candidates with prefixes
-	for _, prefix := range prefixes {
-		addCandidatesForPath(candidates, prefix, path)
-		if hyphenatedPath != path {
-			addCandidatesForPath(candidates, prefix, hyphenatedPath)
+	// Add candidates with file extensions (matching Python)
+	addCandidatesWithExtensions := func(base string) {
+		candidates[base] = true
+		if !strings.HasSuffix(base, ".md") && !strings.HasSuffix(base, ".html") {
+			candidates[base+".md"] = true
+			candidates[base+"/index.md"] = true
+			candidates[base+"/_index.md"] = true
+			candidates[base+".html"] = true
+			candidates[base+"/index.html"] = true
+			candidates[base+"/_index.html"] = true
 		}
 	}
 
-	// Add shortened paths (progressively remove leading components)
+	// prefix + path
+	for _, prefix := range prefixes {
+		base := prefix + path
+		addCandidatesWithExtensions(base)
+
+		base2 := prefix + hyphenatedPath
+		if base2 != base {
+			addCandidatesWithExtensions(base2)
+		}
+	}
+
+	// shorten path (progressively remove leading components)
 	parts := strings.Split(path, "/")
 	for i := 1; i < len(parts); i++ {
 		shortened := strings.Join(parts[i:], "/")
-		addCandidatesForPath(candidates, "", shortened)
+		addCandidatesWithExtensions(shortened)
 	}
 
-	if hyphenatedPath != path {
-		parts2 := strings.Split(hyphenatedPath, "/")
-		for i := 1; i < len(parts2); i++ {
-			shortened := strings.Join(parts2[i:], "/")
-			addCandidatesForPath(candidates, "", shortened)
-		}
+	parts2 := strings.Split(hyphenatedPath, "/")
+	for i := 1; i < len(parts2); i++ {
+		shortened := strings.Join(parts2[i:], "/")
+		addCandidatesWithExtensions(shortened)
 	}
 
 	// Convert map to slice
@@ -181,22 +205,8 @@ func convertUnderscoresToHyphens(path string) string {
 	return strings.Join(parts, "/")
 }
 
-// addCandidatesForPath adds path candidates with common file extensions and patterns.
-func addCandidatesForPath(candidates map[string]bool, prefix, path string) {
-	base := prefix + path
-	candidates[base] = true
-
-	if !strings.HasSuffix(base, ".md") && !strings.HasSuffix(base, ".html") {
-		candidates[base+".md"] = true
-		candidates[base+"/index.md"] = true
-		candidates[base+"/_index.md"] = true
-		candidates[base+".html"] = true
-		candidates[base+"/index.html"] = true
-		candidates[base+"/_index.html"] = true
-	}
-}
-
 // GuessPath attempts to guess the file path for an issue.
+// Returns the first matching path from existing paths, or empty string if no match.
 func GuessPath(issue Issue, lang language.Language, existingPaths map[string]bool) string {
 	pathLike := ExtractPathLikeString(issue.Title)
 	if pathLike == "" {
@@ -204,11 +214,14 @@ func GuessPath(issue Issue, lang language.Language, existingPaths map[string]boo
 	}
 
 	candidates := GeneratePathCandidates(pathLike, lang)
+
+	// Try to find the first existing file match
 	for _, candidate := range candidates {
 		if existingPaths[candidate] {
 			return candidate
 		}
 	}
 
+	// No match found
 	return ""
 }

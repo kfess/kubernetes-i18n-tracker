@@ -9,7 +9,7 @@ import (
 
 const (
 	tooManyFilesChanged = 1000
-	tooManyCommits      = 100
+	tooManyCommits      = 1000
 )
 
 // shouldSkipPR determines if a PR should be filtered out based on labels and change metrics.
