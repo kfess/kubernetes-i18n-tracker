@@ -31,9 +31,9 @@ func TestBuild_SimpleHistory(t *testing.T) {
 		},
 	}
 
-	builder := NewHistoryBuilder(events)
+	tracker := Build(events)
 
-	commits := builder.GetCommits("content/en/docs/guide.md")
+	commits := tracker.GetCommits("content/en/docs/guide.md")
 	if len(commits) != 2 {
 		t.Fatalf("expected 2 commits, got %d", len(commits))
 	}
@@ -85,16 +85,16 @@ func TestBuild_WithRename(t *testing.T) {
 		},
 	}
 
-	builder := NewHistoryBuilder(events)
+	tracker := Build(events)
 
 	// All commits should be under the final path
-	commits := builder.GetCommits("new_name.md")
+	commits := tracker.GetCommits("new_name.md")
 	if len(commits) != 3 {
 		t.Fatalf("expected 3 commits under new_name.md, got %d", len(commits))
 	}
 
 	// Old path should have no commits
-	oldCommits := builder.GetCommits("old_name.md")
+	oldCommits := tracker.GetCommits("old_name.md")
 	if len(oldCommits) != 0 {
 		t.Errorf("expected 0 commits under old_name.md, got %d", len(oldCommits))
 	}
@@ -151,10 +151,10 @@ func TestBuild_ChainedRenames(t *testing.T) {
 		},
 	}
 
-	builder := NewHistoryBuilder(events)
+	tracker := Build(events)
 
 	// All commits should be under final path file_c.md
-	commits := builder.GetCommits("file_c.md")
+	commits := tracker.GetCommits("file_c.md")
 	if len(commits) != 4 {
 		t.Fatalf("expected 4 commits under file_c.md, got %d", len(commits))
 	}
@@ -168,7 +168,7 @@ func TestBuild_ChainedRenames(t *testing.T) {
 	}
 
 	// Historical paths should be: file_c.md -> file_b.md -> file_a.md
-	paths := builder.GetHistoricalPaths("file_c.md")
+	paths := tracker.GetHistoricalPaths("file_c.md")
 	expectedPaths := []string{"file_c.md", "file_b.md", "file_a.md"}
 	if len(paths) != len(expectedPaths) {
 		t.Fatalf("expected %d paths, got %d", len(expectedPaths), len(paths))
@@ -217,22 +217,22 @@ func TestBuild_MultipleFiles(t *testing.T) {
 		},
 	}
 
-	builder := NewHistoryBuilder(events)
+	tracker := Build(events)
 
 	// Check that we have 2 distinct files
-	paths := builder.AllPaths()
+	paths := tracker.AllPaths()
 	if len(paths) != 2 {
 		t.Fatalf("expected 2 files, got %d", len(paths))
 	}
 
 	// Check file1 has 2 commits
-	file1Commits := builder.GetCommits("file1.md")
+	file1Commits := tracker.GetCommits("file1.md")
 	if len(file1Commits) != 2 {
 		t.Errorf("expected 2 commits for file1.md, got %d", len(file1Commits))
 	}
 
 	// Check file2 has 1 commit
-	file2Commits := builder.GetCommits("file2.md")
+	file2Commits := tracker.GetCommits("file2.md")
 	if len(file2Commits) != 1 {
 		t.Errorf("expected 1 commit for file2.md, got %d", len(file2Commits))
 	}
@@ -276,8 +276,8 @@ func TestStats(t *testing.T) {
 		},
 	}
 
-	builder := NewHistoryBuilder(events)
-	stats := builder.Stats("test_renamed.md")
+	tracker := Build(events)
+	stats := tracker.Stats("test_renamed.md")
 
 	if stats == nil {
 		t.Fatal("expected stats, got nil")
@@ -326,8 +326,8 @@ func TestStats_NonexistentFile(t *testing.T) {
 		},
 	}
 
-	builder := NewHistoryBuilder(events)
-	stats := builder.Stats("nonexistent.md")
+	tracker := Build(events)
+	stats := tracker.Stats("nonexistent.md")
 
 	if stats != nil {
 		t.Error("expected nil stats for nonexistent file")
