@@ -3,9 +3,13 @@ package issue
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	"github.com/kfess/kubernetes-i18n-tracker/internal/logger"
+	"golang.org/x/sync/errgroup"
 )
+
+const activeFetchers = 10
 
 // Fetcher fetches issues from a GitHub repository.
 type Fetcher struct {
@@ -28,24 +32,53 @@ func (f *Fetcher) FetchAll(ctx context.Context) ([]Issue, error) {
 
 	logger.Debugf("Total issues fetched: %d", len(rawIssues))
 
+	g, ctx := errgroup.WithContext(ctx)
+	g.SetLimit(activeFetchers)
+
+	var mu sync.Mutex
 	issues := make([]Issue, 0, len(rawIssues))
+	var processed, skipped int
+
 	for _, rawIssue := range rawIssues {
-		if rawIssue.Number == nil || rawIssue.Title == nil || rawIssue.HTMLURL == nil {
-			logger.Warnf("Skipping issue with missing data: %+v", rawIssue)
-			continue
-		}
+		rawIssue := rawIssue
 
-		issue := Issue{
-			Number: *rawIssue.Number,
-			Title:  *rawIssue.Title,
-			URL:    *rawIssue.HTMLURL,
-			Labels: extractLabels(rawIssue),
-		}
+		g.Go(func() error {
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+			default:
+			}
 
-		issues = append(issues, issue)
+			if rawIssue.Number == nil || rawIssue.Title == nil || rawIssue.HTMLURL == nil {
+				mu.Lock()
+				skipped++
+				mu.Unlock()
+				logger.Warnf("Skipping issue with missing data: %+v", rawIssue)
+				return nil
+			}
+
+			issue := Issue{
+				Number: *rawIssue.Number,
+				Title:  *rawIssue.Title,
+				URL:    *rawIssue.HTMLURL,
+				Labels: extractLabels(rawIssue),
+			}
+
+			mu.Lock()
+			issues = append(issues, issue)
+			processed++
+			mu.Unlock()
+
+			return nil
+		})
 	}
 
-	logger.Debugf("Processed %d issues", len(issues))
+	if err := g.Wait(); err != nil {
+		logger.Errorf("Error processing issues: %v", err)
+		return nil, err
+	}
+
+	logger.Infof("Total issues processed: %d, skipped: %d", processed, skipped)
 
 	return issues, nil
 }

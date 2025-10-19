@@ -10,9 +10,9 @@ type Index struct {
 	byFile map[string][]*PullRequest
 }
 
-// buildPRIndex creates a Index from a list of pull requests.
+// BuildPRIndex creates an Index from a list of pull requests.
 // It indexes PRs by their modified files for quick lookup.
-func buildPRIndex(prs []PullRequest) *Index {
+func BuildPRIndex(prs []PullRequest) *Index {
 	index := &Index{
 		byFile: make(map[string][]*PullRequest),
 	}

@@ -23,7 +23,7 @@ func TestBuildPRIndex(t *testing.T) {
 		},
 	}
 
-	index := buildPRIndex(prs)
+	index := BuildPRIndex(prs)
 
 	// Test file1 has 2 PRs
 	file1PRs := index.GetPRsForFile("content/ja/docs/file1.md")
@@ -62,7 +62,7 @@ func TestPRIndex_GetLatestPR(t *testing.T) {
 		{Number: 102, Files: []string{"file1.md"}},
 	}
 
-	index := buildPRIndex(prs)
+	index := BuildPRIndex(prs)
 
 	latest := index.GetLatestPR("file1.md")
 	if latest == nil {
@@ -88,7 +88,7 @@ func TestPRIndex_GetRecentPRs(t *testing.T) {
 		{Number: 104, Files: []string{"file1.md"}},
 	}
 
-	index := buildPRIndex(prs)
+	index := BuildPRIndex(prs)
 
 	// Get recent 3 PRs
 	recent := index.GetRecentPRs("file1.md", 3)
@@ -117,7 +117,7 @@ func TestPRIndex_HasPRs(t *testing.T) {
 		{Number: 100, Files: []string{"file1.md"}},
 	}
 
-	index := buildPRIndex(prs)
+	index := BuildPRIndex(prs)
 
 	if !index.HasPRs("file1.md") {
 		t.Error("expected HasPRs to return true for file1.md")
@@ -144,7 +144,7 @@ func TestPRIndex_Stats(t *testing.T) {
 		},
 	}
 
-	index := buildPRIndex(prs)
+	index := BuildPRIndex(prs)
 
 	// Test total files
 	if index.TotalFiles() != 4 {
