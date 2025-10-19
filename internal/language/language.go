@@ -31,3 +31,13 @@ var DeprecatedLanguages = []string{
 var NotSupportedYetLanguages = []string{
 	"ar", // Arabic
 }
+
+func IsSupportedLanguage(lang string) bool {
+	for _, l := range SupportedLanguages {
+		if l == lang {
+			return true
+		}
+	}
+
+	return false
+}
