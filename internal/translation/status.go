@@ -19,17 +19,6 @@ const (
 	StatusUnknown          Status = "unknown"
 )
 
-// Severity represents the severity level of translation issues.
-type Severity string
-
-const (
-	SeverityCurrent     Severity = "current"
-	SeverityMinor       Severity = "minor"
-	SeverityModerate    Severity = "moderate"
-	SeveritySignificant Severity = "significant"
-	SeverityCritical    Severity = "critical"
-)
-
 // TranslationStatus holds comprehensive information about a translation file.
 type TranslationStatus struct {
 	// Basic

@@ -140,9 +140,9 @@ func (h *History) GetLatestCommit(path string) *Commit {
 	return commits[len(commits)-1]
 }
 
-// GetCommitsSince returns all commits for a file path that occurred after the specified time.
+// GetCommitsAfter returns all commits for a file path that occurred after the specified time.
 // Returns nil if the path has no history or no commits match the time filter.
-func (h *History) GetCommitsSince(path string, since time.Time) []*Commit {
+func (h *History) GetCommitsAfter(path string, after time.Time) []*Commit {
 	commits := h.histories[path]
 	if len(commits) == 0 {
 		return nil
@@ -150,10 +150,30 @@ func (h *History) GetCommitsSince(path string, since time.Time) []*Commit {
 
 	var result []*Commit
 	for _, c := range commits {
-		if c.Date.After(since) {
+		if c.Date.After(after) {
 			result = append(result, c)
 		}
 	}
 
+	return result
+}
+
+// GetCommitBeforeOrAt finds the latest commit for a file path that occurred before or at the specified time.
+// Returns nil if no such commit exists or the path has no history.
+func (h *History) GetCommitBeforeOrAt(path string, date time.Time) *Commit {
+	commits := h.histories[path]
+	if len(commits) == 0 {
+		return nil
+	}
+
+	var result *Commit
+	for _, commit := range commits {
+		if commit.Date.Before(date) || commit.Date.Equal(date) {
+			result = commit
+		} else {
+			// Since commits are sorted chronologically, we can break early
+			break
+		}
+	}
 	return result
 }
