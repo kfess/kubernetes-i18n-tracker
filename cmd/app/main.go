@@ -11,6 +11,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/language"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/logger"
+	"github.com/kfess/kubernetes-i18n-tracker/internal/pageview"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/url"
 )
 
@@ -142,6 +143,35 @@ func main() {
 	}
 
 	logger.Infof("Results saved to %s", outputPath)
+
+	// Page View データの集計
+	logger.Info("Starting page view aggregation...")
+	pageViewPath := "./data/master/page_view.csv"
+	pageViewStats, err := pageview.AggregatePageViews(pageViewPath, urlMap, "https://kubernetes.io")
+	if err != nil {
+		logger.Errorf("Error aggregating page views: %v", err)
+		return
+	}
+
+	logger.Infof("Page view data aggregated: %d unique URLs", len(pageViewStats))
+
+	// ページビュー結果をJSONファイルに出力
+	pageViewOutputPath := "./data/output/page_view_stats.json"
+	pageViewOutputFile, err := os.Create(pageViewOutputPath)
+	if err != nil {
+		logger.Errorf("Error creating page view output file: %v", err)
+		return
+	}
+	defer pageViewOutputFile.Close()
+
+	pageViewEncoder := json.NewEncoder(pageViewOutputFile)
+	pageViewEncoder.SetIndent("", "  ")
+	if err := pageViewEncoder.Encode(pageViewStats); err != nil {
+		logger.Errorf("Error encoding page view stats to JSON: %v", err)
+		return
+	}
+
+	logger.Infof("Page view stats saved to %s", pageViewOutputPath)
 
 	generatedUrl, err := converter.Convert(context.Background(), "content/en/blog/_posts/2020-06-30-SIG-Windows-Spotlight/index.md")
 	if err != nil {
