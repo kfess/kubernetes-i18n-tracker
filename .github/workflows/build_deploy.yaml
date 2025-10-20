@@ -42,16 +42,11 @@ jobs:
         working-directory: ./scripts/scraper
         run: yarn playwright install --with-deps
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - name: Setup Go
+        uses: actions/setup-go@v5
         with:
-          python-version: "3.13"
-          cache: "pip"
-
-      - name: Install Python dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install requests pyyaml PyGithub python-dotenv
+          go-version-file: "go.mod"
+          cache: true
 
       - name: Run data collection scripts
         working-directory: ./scripts/shell
@@ -64,12 +59,15 @@ jobs:
         working-directory: ./scripts/scraper
         run: yarn run scrape
 
-      - name: Run Data Processing Script
-        working-directory: ./scripts/python
+      - name: Build Go application
+        run: |
+          mkdir -p ./bin
+          go build -o ./bin/main ./cmd/app/main.go
+
+      - name: Run Data Processing with Go
         env:
           KUBERNETES_WEBSITE_READ_GITHUB_TOKEN: ${{ secrets.KUBERNETES_WEBSITE_READ_GITHUB_TOKEN }}
-        run: |
-          python main.py
+        run: ./bin/main
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
