@@ -12,6 +12,7 @@ import includesArticles from '@/data/output/matrix/includes.json';
 import partnerArticles from '@/data/output/matrix/partners.json';
 import releaseArticles from '@/data/output/matrix/releases.json';
 import trainingArticles from '@/data/output/matrix/training.json';
+
 import {
   ArticleCategory,
   ArticleTranslation,
@@ -19,21 +20,21 @@ import {
 } from '@/features/translations';
 
 const articles = {
-  blog: blogArticles,
-  caseStudy: caseStudiesArticles,
-  community: communityArticles,
-  examples: examplesArticles,
-  docsConcept: docsConceptsArticles,
-  docsContribute: docsContributionArticles,
-  docsTask: docsTasksArticles,
-  docsReference: docsReferenceArticles,
-  docsSetup: docsSetupArticles,
-  docsTutorial: docsTutorialsArticles,
-  includes: includesArticles,
-  partner: partnerArticles,
-  release: releaseArticles,
-  training: trainingArticles,
-} as Record<ArticleCategory, TranslationStatusReport>;
+  blog: blogArticles as TranslationStatusReport,
+  caseStudy: caseStudiesArticles as TranslationStatusReport,
+  community: communityArticles as TranslationStatusReport,
+  examples: examplesArticles as TranslationStatusReport,
+  docsConcept: docsConceptsArticles as TranslationStatusReport,
+  docsContribute: docsContributionArticles as TranslationStatusReport,
+  docsTask: docsTasksArticles as TranslationStatusReport,
+  docsReference: docsReferenceArticles as TranslationStatusReport,
+  docsSetup: docsSetupArticles as TranslationStatusReport,
+  docsTutorial: docsTutorialsArticles as TranslationStatusReport,
+  includes: includesArticles as TranslationStatusReport,
+  partner: partnerArticles as TranslationStatusReport,
+  release: releaseArticles as TranslationStatusReport,
+  training: trainingArticles as TranslationStatusReport,
+};
 
 export const useFetchTranslationArticles = (
   articleCategory: ArticleCategory

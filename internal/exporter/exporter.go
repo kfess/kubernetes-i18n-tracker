@@ -6,11 +6,13 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 	"time"
 
 	"github.com/kfess/kubernetes-i18n-tracker/internal/language"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/logger"
+	"github.com/kfess/kubernetes-i18n-tracker/internal/pageview"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/translation"
 )
 
@@ -74,8 +76,7 @@ type MatrixOutput struct {
 // ExportOptions contains options for exporting translation status.
 type ExportOptions struct {
 	OutputDir string
-	// PageViews can be added later
-	// ExistingURLs can be added later
+	PageViews map[string]*pageview.PageViewStats
 }
 
 // Exporter exports translation status to various formats.
@@ -93,8 +94,8 @@ func NewExporter(options ExportOptions) *Exporter {
 // Export exports translation status to diff and matrix formats.
 func (e *Exporter) Export(results map[string]*translation.TranslationStatus) error {
 	// Create output directories
-	diffDir := filepath.Join(e.options.OutputDir, "diff_go")
-	matrixDir := filepath.Join(e.options.OutputDir, "matrix_go")
+	diffDir := filepath.Join(e.options.OutputDir, "diff")
+	matrixDir := filepath.Join(e.options.OutputDir, "matrix")
 
 	if err := os.MkdirAll(diffDir, 0755); err != nil {
 		return fmt.Errorf("failed to create diff directory: %w", err)
@@ -225,7 +226,12 @@ func (e *Exporter) exportMatrices(byCategory map[string]map[string]*translation.
 		// Build articles
 		articles := []MatrixArticle{}
 		for englishPath, translations := range byEnglishPath {
-			englishURL := "https://kubernetes.io/en/" + strings.TrimPrefix(englishPath, "content/en/")
+			// Use the existing generated website URL from the English status.
+			englishURL := ""
+			if engStatus, ok := translations[language.LanguageEnglish]; ok && engStatus.URL != nil {
+				englishURL = engStatus.URL.Website
+			}
+
 			article := MatrixArticle{
 				EnglishPath:  englishPath,
 				EnglishUrl:   englishURL,
@@ -233,11 +239,18 @@ func (e *Exporter) exportMatrices(byCategory map[string]map[string]*translation.
 			}
 
 			for lang, status := range translations {
-				article.Translations[string(lang)] = e.buildMatrixTranslation(status)
+				translationURL := ""
+				if status.URL != nil {
+					translationURL = status.URL.Website
+				}
+				article.Translations[string(lang)] = e.buildMatrixTranslation(status, translationURL)
 			}
 
 			articles = append(articles, article)
 		}
+
+		// Sort articles
+		e.sortArticles(articles, category)
 
 		// Create matrix output
 		matrix := MatrixOutput{
@@ -258,18 +271,27 @@ func (e *Exporter) exportMatrices(byCategory map[string]map[string]*translation.
 }
 
 // buildMatrixTranslation builds a MatrixTranslation from TranslationStatus.
-func (e *Exporter) buildMatrixTranslation(status *translation.TranslationStatus) MatrixTranslation {
+func (e *Exporter) buildMatrixTranslation(status *translation.TranslationStatus, translationURL string) MatrixTranslation {
 	mt := MatrixTranslation{
 		Status:                 string(status.History.Status),
 		Severity:               string(status.History.Severity),
 		DaysBehind:             status.History.DaysBehind,
 		CommitsBehind:          status.History.CommitsBehind,
 		TotalChangeLines:       status.History.LinesBehind,
-		Views:                  0, // TODO: Add page view data
+		Views:                  0,
 		NewUsers:               0,
 		AverageSessionDuration: 0.0,
 		Issues:                 []MatrixIssue{},
 		PRs:                    []MatrixPR{},
+	}
+
+	// Add page view data if available
+	if e.options.PageViews != nil && translationURL != "" {
+		if stats, exists := e.options.PageViews[translationURL]; exists {
+			mt.Views = stats.Views
+			mt.NewUsers = stats.NewUsers
+			mt.AverageSessionDuration = stats.AverageSessionDuration
+		}
 	}
 
 	// Add dates
@@ -333,4 +355,50 @@ func (e *Exporter) writeJSON(filename string, data interface{}) error {
 	encoder := json.NewEncoder(file)
 	encoder.SetIndent("", "  ")
 	return encoder.Encode(data)
+}
+
+// sortArticles sorts articles based on the category.
+// For blog category, sort _index.md first, then by date (newest first) extracted from filename.
+// For other categories, sort by English path alphabetically.
+func (e *Exporter) sortArticles(articles []MatrixArticle, category string) {
+	if category == "blog" {
+		// Sort blog articles: _index.md first, then by date (newest first)
+		sort.Slice(articles, func(i, j int) bool {
+			isIndexI := strings.HasSuffix(articles[i].EnglishPath, "/_index.md")
+			isIndexJ := strings.HasSuffix(articles[j].EnglishPath, "/_index.md")
+
+			// _index.md always comes first
+			if isIndexI && !isIndexJ {
+				return true
+			}
+			if !isIndexI && isIndexJ {
+				return false
+			}
+
+			// If both are _index.md or both are not, sort by date
+			dateI := extractDateFromBlogPath(articles[i].EnglishPath)
+			dateJ := extractDateFromBlogPath(articles[j].EnglishPath)
+			// Descending order (newest first)
+			return dateI > dateJ
+		})
+	} else {
+		// Sort other articles by English path alphabetically
+		sort.Slice(articles, func(i, j int) bool {
+			return articles[i].EnglishPath < articles[j].EnglishPath
+		})
+	}
+}
+
+// extractDateFromBlogPath extracts the date (yyyy-mm-dd) from a blog file path.
+// Blog paths typically look like: content/en/blog/_posts/yyyy-mm-dd-title.md
+// Returns the date string, or empty string if not found.
+func extractDateFromBlogPath(path string) string {
+	// Match yyyy-mm-dd pattern in the filename
+	re := regexp.MustCompile(`/(\d{4}-\d{2}-\d{2})`)
+	matches := re.FindStringSubmatch(path)
+	if len(matches) > 1 {
+		return matches[1]
+	}
+	// If no date found, return empty string (will be sorted to the end)
+	return ""
 }

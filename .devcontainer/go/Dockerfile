@@ -1,12 +1,23 @@
 FROM golang:1.25-bookworm
 
+# Install system dependencies including Node.js prerequisites
 RUN apt-get update && apt-get install -y \
     git \
     make \
     curl \
     vim \
     bash-completion \
+    ca-certificates \
+    gnupg \
     && rm -rf /var/lib/apt/lists/*
+
+# Install Node.js (LTS version)
+RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - \
+    && apt-get install -y nodejs \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Yarn
+RUN npm install -g yarn
 
 ARG USERNAME=vscode
 ARG USER_UID=1000

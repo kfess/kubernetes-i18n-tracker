@@ -8,6 +8,23 @@ import (
 	"time"
 )
 
+func parseDate(dateStr string) (time.Time, error) {
+	formats := []string{
+		"2006-01-02",                // Date only
+		"2006-01-02 15:04:05 -0700", // Date with time and timezone
+		"2006-01-02 15:04:05",       // Date with time
+		time.RFC3339,                // ISO 8601 format
+	}
+
+	for _, format := range formats {
+		if t, err := time.Parse(format, dateStr); err == nil {
+			return t, nil
+		}
+	}
+
+	return time.Time{}, fmt.Errorf("unable to parse date: %s", dateStr)
+}
+
 // buildBlogUrl builds a blog URL with Hugo priority: slug+date > url > filename > title+date
 func generateBlogUrl(baseURL string, cp contentPath, fm *FrontMatter, existingUrls map[string]bool) string {
 	langPrefix := ""
@@ -50,7 +67,7 @@ func generateBlogUrl(baseURL string, cp contentPath, fm *FrontMatter, existingUr
 }
 
 func trySlugWithDate(fm *FrontMatter, langPrefix string, baseURL string, existingUrls map[string]bool) string {
-	t, err := time.Parse("2006-01-02", fm.Date)
+	t, err := parseDate(fm.Date)
 	if err != nil {
 		return ""
 	}
@@ -103,7 +120,7 @@ func tryFilename(path string, langPrefix string, baseURL string, existingUrls ma
 func tryTitleWithDate(fm *FrontMatter, langPrefix string, baseURL string, existingUrls map[string]bool) string {
 	title := textToSlug(fm.Title)
 
-	t, err := time.Parse("2006-01-02", fm.Date)
+	t, err := parseDate(fm.Date)
 	if err != nil {
 		return ""
 	}

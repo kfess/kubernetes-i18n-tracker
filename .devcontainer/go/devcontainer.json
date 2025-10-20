@@ -43,7 +43,7 @@
       }
     }
   },
-  "forwardPorts": [8080, 2345],
+  "forwardPorts": [8080, 2345, 5173],
   "portsAttributes": {
     "8080": {
       "label": "Application",

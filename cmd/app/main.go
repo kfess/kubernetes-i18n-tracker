@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+
 	"path/filepath"
 	"strings"
 
@@ -16,6 +17,8 @@ import (
 	"github.com/kfess/kubernetes-i18n-tracker/internal/issue"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/language"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/logger"
+
+	"github.com/kfess/kubernetes-i18n-tracker/internal/pageview"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/pr"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/translation"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/url"
@@ -28,6 +31,7 @@ const (
 
 	gitHistoryFile = "./data/master/git_history.jsonl"
 	allFilesPath   = "./data/master/all_files.csv"
+	pageViewFile   = "./data/master/page_view.csv"
 	outputDir      = "./data/output"
 )
 
@@ -234,12 +238,18 @@ func main() {
 		}
 	}
 
-	// For each English file, check all supported languages
-	supportedLangs := []string{"bn", "de", "es", "fr", "hi", "id", "it", "ja", "ko", "pl", "pt-br", "ru", "uk", "vi", "zh-cn"}
+	// For each English file, check all supported languages (including English)
+	supportedLangs := []string{"en", "bn", "de", "es", "fr", "hi", "id", "it", "ja", "ko", "pl", "pt-br", "ru", "uk", "vi", "zh-cn"}
 	for _, englishPath := range englishFiles {
 		for _, lang := range supportedLangs {
-			// Convert English path to translation path
-			translationPath := strings.Replace(englishPath, "content/en/", "content/"+lang+"/", 1)
+			var translationPath string
+			if lang == "en" {
+				// For English, use the original path
+				translationPath = englishPath
+			} else {
+				// Convert English path to translation path
+				translationPath = strings.Replace(englishPath, "content/en/", "content/"+lang+"/", 1)
+			}
 
 			status, err := tracker.GetStatus(ctx, translationPath)
 			if err != nil {
@@ -253,16 +263,27 @@ func main() {
 
 	logger.Infof("Analyzed %d translation files", len(results))
 
-	// Step 10: Export results to diff_go and matrix_go
+	// Step 10: Load page view data
+	logger.Info("Loading page view data...")
+	pageViews, err := pageview.AggregatePageViews(pageViewFile, existingURLsMap, "https://kubernetes.io")
+	if err != nil {
+		logger.Errorf("Failed to load page view data: %v", err)
+		pageViews = make(map[string]*pageview.PageViewStats)
+	} else {
+		logger.Infof("Loaded page view data for %d URLs", len(pageViews))
+	}
+
+	// Step 11: Export results to diff_go and matrix_go
 	logger.Info("Exporting results...")
 	exp := exporter.NewExporter(exporter.ExportOptions{
 		OutputDir: outputDir,
+		PageViews: pageViews,
 	})
 	if err := exp.Export(results); err != nil {
-		log.Fatalf("Failed to export results: %w", err)
+		log.Fatalf("Failed to export results: %v", err)
 	}
 
-	// Step 11: Save complete results to JSON
+	// Step 12: Save complete results to JSON
 	logger.Info("Saving complete results...")
 	if err := saveResults(results); err != nil {
 		log.Fatalf("Failed to save results: %v", err)
