@@ -1,5 +1,5 @@
-import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { NavigationBar } from '@/features/NavigationBar';
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { basename } from './const';
 import { DetailPage } from './pages/DetailPage';
 import { DevPage } from './pages/DevPage';

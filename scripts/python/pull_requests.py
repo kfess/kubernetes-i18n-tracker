@@ -39,7 +39,7 @@ def _get_prs(repo_name: str = "kubernetes/website") -> list[GitHubPullRequest]:
     for pr in raw_pull_requests:
         number = pr.number
         title = pr.title
-        url = pr.html_url
+        url = pr.html_urlni
         label_names = [label.name for label in pr.labels]
         files = pr.get_files()
         commits = pr.commits

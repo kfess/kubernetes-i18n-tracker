@@ -12,6 +12,8 @@ import includesDiffs from '@/data/output/diff/includes_diff.json';
 import partnerDiffs from '@/data/output/diff/partners_diff.json';
 import releaseDiffs from '@/data/output/diff/releases_diff.json';
 import trainingDiffs from '@/data/output/diff/training_diff.json';
+
+
 import { Diff } from '@/features/translations';
 
 const diffs: Record<string, Diff> = {

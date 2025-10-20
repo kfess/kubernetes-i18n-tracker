@@ -1,6 +1,6 @@
 {
   "name": "kube-website-i18n Dev Environment",
-  "dockerComposeFile": "../docker-compose.yml",
+  "dockerComposeFile": "../../docker-compose.yml",
   "service": "web",
   "workspaceFolder": "/workspace",
   "features": {
