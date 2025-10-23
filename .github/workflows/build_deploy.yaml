@@ -51,8 +51,7 @@ jobs:
       - name: Run data collection scripts
         working-directory: ./scripts/shell
         run: |
-          chmod +x ./fetch.sh ./collect_all_files.sh
-          ./fetch.sh
+          chmod +x ./collect_all_files.sh
           ./collect_all_files.sh
 
       - name: Run scraper
