@@ -62,6 +62,7 @@ jobs:
       - name: Build Go application
         run: |
           mkdir -p ./bin
+          go build -o ./bin/fetch-history ./cmd/fetch-history/main.go
           go build -o ./bin/main ./cmd/app/main.go
 
       - name: Run Data Processing with Go

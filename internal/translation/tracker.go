@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/kfess/kubernetes-i18n-tracker/internal/diff"
+	"github.com/kfess/kubernetes-i18n-tracker/internal/git"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/history"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/issue"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/logger"
@@ -111,8 +112,8 @@ func (t *Tracker) buildHistory(englishPath string, translationPath string) *Hist
 
 // buildNotTranslatedHistory creates history analysis for files that haven't been translated.
 func (t *Tracker) buildNotTranslatedHistory(
-	englishCommits []*history.Commit,
-	englishLatest *history.Commit,
+	englishCommits []*git.Commit,
+	englishLatest *git.Commit,
 ) *HistoryAnalysis {
 	stats := calculateChangeStats(englishCommits)
 	daysBehind := int(time.Since(englishLatest.Date).Hours() / 24)
@@ -134,9 +135,9 @@ func (t *Tracker) buildNotTranslatedHistory(
 // buildComparisonHistory creates history analysis by comparing English and translation files.
 func (t *Tracker) buildComparisonHistory(
 	englishPath string,
-	englishLatest *history.Commit,
-	translationCommits []*history.Commit,
-	translationLatest *history.Commit,
+	englishLatest *git.Commit,
+	translationCommits []*git.Commit,
+	translationLatest *git.Commit,
 ) *HistoryAnalysis {
 	missingCommits := t.history.GetCommitsAfter(englishPath, translationLatest.Date)
 	stats := calculateChangeStats(missingCommits)
@@ -249,7 +250,7 @@ func (t *Tracker) buildDiff(
 // Helper functions
 
 // calculateChangeStats calculates insertion/deletion statistics from commits.
-func calculateChangeStats(commits []*history.Commit) struct {
+func calculateChangeStats(commits []*git.Commit) struct {
 	Insertions int
 	Deletions  int
 	Total      int

@@ -3,16 +3,18 @@ package history
 import (
 	"testing"
 	"time"
+
+	"github.com/kfess/kubernetes-i18n-tracker/internal/git"
 )
 
 func TestBuild_SimpleHistory(t *testing.T) {
-	events := []*Event{
+	events := []*git.Event{
 		{
 			Hash:    "abc123",
 			Author:  "Alice",
 			Date:    "2025-01-01 10:00:00 +0000",
 			Message: "Add file",
-			File: FileInfo{
+			File: git.FileInfo{
 				Path:       "content/en/docs/guide.md",
 				Insertions: intPtr(10),
 				Deletions:  intPtr(0),
@@ -23,7 +25,7 @@ func TestBuild_SimpleHistory(t *testing.T) {
 			Author:  "Bob",
 			Date:    "2025-02-01 11:00:00 +0000",
 			Message: "Update file",
-			File: FileInfo{
+			File: git.FileInfo{
 				Path:       "content/en/docs/guide.md",
 				Insertions: intPtr(5),
 				Deletions:  intPtr(2),
@@ -48,13 +50,13 @@ func TestBuild_SimpleHistory(t *testing.T) {
 }
 
 func TestBuild_WithRename(t *testing.T) {
-	events := []*Event{
+	events := []*git.Event{
 		{
 			Hash:    "commit1",
 			Author:  "Alice",
 			Date:    "2025-01-01 10:00:00 +0000",
 			Message: "Add file",
-			File: FileInfo{
+			File: git.FileInfo{
 				Path:       "old_name.md",
 				Insertions: intPtr(10),
 				Deletions:  intPtr(0),
@@ -65,7 +67,7 @@ func TestBuild_WithRename(t *testing.T) {
 			Author:  "Bob",
 			Date:    "2025-02-01 11:00:00 +0000",
 			Message: "Rename file",
-			File: FileInfo{
+			File: git.FileInfo{
 				Path:       "new_name.md",
 				Insertions: nil, // Rename events often have nil insertions/deletions
 				Deletions:  nil,
@@ -77,7 +79,7 @@ func TestBuild_WithRename(t *testing.T) {
 			Author:  "Charlie",
 			Date:    "2025-03-01 12:00:00 +0000",
 			Message: "Update file",
-			File: FileInfo{
+			File: git.FileInfo{
 				Path:       "new_name.md",
 				Insertions: intPtr(3),
 				Deletions:  intPtr(1),
@@ -106,13 +108,13 @@ func TestBuild_WithRename(t *testing.T) {
 }
 
 func TestBuild_ChainedRenames(t *testing.T) {
-	events := []*Event{
+	events := []*git.Event{
 		{
 			Hash:    "commit1",
 			Author:  "Alice",
 			Date:    "2025-01-01 10:00:00 +0000",
 			Message: "Add file A",
-			File: FileInfo{
+			File: git.FileInfo{
 				Path:       "file_a.md",
 				Insertions: intPtr(10),
 				Deletions:  intPtr(0),
@@ -123,7 +125,7 @@ func TestBuild_ChainedRenames(t *testing.T) {
 			Author:  "Bob",
 			Date:    "2025-02-01 11:00:00 +0000",
 			Message: "Rename A to B",
-			File: FileInfo{
+			File: git.FileInfo{
 				Path:    "file_b.md",
 				OldPath: "file_a.md",
 			},
@@ -133,7 +135,7 @@ func TestBuild_ChainedRenames(t *testing.T) {
 			Author:  "Charlie",
 			Date:    "2025-03-01 12:00:00 +0000",
 			Message: "Rename B to C",
-			File: FileInfo{
+			File: git.FileInfo{
 				Path:    "file_c.md",
 				OldPath: "file_b.md",
 			},
@@ -143,7 +145,7 @@ func TestBuild_ChainedRenames(t *testing.T) {
 			Author:  "Dave",
 			Date:    "2025-04-01 13:00:00 +0000",
 			Message: "Update C",
-			File: FileInfo{
+			File: git.FileInfo{
 				Path:       "file_c.md",
 				Insertions: intPtr(5),
 				Deletions:  intPtr(2),
@@ -181,13 +183,13 @@ func TestBuild_ChainedRenames(t *testing.T) {
 }
 
 func TestBuild_MultipleFiles(t *testing.T) {
-	events := []*Event{
+	events := []*git.Event{
 		{
 			Hash:    "commit1",
 			Author:  "Alice",
 			Date:    "2025-01-01 10:00:00 +0000",
 			Message: "Add file1",
-			File: FileInfo{
+			File: git.FileInfo{
 				Path:       "file1.md",
 				Insertions: intPtr(10),
 				Deletions:  intPtr(0),
@@ -198,7 +200,7 @@ func TestBuild_MultipleFiles(t *testing.T) {
 			Author:  "Bob",
 			Date:    "2025-01-02 10:00:00 +0000",
 			Message: "Add file2",
-			File: FileInfo{
+			File: git.FileInfo{
 				Path:       "file2.md",
 				Insertions: intPtr(20),
 				Deletions:  intPtr(0),
@@ -209,7 +211,7 @@ func TestBuild_MultipleFiles(t *testing.T) {
 			Author:  "Charlie",
 			Date:    "2025-01-03 10:00:00 +0000",
 			Message: "Update file1",
-			File: FileInfo{
+			File: git.FileInfo{
 				Path:       "file1.md",
 				Insertions: intPtr(5),
 				Deletions:  intPtr(1),
@@ -239,13 +241,13 @@ func TestBuild_MultipleFiles(t *testing.T) {
 }
 
 func TestStats(t *testing.T) {
-	events := []*Event{
+	events := []*git.Event{
 		{
 			Hash:    "commit1",
 			Author:  "Alice",
 			Date:    "2025-01-01 10:00:00 +0000",
 			Message: "Add file",
-			File: FileInfo{
+			File: git.FileInfo{
 				Path:       "test.md",
 				Insertions: intPtr(10),
 				Deletions:  intPtr(0),
@@ -256,7 +258,7 @@ func TestStats(t *testing.T) {
 			Author:  "Bob",
 			Date:    "2025-02-01 11:00:00 +0000",
 			Message: "Update file",
-			File: FileInfo{
+			File: git.FileInfo{
 				Path:       "test.md",
 				Insertions: intPtr(5),
 				Deletions:  intPtr(2),
@@ -267,7 +269,7 @@ func TestStats(t *testing.T) {
 			Author:  "Charlie",
 			Date:    "2025-03-01 12:00:00 +0000",
 			Message: "Rename file",
-			File: FileInfo{
+			File: git.FileInfo{
 				Path:       "test_renamed.md",
 				Insertions: intPtr(0),
 				Deletions:  intPtr(0),
@@ -312,13 +314,13 @@ func TestStats(t *testing.T) {
 }
 
 func TestStats_NonexistentFile(t *testing.T) {
-	events := []*Event{
+	events := []*git.Event{
 		{
 			Hash:    "commit1",
 			Author:  "Alice",
 			Date:    "2025-01-01 10:00:00 +0000",
 			Message: "Add file",
-			File: FileInfo{
+			File: git.FileInfo{
 				Path:       "exists.md",
 				Insertions: intPtr(10),
 				Deletions:  intPtr(0),

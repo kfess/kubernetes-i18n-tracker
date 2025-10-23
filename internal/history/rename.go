@@ -3,6 +3,8 @@ package history
 import (
 	"sort"
 	"time"
+
+	"github.com/kfess/kubernetes-i18n-tracker/internal/git"
 )
 
 // renameTransition represents a single rename event.
@@ -21,7 +23,7 @@ type renameChain struct {
 }
 
 // buildRenameChain extracts and indexes all rename events from the input events.
-func buildRenameChain(events []*Event) *renameChain {
+func buildRenameChain(events []*git.Event) *renameChain {
 	var transitions []renameTransition
 
 	for _, event := range events {

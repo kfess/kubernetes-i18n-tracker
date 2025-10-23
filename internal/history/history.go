@@ -3,12 +3,14 @@ package history
 import (
 	"sort"
 	"time"
+
+	"github.com/kfess/kubernetes-i18n-tracker/internal/git"
 )
 
 // Tracker builds and maintains file histories from git events.
 type History struct {
 	// Map from final file path to its commit history (sorted by date, oldest to newest)
-	histories map[string][]*Commit
+	histories map[string][]*git.Commit
 	// Rename chain for path resolution
 	renames *renameChain
 }
@@ -16,9 +18,9 @@ type History struct {
 // Build creates a new history from a list of events.
 // It processes all events, resolves renames, groups commits by final file path,
 // and sorts them chronologically.
-func Build(events []*Event) *History {
+func Build(events []*git.Event) *History {
 	history := &History{
-		histories: make(map[string][]*Commit),
+		histories: make(map[string][]*git.Commit),
 		renames:   buildRenameChain(events),
 	}
 
@@ -42,7 +44,7 @@ func Build(events []*Event) *History {
 }
 
 // eventToCommit converts an Event to a Commit.
-func (h *History) eventToCommit(event *Event) *Commit {
+func (h *History) eventToCommit(event *git.Event) *git.Commit {
 	date, err := time.Parse("2006-01-02 15:04:05 -0700", event.Date)
 	if err != nil {
 		return nil
@@ -58,7 +60,7 @@ func (h *History) eventToCommit(event *Event) *Commit {
 		deletions = *event.File.Deletions
 	}
 
-	commit := &Commit{
+	commit := &git.Commit{
 		Hash:        event.Hash,
 		Author:      event.Author,
 		Date:        date,
@@ -74,7 +76,7 @@ func (h *History) eventToCommit(event *Event) *Commit {
 
 // GetCommits returns the commit history for a specific file path.
 // Returns nil if the path has no history.
-func (h *History) GetCommits(path string) []*Commit {
+func (h *History) GetCommits(path string) []*git.Commit {
 	return h.histories[path]
 }
 
@@ -89,13 +91,13 @@ func (h *History) AllPaths() []string {
 }
 
 // Stats calculates statistics for a specific file path.
-func (h *History) Stats(path string) *Stats {
+func (h *History) Stats(path string) *git.Stats {
 	commits := h.histories[path]
 	if len(commits) == 0 {
 		return nil
 	}
 
-	stats := &Stats{
+	stats := &git.Stats{
 		TotalCommits: len(commits),
 		FirstCommit:  commits[0].Date,
 		LatestCommit: commits[len(commits)-1].Date,
@@ -121,7 +123,7 @@ func (h *History) GetHistoricalPaths(currentPath string) []string {
 }
 
 // GetOldestCommit returns the oldest commit for a specific file path.
-func (h *History) GetOldestCommit(path string) *Commit {
+func (h *History) GetOldestCommit(path string) *git.Commit {
 	commits := h.histories[path]
 	if len(commits) == 0 {
 		return nil
@@ -131,7 +133,7 @@ func (h *History) GetOldestCommit(path string) *Commit {
 }
 
 // GetLatestCommit returns the latest commit for a specific file path.
-func (h *History) GetLatestCommit(path string) *Commit {
+func (h *History) GetLatestCommit(path string) *git.Commit {
 	commits := h.histories[path]
 	if len(commits) == 0 {
 		return nil
@@ -142,13 +144,13 @@ func (h *History) GetLatestCommit(path string) *Commit {
 
 // GetCommitsAfter returns all commits for a file path that occurred after the specified time.
 // Returns nil if the path has no history or no commits match the time filter.
-func (h *History) GetCommitsAfter(path string, after time.Time) []*Commit {
+func (h *History) GetCommitsAfter(path string, after time.Time) []*git.Commit {
 	commits := h.histories[path]
 	if len(commits) == 0 {
 		return nil
 	}
 
-	var result []*Commit
+	var result []*git.Commit
 	for _, c := range commits {
 		if c.Date.After(after) {
 			result = append(result, c)
@@ -160,13 +162,13 @@ func (h *History) GetCommitsAfter(path string, after time.Time) []*Commit {
 
 // GetCommitBeforeOrAt finds the latest commit for a file path that occurred before or at the specified time.
 // Returns nil if no such commit exists or the path has no history.
-func (h *History) GetCommitBeforeOrAt(path string, date time.Time) *Commit {
+func (h *History) GetCommitBeforeOrAt(path string, date time.Time) *git.Commit {
 	commits := h.histories[path]
 	if len(commits) == 0 {
 		return nil
 	}
 
-	var result *Commit
+	var result *git.Commit
 	for _, commit := range commits {
 		if commit.Date.Before(date) || commit.Date.Equal(date) {
 			result = commit

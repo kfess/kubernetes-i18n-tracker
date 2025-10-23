@@ -13,6 +13,7 @@ import (
 
 	"github.com/joho/godotenv"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/exporter"
+	"github.com/kfess/kubernetes-i18n-tracker/internal/git"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/history"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/issue"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/language"
@@ -36,14 +37,14 @@ const (
 )
 
 // loadEvents reads events from a JSONL file
-func loadEvents(path string) ([]*history.Event, error) {
+func loadEvents(path string) ([]*git.Event, error) {
 	file, err := os.Open(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open file: %w", err)
 	}
 	defer file.Close()
 
-	var events []*history.Event
+	var events []*git.Event
 	scanner := bufio.NewScanner(file)
 
 	// Increase buffer size for large lines
@@ -58,7 +59,7 @@ func loadEvents(path string) ([]*history.Event, error) {
 			continue
 		}
 
-		var event history.Event
+		var event git.Event
 		if err := json.Unmarshal(line, &event); err != nil {
 			log.Printf("Warning: failed to parse line %d: %v", lineNum, err)
 			continue
