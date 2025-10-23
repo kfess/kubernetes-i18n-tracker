@@ -41,7 +41,7 @@ const scrape = async () => {
     await page.mouse.click(centerX, centerY, { button: "right" });
     console.log("Right-clicked");
 
-    await page.locator("text=エクスポート").first().click();
+    await page.locator("text=Export Data").first().click();
     console.log("Clicked context menu export");
 
     await page.locator("text=エクスポート").nth(1).click();
