@@ -3,7 +3,7 @@ package translation
 import (
 	"time"
 
-	"github.com/kfess/kubernetes-i18n-tracker/internal/history"
+	"github.com/kfess/kubernetes-i18n-tracker/internal/git"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/issue"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/language"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/pr"
@@ -45,22 +45,22 @@ type HistoryAnalysis struct {
 	Severity Severity `json:"severity"` // Severity of being out-of-date
 
 	// Translation file metrics
-	LastModified  *time.Time        `json:"last_modified,omitempty"`  // Last modified time of the translation file
-	LatestCommit  *history.Commit   `json:"latest_commit,omitempty"`  // Latest commit of the translation file
-	CommitHistory []*history.Commit `json:"commit_history,omitempty"` // Full commit history of the translation file
+	LastModified  *time.Time    `json:"last_modified,omitempty"`  // Last modified time of the translation file
+	LatestCommit  *git.Commit   `json:"latest_commit,omitempty"`  // Latest commit of the translation file
+	CommitHistory []*git.Commit `json:"commit_history,omitempty"` // Full commit history of the translation file
 
 	// English file metrics
-	EnglishLastModified *time.Time      `json:"english_last_modified,omitempty"` // Last modified time of the English file
-	EnglishLatestCommit *history.Commit `json:"english_latest_commit,omitempty"` // Latest commit of the English file
-	ReferenceCommit     *history.Commit `json:"reference_commit,omitempty"`      // English commit at time of translation
+	EnglishLastModified *time.Time  `json:"english_last_modified,omitempty"` // Last modified time of the English file
+	EnglishLatestCommit *git.Commit `json:"english_latest_commit,omitempty"` // Latest commit of the English file
+	ReferenceCommit     *git.Commit `json:"reference_commit,omitempty"`      // English commit at time of translation
 
 	// Comparison metrics
-	DaysBehind       int               `json:"days_behind"`               // Days since last translation update
-	CommitsBehind    int               `json:"commits_behind"`            // Number of English commits since last translation update
-	LinesBehind      int               `json:"lines_behind"`              // Total changed lines
-	InsertionsBehind int               `json:"insertions_behind"`         // Insertions in English since last translation update
-	DeletionsBehind  int               `json:"deletions_behind"`          // Deletions in English since last translation update
-	MissingCommits   []*history.Commit `json:"missing_commits,omitempty"` // List of English commits not yet reflected in translation
+	DaysBehind       int           `json:"days_behind"`               // Days since last translation update
+	CommitsBehind    int           `json:"commits_behind"`            // Number of English commits since last translation update
+	LinesBehind      int           `json:"lines_behind"`              // Total changed lines
+	InsertionsBehind int           `json:"insertions_behind"`         // Insertions in English since last translation update
+	DeletionsBehind  int           `json:"deletions_behind"`          // Deletions in English since last translation update
+	MissingCommits   []*git.Commit `json:"missing_commits,omitempty"` // List of English commits not yet reflected in translation
 }
 
 // URL contains URL information for the file.

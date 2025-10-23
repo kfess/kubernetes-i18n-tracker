@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/kfess/kubernetes-i18n-tracker/internal/history"
+	"github.com/kfess/kubernetes-i18n-tracker/internal/git"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/language"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/translation"
 )
@@ -78,11 +78,11 @@ func TestExportDiffs(t *testing.T) {
 				History: &translation.HistoryAnalysis{
 					Status:   translation.StatusOutdated,
 					Severity: translation.SeverityMinor,
-					ReferenceCommit: &history.Commit{
+					ReferenceCommit: &git.Commit{
 						Hash: "abc123",
 						Date: now,
 					},
-					EnglishLatestCommit: &history.Commit{
+					EnglishLatestCommit: &git.Commit{
 						Hash: "def456",
 						Date: now,
 					},
@@ -149,15 +149,15 @@ func TestExportMatrices(t *testing.T) {
 					DaysBehind:    0,
 					CommitsBehind: 0,
 					LinesBehind:   0,
-					LatestCommit: &history.Commit{
+					LatestCommit: &git.Commit{
 						Hash: "abc123",
 						Date: now,
 					},
-					EnglishLatestCommit: &history.Commit{
+					EnglishLatestCommit: &git.Commit{
 						Hash: "abc123",
 						Date: now,
 					},
-					ReferenceCommit: &history.Commit{
+					ReferenceCommit: &git.Commit{
 						Hash: "abc123",
 						Date: now,
 					},
