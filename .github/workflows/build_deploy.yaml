@@ -49,7 +49,7 @@ jobs:
           cache: true
       
       - name: Clone Kubernetes website repo
-        run: git clone -b main --single-branch https://github.com/kubernetes/website.git ./k8s-repo
+        run: git clone -b main --single-branch https://github.com/kubernetes/website.git ./k8s-repo/website
 
       - name: Run data collection scripts
         working-directory: ./scripts/shell
