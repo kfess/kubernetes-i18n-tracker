@@ -62,12 +62,16 @@ jobs:
         run: |
           mkdir -p ./bin
           go build -o ./bin/fetch-history ./cmd/fetch-history/main.go
-          go build -o ./bin/main ./cmd/app/main.go
+          go build -o ./bin/analyze ./cmd/analyze/main.go
 
-      - name: Run Data Processing with Go
+      - name: Fetch Git History (commits)
+        run: |
+          ./bin/fetch-history --repo ./k8s-repo/website --output ./data/master/git_history.jsonl
+
+      - name: Analyze Git History
         env:
           KUBERNETES_WEBSITE_READ_GITHUB_TOKEN: ${{ secrets.KUBERNETES_WEBSITE_READ_GITHUB_TOKEN }}
-        run: ./bin/main
+        run: ./bin/analyze
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
