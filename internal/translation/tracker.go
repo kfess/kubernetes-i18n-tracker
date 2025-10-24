@@ -67,21 +67,16 @@ func (t *Tracker) GetTranslationStatus(ctx context.Context, translationPath stri
 	}
 
 	// Build each component
-	translationStatus.History = t.buildHistory(englishPath, translationPath)
+	translationStatus.History = t.buildHistory(ctx, englishPath, translationPath)
 	translationStatus.PullRequests = t.buildPullRequests(translationPath)
 	translationStatus.Issues = t.buildIssues(translationPath)
 	translationStatus.URL = t.buildURL(ctx, translationPath)
-
-	// Build diff only if outdated
-	if translationStatus.History != nil && translationStatus.History.Status == StatusOutdated {
-		translationStatus.Diff = t.buildDiff(ctx, translationStatus.History, englishPath)
-	}
 
 	return translationStatus, nil
 }
 
 // buildHistory builds history by comparing English and translation file.
-func (t *Tracker) buildHistory(englishPath string, translationPath string) *HistoryAnalysis {
+func (t *Tracker) buildHistory(ctx context.Context, englishPath string, translationPath string) *HistoryAnalysis {
 	pathInfo := parsePath(translationPath)
 
 	englishCommits := t.history.GetCommits(englishPath)
@@ -109,13 +104,21 @@ func (t *Tracker) buildHistory(englishPath string, translationPath string) *Hist
 		translationLatest = translationCommits[len(translationCommits)-1]
 	}
 
-	// Handle not translated case
 	if status == StatusNotTranslated {
 		return t.buildNotTranslatedHistory(englishCommits, englishLatest)
 	}
 
-	// Handle up-to-date or outdated cases
-	return t.buildTranslatedHistory(
+	if status == StatusUpToDate {
+		return t.buildUpToDateHistory(
+			englishCommits,
+			englishLatest,
+			translationCommits,
+			translationLatest,
+		)
+	}
+
+	return t.buildOutdatedHistory(
+		ctx,
 		englishPath,
 		englishCommits,
 		englishLatest,
@@ -129,25 +132,46 @@ func (t *Tracker) buildNotTranslatedHistory(
 	englishCommits []*git.Commit,
 	englishLatest *git.Commit,
 ) *HistoryAnalysis {
-	stats := calculateChangeStats(englishCommits)
 	daysBehind := calculateDaysBehind(englishCommits, []*git.Commit{})
 
 	return &HistoryAnalysis{
 		Status:              StatusNotTranslated,
-		Severity:            calculateSeverity(stats.Total),
+		Severity:            SeverityCritical, // Not translated is always critical
 		EnglishLastModified: &englishLatest.Date,
 		EnglishLatestCommit: englishLatest,
 		DaysBehind:          daysBehind,
 		CommitsBehind:       len(englishCommits),
-		LinesBehind:         stats.Total,
-		InsertionsBehind:    stats.Insertions,
-		DeletionsBehind:     stats.Deletions,
 		MissingCommits:      englishCommits,
 	}
 }
 
-// buildTranslatedHistory creates history analysis by comparing English and translation files.
-func (t *Tracker) buildTranslatedHistory(
+// buildUpToDateHistory creates history analysis for up-to-date translations.
+func (t *Tracker) buildUpToDateHistory(
+	englishCommits []*git.Commit,
+	englishLatest *git.Commit,
+	translationCommits []*git.Commit,
+	translationLatest *git.Commit,
+) *HistoryAnalysis {
+	daysBehind := calculateDaysBehind(englishCommits, translationCommits)
+
+	return &HistoryAnalysis{
+		Status:              StatusUpToDate,
+		Severity:            SeverityCurrent,
+		LastModified:        &translationLatest.Date,
+		LatestCommit:        translationLatest,
+		CommitHistory:       translationCommits,
+		EnglishLastModified: &englishLatest.Date,
+		EnglishLatestCommit: englishLatest,
+		ReferenceCommit:     translationLatest,
+		DaysBehind:          daysBehind,
+		CommitsBehind:       0,
+		MissingCommits:      []*git.Commit{},
+	}
+}
+
+// buildOutdatedHistory creates history analysis for outdated translations.
+func (t *Tracker) buildOutdatedHistory(
+	ctx context.Context,
 	englishPath string,
 	englishCommits []*git.Commit,
 	englishLatest *git.Commit,
@@ -156,18 +180,22 @@ func (t *Tracker) buildTranslatedHistory(
 ) *HistoryAnalysis {
 	missingCommits := t.history.GetCommitsAfter(englishPath, translationLatest.Date)
 	referenceCommit := t.history.GetCommitBeforeOrAt(englishPath, translationLatest.Date)
-	
-	stats := calculateChangeStats(missingCommits)
 	daysBehind := calculateDaysBehind(englishCommits, translationCommits)
 
-	status := StatusUpToDate
-	if len(missingCommits) > 0 {
-		status = StatusOutdated
+	diff := t.buildDiff(ctx,
+		&HistoryAnalysis{
+			ReferenceCommit:     referenceCommit,
+			EnglishLatestCommit: englishLatest,
+		}, englishPath)
+
+	severity := SeverityCurrent
+	if diff != nil {
+		severity = calculateSeverity(diff.LinesChanged)
 	}
 
 	return &HistoryAnalysis{
-		Status:              status,
-		Severity:            calculateSeverity(stats.Total),
+		Status:              StatusOutdated,
+		Severity:            severity,
 		LastModified:        &translationLatest.Date,
 		LatestCommit:        translationLatest,
 		CommitHistory:       translationCommits,
@@ -176,10 +204,8 @@ func (t *Tracker) buildTranslatedHistory(
 		ReferenceCommit:     referenceCommit,
 		DaysBehind:          daysBehind,
 		CommitsBehind:       len(missingCommits),
-		LinesBehind:         stats.Total,
-		InsertionsBehind:    stats.Insertions,
-		DeletionsBehind:     stats.Deletions,
 		MissingCommits:      missingCommits,
+		Diff:                diff,
 	}
 }
 
@@ -253,47 +279,27 @@ func (t *Tracker) buildDiff(
 		return nil
 	}
 
+	insertions, deletions, total := countDiffLines(result.Content)
+
 	return &Diff{
 		Content:      result.Content,
-		LinesChanged: countDiffLines(result.Content),
+		LinesChanged: total,
+		Insertions:   insertions,
+		Deletions:    deletions,
 		OldCommit:    result.OldCommitHash,
 		NewCommit:    result.NewCommitHash,
 	}
 }
 
-// Helper functions
-
-// calculateChangeStats calculates insertion/deletion statistics from commits.
-func calculateChangeStats(commits []*git.Commit) struct {
-	Insertions int
-	Deletions  int
-	Total      int
-} {
-	var stats struct {
-		Insertions int
-		Deletions  int
-		Total      int
-	}
-
-	for _, commit := range commits {
-		stats.Insertions += commit.Insertions
-		stats.Deletions += commit.Deletions
-	}
-	stats.Total = stats.Insertions + stats.Deletions
-
-	return stats
-}
-
 // countDiffLines counts the number of changed lines in a diff.
-func countDiffLines(diffContent string) int {
-	lines := 0
+func countDiffLines(diffContent string) (insertions int, deletions int, total int) {
 	for _, line := range strings.Split(diffContent, "\n") {
-		if strings.HasPrefix(line, "+") || strings.HasPrefix(line, "-") {
-			// Exclude file headers (+++, ---)
-			if !strings.HasPrefix(line, "+++") && !strings.HasPrefix(line, "---") {
-				lines++
-			}
+		if strings.HasPrefix(line, "+") && !strings.HasPrefix(line, "+++") {
+			insertions++
+		} else if strings.HasPrefix(line, "-") && !strings.HasPrefix(line, "---") {
+			deletions++
 		}
 	}
-	return lines
+	total = insertions + deletions
+	return insertions, deletions, total
 }

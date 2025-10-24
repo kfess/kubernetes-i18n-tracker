@@ -172,7 +172,7 @@ func (e *Exporter) exportDiffs(byCategory map[string]map[string]*translation.Tra
 
 		for path, status := range statuses {
 			// Only include outdated files with diff
-			if status.History != nil && status.History.Status == translation.StatusOutdated && status.Diff != nil {
+			if status.History != nil && status.History.Status == translation.StatusOutdated && status.History.Diff != nil {
 				refCommit := ""
 				if status.History.ReferenceCommit != nil {
 					refCommit = status.History.ReferenceCommit.Hash
@@ -188,7 +188,7 @@ func (e *Exporter) exportDiffs(byCategory map[string]map[string]*translation.Tra
 					Language:                string(status.Language),
 					RefEnglishCommitHash:    refCommit,
 					EnglishLatestCommitHash: latestCommit,
-					Diff:                    status.Diff.Content,
+					Diff:                    status.History.Diff.Content,
 				}
 			}
 		}
@@ -272,12 +272,18 @@ func (e *Exporter) exportMatrices(byCategory map[string]map[string]*translation.
 
 // buildMatrixTranslation builds a MatrixTranslation from TranslationStatus.
 func (e *Exporter) buildMatrixTranslation(status *translation.TranslationStatus, translationURL string) MatrixTranslation {
+	// Calculate total change lines from diff if available
+	totalChangeLines := 0
+	if status.History.Diff != nil {
+		totalChangeLines = status.History.Diff.LinesChanged
+	}
+
 	mt := MatrixTranslation{
 		Status:                 string(status.History.Status),
 		Severity:               string(status.History.Severity),
 		DaysBehind:             status.History.DaysBehind,
 		CommitsBehind:          status.History.CommitsBehind,
-		TotalChangeLines:       status.History.LinesBehind,
+		TotalChangeLines:       totalChangeLines,
 		Views:                  0,
 		NewUsers:               0,
 		AverageSessionDuration: 0.0,
