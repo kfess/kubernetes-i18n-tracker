@@ -1,12 +1,10 @@
 package translation
 
 import (
+	"math"
 	"time"
 
 	"github.com/kfess/kubernetes-i18n-tracker/internal/git"
-	"github.com/kfess/kubernetes-i18n-tracker/internal/issue"
-	"github.com/kfess/kubernetes-i18n-tracker/internal/language"
-	"github.com/kfess/kubernetes-i18n-tracker/internal/pr"
 )
 
 // Status represents the translation status of a file.
@@ -20,60 +18,64 @@ const (
 	StatusUnknown          Status = "unknown"
 )
 
-// TranslationStatus holds comprehensive information about a translation file.
-type TranslationStatus struct {
-	// Basic
-	Path        string            `json:"path"`
-	EnglishPath string            `json:"english_path"`
-	Language    language.Language `json:"language"`
-	Category    string            `json:"category"` // docs, blog, tutorials, etc.
+// calculateStatus determines the translation status of a file based on its history.
+func calculateStatus(
+	language string,
+	englishCommits []*git.Commit,
+	translationCommits []*git.Commit,
+) Status {
+	if len(englishCommits) == 0 {
+		return StatusNoEnglishVersion
+	}
 
-	// Analysis results (nil if not available/applicable)
-	History      *HistoryAnalysis  `json:"history,omitempty"`
-	PullRequests []*pr.PullRequest `json:"pull_requests,omitempty"`
-	Issues       []*issue.Issue    `json:"issues,omitempty"`
-	URL          *URL              `json:"url,omitempty"`
-	Diff         *Diff             `json:"diff,omitempty"`
+	// For English files, they are always up-to-date with themselves
+	if language == "en" {
+		return StatusUpToDate
+	}
 
-	// Metadata
-	CreatedAt time.Time `json:"created_at"`
+	if len(translationCommits) == 0 {
+		return StatusNotTranslated
+	}
+
+	englishLatest := englishCommits[len(englishCommits)-1]
+	translationLatest := translationCommits[len(translationCommits)-1]
+
+	if englishLatest.Date.After(translationLatest.Date) {
+		return StatusOutdated
+	}
+
+	if translationLatest.Date.Equal(englishLatest.Date) || translationLatest.Date.After(englishLatest.Date) {
+		return StatusUpToDate
+	}
+
+	// This should not be reachable, but just in case
+	return StatusUnknown
 }
 
-// HistoryAnalysis contains git history analysis results.
-type HistoryAnalysis struct {
-	Status   Status   `json:"status"`   // Translation status
-	Severity Severity `json:"severity"` // Severity of being out-of-date
+func calculateDaysBehind(englishCommits []*git.Commit, translationCommits []*git.Commit) int {
+	// If there are no English commits, return 0 days behind
+	if len(englishCommits) == 0 {
+		return 0
+	}
 
-	// Translation file metrics
-	LastModified  *time.Time    `json:"last_modified,omitempty"`  // Last modified time of the translation file
-	LatestCommit  *git.Commit   `json:"latest_commit,omitempty"`  // Latest commit of the translation file
-	CommitHistory []*git.Commit `json:"commit_history,omitempty"` // Full commit history of the translation file
+	var diffHours float64
+	if len(translationCommits) == 0 {
+		// If there are no translation commits, calculate from the first English commit
+		englishFirst := englishCommits[len(englishCommits)-1]
+		diffHours = time.Since(englishFirst.Date).Hours()
+	} else {
+		// Compare the English latest and translation latest commits
+		englishLatest := englishCommits[len(englishCommits)-1]
+		translationLatest := translationCommits[len(translationCommits)-1]
+		diffHours = englishLatest.Date.Sub(translationLatest.Date).Hours()
+	}
 
-	// English file metrics
-	EnglishLastModified *time.Time  `json:"english_last_modified,omitempty"` // Last modified time of the English file
-	EnglishLatestCommit *git.Commit `json:"english_latest_commit,omitempty"` // Latest commit of the English file
-	ReferenceCommit     *git.Commit `json:"reference_commit,omitempty"`      // English commit at time of translation
+	// Round to the nearest whole day
+	// Without this, translations that are 23 hours behind would show as 0 days behind
+	daysBehind := int(math.Round(diffHours / 24))
+	if daysBehind < 0 {
+		return 0
+	}
 
-	// Comparison metrics
-	DaysBehind       int           `json:"days_behind"`               // Days since last translation update
-	CommitsBehind    int           `json:"commits_behind"`            // Number of English commits since last translation update
-	LinesBehind      int           `json:"lines_behind"`              // Total changed lines
-	InsertionsBehind int           `json:"insertions_behind"`         // Insertions in English since last translation update
-	DeletionsBehind  int           `json:"deletions_behind"`          // Deletions in English since last translation update
-	MissingCommits   []*git.Commit `json:"missing_commits,omitempty"` // List of English commits not yet reflected in translation
-}
-
-// URL contains URL information for the file.
-type URL struct {
-	Website string `json:"website"` // Public website URL (e.g., https://kubernetes.io/ja/docs/...)
-	GitHub  string `json:"github"`  // GitHub repository URL (e.g., https://github.com/kubernetes/website/blob/main/content/ja/docs/...)
-}
-
-// Diff contains the diff between the current English version and the reference English version
-// that was used when the translation was last updated.
-type Diff struct {
-	Content      string `json:"content"`       // Diff content
-	LinesChanged int    `json:"lines_changed"` // Number of lines changed
-	OldCommit    string `json:"old_commit"`    // Reference English commit hash (at translation time)
-	NewCommit    string `json:"new_commit"`    // Current English commit hash
+	return daysBehind
 }

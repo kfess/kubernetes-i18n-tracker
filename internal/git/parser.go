@@ -120,5 +120,9 @@ func parseRenamePath(path string) (string, string) {
 // cleanPath removes quotes and other unnecessary characters from a path.
 func cleanPath(path string) string {
 	path = strings.Trim(path, "\"")
+
+	// some git outputs paths with double slashes, normalize them
+	path = strings.ReplaceAll(path, "//", "/")
+
 	return path
 }

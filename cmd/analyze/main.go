@@ -252,7 +252,7 @@ func main() {
 				translationPath = strings.Replace(englishPath, "content/en/", "content/"+lang+"/", 1)
 			}
 
-			status, err := tracker.GetStatus(ctx, translationPath)
+			status, err := tracker.GetTranslationStatus(ctx, translationPath)
 			if err != nil {
 				logger.Warnf("Failed to get status for %s: %v", translationPath, err)
 				continue

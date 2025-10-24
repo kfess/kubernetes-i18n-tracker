@@ -53,12 +53,12 @@ func NewTracker(
 	}
 }
 
-// GetStatus returns comprehensive translation status for a single file.
-func (t *Tracker) GetStatus(ctx context.Context, translationPath string) (*TranslationStatus, error) {
+// GetTranslationStatus returns comprehensive translation status for a single file.
+func (t *Tracker) GetTranslationStatus(ctx context.Context, translationPath string) (*TranslationStatus, error) {
 	pathInfo := parsePath(translationPath)
 	englishPath := pathInfo.ToEnglishPath()
 
-	status := &TranslationStatus{
+	translationStatus := &TranslationStatus{
 		Path:        translationPath,
 		EnglishPath: englishPath,
 		Language:    pathInfo.Language,
@@ -67,43 +67,57 @@ func (t *Tracker) GetStatus(ctx context.Context, translationPath string) (*Trans
 	}
 
 	// Build each component
-	status.History = t.buildHistory(englishPath, translationPath)
-	status.PullRequests = t.buildPullRequests(translationPath)
-	status.Issues = t.buildIssues(translationPath)
-	status.URL = t.buildURL(ctx, translationPath)
+	translationStatus.History = t.buildHistory(englishPath, translationPath)
+	translationStatus.PullRequests = t.buildPullRequests(translationPath)
+	translationStatus.Issues = t.buildIssues(translationPath)
+	translationStatus.URL = t.buildURL(ctx, translationPath)
 
-	// Build diff only if outdated (heavy operation)
-	if status.History != nil && status.History.Status == StatusOutdated {
-		status.Diff = t.buildDiff(ctx, status.History, englishPath)
+	// Build diff only if outdated
+	if translationStatus.History != nil && translationStatus.History.Status == StatusOutdated {
+		translationStatus.Diff = t.buildDiff(ctx, translationStatus.History, englishPath)
 	}
 
-	return status, nil
+	return translationStatus, nil
 }
 
-// buildHistory builds history analysis by comparing English and translation files.
+// buildHistory builds history by comparing English and translation file.
 func (t *Tracker) buildHistory(englishPath string, translationPath string) *HistoryAnalysis {
-	// Get English file history
+	pathInfo := parsePath(translationPath)
+
 	englishCommits := t.history.GetCommits(englishPath)
-	if len(englishCommits) == 0 {
+	translationCommits := t.history.GetCommits(translationPath)
+
+	status := calculateStatus(
+		string(pathInfo.Language),
+		englishCommits,
+		translationCommits,
+	)
+
+	// Handle no English version case
+	if status == StatusNoEnglishVersion {
 		return &HistoryAnalysis{
 			Status:   StatusNoEnglishVersion,
 			Severity: SeverityCurrent,
 		}
 	}
 
-	englishLatest := englishCommits[len(englishCommits)-1]
+	var englishLatest, translationLatest *git.Commit
+	if len(englishCommits) > 0 {
+		englishLatest = englishCommits[len(englishCommits)-1]
+	}
+	if len(translationCommits) > 0 {
+		translationLatest = translationCommits[len(translationCommits)-1]
+	}
 
-	// Get translation file history
-	translationCommits := t.history.GetCommits(translationPath)
-	if len(translationCommits) == 0 || !t.existingPaths[translationPath] {
+	// Handle not translated case
+	if status == StatusNotTranslated {
 		return t.buildNotTranslatedHistory(englishCommits, englishLatest)
 	}
 
-	translationLatest := translationCommits[len(translationCommits)-1]
-
-	// Compare and build analysis
-	return t.buildComparisonHistory(
+	// Handle up-to-date or outdated cases
+	return t.buildTranslatedHistory(
 		englishPath,
+		englishCommits,
 		englishLatest,
 		translationCommits,
 		translationLatest,
@@ -116,7 +130,7 @@ func (t *Tracker) buildNotTranslatedHistory(
 	englishLatest *git.Commit,
 ) *HistoryAnalysis {
 	stats := calculateChangeStats(englishCommits)
-	daysBehind := int(time.Since(englishLatest.Date).Hours() / 24)
+	daysBehind := calculateDaysBehind(englishCommits, []*git.Commit{})
 
 	return &HistoryAnalysis{
 		Status:              StatusNotTranslated,
@@ -132,19 +146,19 @@ func (t *Tracker) buildNotTranslatedHistory(
 	}
 }
 
-// buildComparisonHistory creates history analysis by comparing English and translation files.
-func (t *Tracker) buildComparisonHistory(
+// buildTranslatedHistory creates history analysis by comparing English and translation files.
+func (t *Tracker) buildTranslatedHistory(
 	englishPath string,
+	englishCommits []*git.Commit,
 	englishLatest *git.Commit,
 	translationCommits []*git.Commit,
 	translationLatest *git.Commit,
 ) *HistoryAnalysis {
 	missingCommits := t.history.GetCommitsAfter(englishPath, translationLatest.Date)
-	stats := calculateChangeStats(missingCommits)
-
 	referenceCommit := t.history.GetCommitBeforeOrAt(englishPath, translationLatest.Date)
-
-	daysBehind := max(0, int(englishLatest.Date.Sub(translationLatest.Date).Hours()/24))
+	
+	stats := calculateChangeStats(missingCommits)
+	daysBehind := calculateDaysBehind(englishCommits, translationCommits)
 
 	status := StatusUpToDate
 	if len(missingCommits) > 0 {
