@@ -86,12 +86,12 @@ func TestExportDiffs(t *testing.T) {
 						Hash: "def456",
 						Date: now,
 					},
-				},
-				Diff: &translation.Diff{
-					Content:      "diff content here",
-					LinesChanged: 10,
-					OldCommit:    "abc123",
-					NewCommit:    "def456",
+					Diff: &translation.Diff{
+						Content:      "diff content here",
+						LinesChanged: 10,
+						OldCommit:    "abc123",
+						NewCommit:    "def456",
+					},
 				},
 			},
 		},
@@ -148,7 +148,6 @@ func TestExportMatrices(t *testing.T) {
 					Severity:      translation.SeverityCurrent,
 					DaysBehind:    0,
 					CommitsBehind: 0,
-					LinesBehind:   0,
 					LatestCommit: &git.Commit{
 						Hash: "abc123",
 						Date: now,

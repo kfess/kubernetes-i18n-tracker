@@ -8,8 +8,13 @@ import (
 
 // PathInfo represents parsed path information.
 type PathInfo struct {
+	// Original path
 	Original string
+
+	// Language code extracted from the path
 	Language language.Language
+
+	// Category of the content (docs, blog, etc.)
 	Category string
 }
 

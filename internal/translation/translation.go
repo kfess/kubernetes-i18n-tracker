@@ -11,58 +11,99 @@ import (
 
 // TranslationStatus holds comprehensive information about a translation file.
 type TranslationStatus struct {
-	// Basic
-	Path        string            `json:"path"`
-	EnglishPath string            `json:"english_path"`
-	Language    language.Language `json:"language"`
-	Category    string            `json:"category"` // docs, blog, tutorials, etc.
+	// Target file path
+	Path string `json:"path"`
 
-	// Analysis results (nil if not available/applicable)
-	History      *HistoryAnalysis  `json:"history,omitempty"`
+	// English file path representing the source of the translation
+	EnglishPath string `json:"english_path"`
+
+	// Language of the translation
+	Language language.Language `json:"language"`
+
+	// Content category (e.g., docs, blog, tutorials, etc.)
+	Category string `json:"category"`
+
+	// Git history analysis results
+	History *HistoryAnalysis `json:"history,omitempty"`
+
+	// Pull request information
 	PullRequests []*pr.PullRequest `json:"pull_requests,omitempty"`
-	Issues       []*issue.Issue    `json:"issues,omitempty"`
-	URL          *URL              `json:"url,omitempty"`
-	Diff         *Diff             `json:"diff,omitempty"`
 
-	// Metadata
+	// Issue information
+	Issues []*issue.Issue `json:"issues,omitempty"`
+
+	// URL information
+	URL *URL `json:"url,omitempty"`
+
+	// Timestamp when this status was created
 	CreatedAt time.Time `json:"created_at"`
 }
 
 // HistoryAnalysis contains git history analysis results.
 type HistoryAnalysis struct {
-	Status   Status   `json:"status"`   // Translation status
-	Severity Severity `json:"severity"` // Severity of being out-of-date
+	// Translation status
+	Status Status `json:"status"`
 
-	// Translation file metrics
-	LastModified  *time.Time    `json:"last_modified,omitempty"`  // Last modified time of the translation file
-	LatestCommit  *git.Commit   `json:"latest_commit,omitempty"`  // Latest commit of the translation file
-	CommitHistory []*git.Commit `json:"commit_history,omitempty"` // Full commit history of the translation file
+	// Severity of being out-of-date
+	Severity Severity `json:"severity"`
 
-	// English file metrics
-	EnglishLastModified *time.Time  `json:"english_last_modified,omitempty"` // Last modified time of the English file
+	// Last modified time of the translation file
+	LastModified *time.Time `json:"last_modified,omitempty"`
+	// Latest commit of the translation file
+	LatestCommit *git.Commit `json:"latest_commit,omitempty"`
+
+	// Full commit history of the translation file
+	CommitHistory []*git.Commit `json:"commit_history,omitempty"`
+
+	// Last modified time of the English file
+	EnglishLastModified *time.Time `json:"english_last_modified,omitempty"` // Last modified time of the English file
+
+	// Latest commit of the English file
 	EnglishLatestCommit *git.Commit `json:"english_latest_commit,omitempty"` // Latest commit of the English file
-	ReferenceCommit     *git.Commit `json:"reference_commit,omitempty"`      // English commit at time of translation
 
-	// Comparison metrics
-	DaysBehind       int           `json:"days_behind"`               // Days since last translation update
-	CommitsBehind    int           `json:"commits_behind"`            // Number of English commits since last translation update
-	LinesBehind      int           `json:"lines_behind"`              // Total changed lines
-	InsertionsBehind int           `json:"insertions_behind"`         // Insertions in English since last translation update
-	DeletionsBehind  int           `json:"deletions_behind"`          // Deletions in English since last translation update
-	MissingCommits   []*git.Commit `json:"missing_commits,omitempty"` // List of English commits not yet reflected in translation
+	// Reference English commit at time of translation
+	ReferenceCommit *git.Commit `json:"reference_commit,omitempty"`
+
+	// Days since last translation update
+	DaysBehind int `json:"days_behind"`
+
+	// Number of English commits since last translation update
+	CommitsBehind int `json:"commits_behind"`
+
+	// List of English commits not yet reflected in translation
+	MissingCommits []*git.Commit `json:"missing_commits,omitempty"`
+
+	// Diff between reference English version and current English version
+	Diff *Diff `json:"diff,omitempty"`
 }
 
 // URL contains URL information for the file.
 type URL struct {
-	Website string `json:"website"` // Public website URL (e.g., https://kubernetes.io/ja/docs/...)
-	GitHub  string `json:"github"`  // GitHub repository URL (e.g., https://github.com/kubernetes/website/blob/main/content/ja/docs/...)
+	// Public website URL (e.g., https://kubernetes.io/ja/docs/...)
+	Website string `json:"website"`
+
+	// GitHub repository URL (e.g., https://github.com/kubernetes/website/blob/main/content/ja/docs/...)
+	GitHub string `json:"github"`
 }
 
 // Diff contains the diff between the current English version and the reference English version
 // that was used when the translation was last updated.
 type Diff struct {
-	Content      string `json:"content"`       // Diff content
-	LinesChanged int    `json:"lines_changed"` // Number of lines changed
-	OldCommit    string `json:"old_commit"`    // Reference English commit hash (at translation time)
-	NewCommit    string `json:"new_commit"`    // Current English commit hash
+	// Diff content
+	Content string `json:"content"`
+
+	// Total number of lines changed (insertions + deletions)
+	LinesChanged int `json:"lines_changed"`
+
+	// Number of lines added
+	Insertions int `json:"insertions"`
+
+	// Number of lines deleted
+	Deletions int `json:"deletions"`
+
+	// Commits involved in the diff
+	OldCommit string `json:"old_commit"`
+
+	// Current English commit hash
+	NewCommit string `json:"new_commit"`
 }
