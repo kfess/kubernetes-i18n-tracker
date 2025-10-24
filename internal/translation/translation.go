@@ -41,26 +41,40 @@ type TranslationStatus struct {
 
 // HistoryAnalysis contains git history analysis results.
 type HistoryAnalysis struct {
-	Status   Status   `json:"status"`   // Translation status
-	Severity Severity `json:"severity"` // Severity of being out-of-date
+	// Translation status
+	Status Status `json:"status"`
 
-	// Translation file metrics
-	LastModified  *time.Time    `json:"last_modified,omitempty"`  // Last modified time of the translation file
-	LatestCommit  *git.Commit   `json:"latest_commit,omitempty"`  // Latest commit of the translation file
-	CommitHistory []*git.Commit `json:"commit_history,omitempty"` // Full commit history of the translation file
+	// Severity of being out-of-date
+	Severity Severity `json:"severity"`
 
-	// English file metrics
-	EnglishLastModified *time.Time  `json:"english_last_modified,omitempty"` // Last modified time of the English file
+	// Last modified time of the translation file
+	LastModified *time.Time `json:"last_modified,omitempty"`
+	// Latest commit of the translation file
+	LatestCommit *git.Commit `json:"latest_commit,omitempty"`
+
+	// Full commit history of the translation file
+	CommitHistory []*git.Commit `json:"commit_history,omitempty"`
+
+	// Last modified time of the English file
+	EnglishLastModified *time.Time `json:"english_last_modified,omitempty"` // Last modified time of the English file
+
+	// Latest commit of the English file
 	EnglishLatestCommit *git.Commit `json:"english_latest_commit,omitempty"` // Latest commit of the English file
-	ReferenceCommit     *git.Commit `json:"reference_commit,omitempty"`      // English commit at time of translation
 
-	// Comparison metrics
-	DaysBehind     int           `json:"days_behind"`               // Days since last translation update
-	CommitsBehind  int           `json:"commits_behind"`            // Number of English commits since last translation update
-	MissingCommits []*git.Commit `json:"missing_commits,omitempty"` // List of English commits not yet reflected in translation
+	// Reference English commit at time of translation
+	ReferenceCommit *git.Commit `json:"reference_commit,omitempty"`
 
-	// Diff information
-	Diff *Diff `json:"diff,omitempty"` // Actual diff between reference and current English version
+	// Days since last translation update
+	DaysBehind int `json:"days_behind"`
+
+	// Number of English commits since last translation update
+	CommitsBehind int `json:"commits_behind"`
+
+	// List of English commits not yet reflected in translation
+	MissingCommits []*git.Commit `json:"missing_commits,omitempty"`
+
+	// Diff between reference English version and current English version
+	Diff *Diff `json:"diff,omitempty"`
 }
 
 // URL contains URL information for the file.
