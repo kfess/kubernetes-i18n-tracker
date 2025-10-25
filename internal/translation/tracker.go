@@ -75,13 +75,7 @@ func (t *Tracker) GetTranslationStatus(ctx context.Context, translationPath stri
 
 	translationStatus.PullRequests = t.buildPullRequests(translationPath)
 	translationStatus.Issues = t.buildIssues(translationPath)
-
-	url, err := t.buildURL(ctx, translationPath)
-	if err != nil {
-		// URL generation failure is not critical, continue with nil URL
-		logger.Warnf("Failed to build URL for %s: %v", translationPath, err)
-	}
-	translationStatus.URL = url
+	translationStatus.URL = t.buildURL(ctx, translationPath)
 
 	return translationStatus, nil
 }
@@ -217,7 +211,6 @@ func (t *Tracker) buildOutdatedHistory(
 
 	diff, err := t.buildDiff(ctx, analysis, englishPath)
 	if err != nil {
-		logger.Errorf("Failed to calculate diff for %s: %v", englishPath, err)
 		return nil, fmt.Errorf("calculate diff for %s: %w", englishPath, err)
 	}
 
@@ -278,9 +271,9 @@ func (t *Tracker) buildIssues(path string) []*issue.Issue {
 }
 
 // buildURL builds URL information for the file.
-func (t *Tracker) buildURL(ctx context.Context, path string) (*URL, error) {
+func (t *Tracker) buildURL(ctx context.Context, path string) *URL {
 	if t.urlConverter == nil {
-		return nil, nil
+		return nil
 	}
 
 	githubURL := toGitHubURL(path)
@@ -290,13 +283,13 @@ func (t *Tracker) buildURL(ctx context.Context, path string) (*URL, error) {
 		// Return GitHub URL only on conversion error
 		return &URL{
 			GitHub: githubURL,
-		}, nil
+		}
 	}
 
 	return &URL{
 		Website: websiteURL,
 		GitHub:  githubURL,
-	}, nil
+	}
 }
 
 // buildDiff builds diff between reference English commit and latest English commit.
