@@ -1,5 +1,7 @@
 package language
 
+import "slices"
+
 type Language string
 
 const (
@@ -61,11 +63,5 @@ var NotSupportedYetLanguages = []string{
 }
 
 func IsSupportedLanguage(lang string) bool {
-	for _, l := range SupportedLanguages {
-		if l == lang {
-			return true
-		}
-	}
-
-	return false
+	return slices.Contains(SupportedLanguages, lang)
 }
