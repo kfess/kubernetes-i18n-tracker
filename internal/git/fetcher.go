@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os/exec"
 	"strconv"
+	"sync"
 	"sync/atomic"
 
 	"github.com/kfess/kubernetes-i18n-tracker/internal/logger"
@@ -58,25 +59,46 @@ func (f *Fetcher) FetchHistory(ctx context.Context) ([]*Event, error) {
 
 	logger.Info(fmt.Sprintf("Found %d commits to process", len(commits)))
 
-	var allEvents []*Event
-	var processedCommits int64
+	var (
+		allEvents        []*Event
+		processedCommits int64
+		mu               sync.Mutex
+		wg               sync.WaitGroup
+	)
+
+	// Create a semaphore to limit concurrent git processes
+	semaphore := make(chan struct{}, f.options.Workers)
 
 	for _, commitHash := range commits {
-		processed := atomic.AddInt64(&processedCommits, 1)
-		if processed%100 == 0 || processed == int64(len(commits)) {
-			percent := (processed * 100) / int64(len(commits))
-			logger.Info(fmt.Sprintf("Progress: %d/%d commits (%d%%)", processed, len(commits), percent))
-		}
+		wg.Add(1)
+		go func(hash string) {
+			defer wg.Done()
 
-		events, err := f.processCommit(ctx, commitHash)
-		if err != nil {
-			logger.Warn(fmt.Sprintf("Failed to process commit %s: %v", commitHash, err))
-			continue
-		}
+			// Acquire semaphore
+			semaphore <- struct{}{}
+			defer func() { <-semaphore }()
 
-		allEvents = append(allEvents, events...)
+			events, err := f.processCommit(ctx, hash)
+			if err != nil {
+				logger.Warn(fmt.Sprintf("Failed to process commit %s: %v", hash, err))
+				return
+			}
 
+			// Thread-safe append
+			mu.Lock()
+			allEvents = append(allEvents, events...)
+			mu.Unlock()
+
+			// Progress logging
+			processed := atomic.AddInt64(&processedCommits, 1)
+			if processed%100 == 0 || processed == int64(len(commits)) {
+				percent := (processed * 100) / int64(len(commits))
+				logger.Info(fmt.Sprintf("Progress: %d/%d commits (%d%%)", processed, len(commits), percent))
+			}
+		}(commitHash)
 	}
+
+	wg.Wait()
 
 	logger.Info(fmt.Sprintf("Completed: %d commits processed, %d events generated", len(commits), len(allEvents)))
 
