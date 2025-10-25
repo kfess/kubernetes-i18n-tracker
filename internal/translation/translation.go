@@ -79,15 +79,14 @@ type HistoryAnalysis struct {
 
 // URL contains URL information for the file.
 type URL struct {
-	// Public website URL (e.g., https://kubernetes.io/ja/docs/...)
+	// Public Kubernetes Official website URL (e.g., https://kubernetes.io/ja/docs/...)
 	Website string `json:"website"`
 
 	// GitHub repository URL (e.g., https://github.com/kubernetes/website/blob/main/content/ja/docs/...)
 	GitHub string `json:"github"`
 }
 
-// Diff contains the diff between the current English version and the reference English version
-// that was used when the translation was last updated.
+// Diff represents the difference between the current English version and the reference English version
 type Diff struct {
 	// Diff content
 	Content string `json:"content"`
@@ -102,8 +101,8 @@ type Diff struct {
 	Deletions int `json:"deletions"`
 
 	// Commits involved in the diff
-	OldCommit string `json:"old_commit"`
+	OldCommitHash string `json:"old_commit_hash"`
 
 	// Current English commit hash
-	NewCommit string `json:"new_commit"`
+	NewCommitHash string `json:"new_commit_hash"`
 }

@@ -12,20 +12,35 @@ import (
 )
 
 type Diff struct {
-	// Commit
+	// Old commit hash
 	OldCommitHash string `json:"old_commit_hash"`
+
+	// New commit hash
 	NewCommitHash string `json:"new_commit_hash"`
 
-	// File
-	FilePath        string `json:"file_path"`
-	EnglishFilePath string `json:"english_file_path"`
-	Language        string `json:"language"`
+	// File path of the translation file
+	FilePath string `json:"file_path"`
 
-	// Diff Content
+	// English file path
+	EnglishFilePath string `json:"english_file_path"`
+
+	// Language of the translation
+	Language string `json:"language"`
+
+	// Diff content
 	Content string `json:"content"`
+
+	// Number of lines changed
+	LinesChanged int `json:"lines_changed"`
+
+	// Number of lines added
+	Insertions int `json:"insertions"`
+
+	// Number of lines deleted
+	Deletions int `json:"deletions"`
 }
 
-func CalculateDiff(ctx context.Context, repoPath, oldCommitHash, newCommitHash, filePath string) (Diff, error) {
+func CalculateDiff(ctx context.Context, repoPath string, oldCommitHash string, newCommitHash string, filePath string) (Diff, error) {
 	absRepoPath, err := filepath.Abs(repoPath)
 	if err != nil {
 		return Diff{}, fmt.Errorf("failed to resolve repository path: %w", err)
@@ -52,6 +67,8 @@ func CalculateDiff(ctx context.Context, repoPath, oldCommitHash, newCommitHash, 
 		return Diff{}, fmt.Errorf("git diff failed: %w, output: %s", err, string(output))
 	}
 
+	insertions, deletions, total := countDiffLines(string(output))
+
 	return Diff{
 		OldCommitHash:   oldCommitHash,
 		NewCommitHash:   newCommitHash,
@@ -59,6 +76,9 @@ func CalculateDiff(ctx context.Context, repoPath, oldCommitHash, newCommitHash, 
 		EnglishFilePath: generateEnglishFilePath(filePath, language),
 		Content:         string(output),
 		Language:        language,
+		LinesChanged:    total,
+		Insertions:      insertions,
+		Deletions:       deletions,
 	}, nil
 }
 
@@ -90,7 +110,8 @@ func extractLanguageFromFilePath(filePath string) (string, error) {
 	return "", fmt.Errorf("language not found in file path: %s", filePath)
 }
 
-func generateEnglishFilePath(filePath, language string) string {
+// generateEnglishFilePath generates the corresponding English file path from the translation file path.
+func generateEnglishFilePath(filePath string, language string) string {
 	parts := strings.Split(filePath, "/")
 	for i, part := range parts {
 		if part == "content" && i+1 < len(parts) && parts[i+1] == language {
@@ -99,4 +120,17 @@ func generateEnglishFilePath(filePath, language string) string {
 		}
 	}
 	return strings.Join(parts, "/")
+}
+
+// countDiffLines counts the number of changed lines in a diff.
+func countDiffLines(diffContent string) (insertions int, deletions int, total int) {
+	for _, line := range strings.Split(diffContent, "\n") {
+		if strings.HasPrefix(line, "+") && !strings.HasPrefix(line, "+++") {
+			insertions++
+		} else if strings.HasPrefix(line, "-") && !strings.HasPrefix(line, "---") {
+			deletions++
+		}
+	}
+	total = insertions + deletions
+	return insertions, deletions, total
 }

@@ -2,7 +2,6 @@ package translation
 
 import (
 	"context"
-	"strings"
 	"time"
 
 	"github.com/kfess/kubernetes-i18n-tracker/internal/diff"
@@ -90,10 +89,7 @@ func (t *Tracker) buildHistory(ctx context.Context, englishPath string, translat
 
 	// Handle no English version case
 	if status == StatusNoEnglishVersion {
-		return &HistoryAnalysis{
-			Status:   StatusNoEnglishVersion,
-			Severity: SeverityCurrent,
-		}
+		return t.buildNoEnglishVersionHistory()
 	}
 
 	var englishLatest, translationLatest *git.Commit
@@ -125,6 +121,13 @@ func (t *Tracker) buildHistory(ctx context.Context, englishPath string, translat
 		translationCommits,
 		translationLatest,
 	)
+}
+
+func (t *Tracker) buildNoEnglishVersionHistory() *HistoryAnalysis {
+	return &HistoryAnalysis{
+		Status:   StatusNoEnglishVersion,
+		Severity: SeverityCurrent,
+	}
 }
 
 // buildNotTranslatedHistory creates history analysis for files that haven't been translated.
@@ -178,9 +181,10 @@ func (t *Tracker) buildOutdatedHistory(
 	translationCommits []*git.Commit,
 	translationLatest *git.Commit,
 ) *HistoryAnalysis {
+	daysBehind := calculateDaysBehind(englishCommits, translationCommits)
+
 	missingCommits := t.history.GetCommitsAfter(englishPath, translationLatest.Date)
 	referenceCommit := t.history.GetCommitBeforeOrAt(englishPath, translationLatest.Date)
-	daysBehind := calculateDaysBehind(englishCommits, translationCommits)
 
 	diff := t.buildDiff(ctx,
 		&HistoryAnalysis{
@@ -258,7 +262,7 @@ func (t *Tracker) buildURL(ctx context.Context, path string) *URL {
 	}
 }
 
-// buildDiff builds diff information (heavy operation, called only when needed).
+// buildDiff builds diff between reference English commit and latest English commit.
 func (t *Tracker) buildDiff(
 	ctx context.Context,
 	historyAnalysis *HistoryAnalysis,
@@ -279,27 +283,12 @@ func (t *Tracker) buildDiff(
 		return nil
 	}
 
-	insertions, deletions, total := countDiffLines(result.Content)
-
 	return &Diff{
-		Content:      result.Content,
-		LinesChanged: total,
-		Insertions:   insertions,
-		Deletions:    deletions,
-		OldCommit:    result.OldCommitHash,
-		NewCommit:    result.NewCommitHash,
+		Content:       result.Content,
+		LinesChanged:  result.LinesChanged,
+		Insertions:    result.Insertions,
+		Deletions:     result.Deletions,
+		OldCommitHash: result.OldCommitHash,
+		NewCommitHash: result.NewCommitHash,
 	}
-}
-
-// countDiffLines counts the number of changed lines in a diff.
-func countDiffLines(diffContent string) (insertions int, deletions int, total int) {
-	for _, line := range strings.Split(diffContent, "\n") {
-		if strings.HasPrefix(line, "+") && !strings.HasPrefix(line, "+++") {
-			insertions++
-		} else if strings.HasPrefix(line, "-") && !strings.HasPrefix(line, "---") {
-			deletions++
-		}
-	}
-	total = insertions + deletions
-	return insertions, deletions, total
 }
