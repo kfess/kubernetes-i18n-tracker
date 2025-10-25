@@ -42,7 +42,8 @@ func loadEvents(path string) ([]*git.Event, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to open file: %w", err)
 	}
-	defer file.Close()
+
+	defer func() { _ = file.Close() }()
 
 	var events []*git.Event
 	scanner := bufio.NewScanner(file)
@@ -105,7 +106,9 @@ func saveResults(results map[string]*translation.TranslationStatus) error {
 	if err != nil {
 		return fmt.Errorf("failed to create output file: %w", err)
 	}
-	defer file.Close()
+
+	// Ignore error, REFACTOR
+	defer func() { _ = file.Close() }()
 
 	encoder := json.NewEncoder(file)
 	encoder.SetIndent("", "  ")
