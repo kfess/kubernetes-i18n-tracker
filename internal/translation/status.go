@@ -61,7 +61,7 @@ func calculateDaysBehind(englishCommits []*git.Commit, translationCommits []*git
 	var diffHours float64
 	if len(translationCommits) == 0 {
 		// If there are no translation commits, calculate from the first English commit
-		englishFirst := englishCommits[len(englishCommits)-1]
+		englishFirst := englishCommits[0]
 		diffHours = time.Since(englishFirst.Date).Hours()
 	} else {
 		// Compare the English latest and translation latest commits

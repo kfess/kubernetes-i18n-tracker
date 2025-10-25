@@ -2,6 +2,7 @@ package translation
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/kfess/kubernetes-i18n-tracker/internal/diff"
@@ -66,16 +67,27 @@ func (t *Tracker) GetTranslationStatus(ctx context.Context, translationPath stri
 	}
 
 	// Build each component
-	translationStatus.History = t.buildHistory(ctx, englishPath, translationPath)
+	history, err := t.buildHistory(ctx, englishPath, translationPath)
+	if err != nil {
+		return nil, fmt.Errorf("build history for %s: %w", translationPath, err)
+	}
+	translationStatus.History = history
+
 	translationStatus.PullRequests = t.buildPullRequests(translationPath)
 	translationStatus.Issues = t.buildIssues(translationPath)
-	translationStatus.URL = t.buildURL(ctx, translationPath)
+
+	url, err := t.buildURL(ctx, translationPath)
+	if err != nil {
+		// URL generation failure is not critical, continue with nil URL
+		logger.Warnf("Failed to build URL for %s: %v", translationPath, err)
+	}
+	translationStatus.URL = url
 
 	return translationStatus, nil
 }
 
 // buildHistory builds history by comparing English and translation file.
-func (t *Tracker) buildHistory(ctx context.Context, englishPath string, translationPath string) *HistoryAnalysis {
+func (t *Tracker) buildHistory(ctx context.Context, englishPath string, translationPath string) (*HistoryAnalysis, error) {
 	pathInfo := parsePath(translationPath)
 
 	englishCommits := t.history.GetCommits(englishPath)
@@ -87,9 +99,13 @@ func (t *Tracker) buildHistory(ctx context.Context, englishPath string, translat
 		translationCommits,
 	)
 
+	logger.Debugf("Translation status for %s: %s (EN commits: %d, Translation commits: %d)",
+		translationPath, status, len(englishCommits), len(translationCommits))
+
 	// Handle no English version case
 	if status == StatusNoEnglishVersion {
-		return t.buildNoEnglishVersionHistory()
+		logger.Warnf("No English version found for %s", translationPath)
+		return t.buildNoEnglishVersionHistory(), nil
 	}
 
 	var englishLatest, translationLatest *git.Commit
@@ -101,7 +117,7 @@ func (t *Tracker) buildHistory(ctx context.Context, englishPath string, translat
 	}
 
 	if status == StatusNotTranslated {
-		return t.buildNotTranslatedHistory(englishCommits, englishLatest)
+		return t.buildNotTranslatedHistory(englishCommits, englishLatest), nil
 	}
 
 	if status == StatusUpToDate {
@@ -110,10 +126,10 @@ func (t *Tracker) buildHistory(ctx context.Context, englishPath string, translat
 			englishLatest,
 			translationCommits,
 			translationLatest,
-		)
+		), nil
 	}
 
-	return t.buildOutdatedHistory(
+	outdatedHistory, err := t.buildOutdatedHistory(
 		ctx,
 		englishPath,
 		englishCommits,
@@ -121,6 +137,11 @@ func (t *Tracker) buildHistory(ctx context.Context, englishPath string, translat
 		translationCommits,
 		translationLatest,
 	)
+	if err != nil {
+		return nil, err
+	}
+
+	return outdatedHistory, nil
 }
 
 func (t *Tracker) buildNoEnglishVersionHistory() *HistoryAnalysis {
@@ -180,21 +201,31 @@ func (t *Tracker) buildOutdatedHistory(
 	englishLatest *git.Commit,
 	translationCommits []*git.Commit,
 	translationLatest *git.Commit,
-) *HistoryAnalysis {
+) (*HistoryAnalysis, error) {
 	daysBehind := calculateDaysBehind(englishCommits, translationCommits)
 
 	missingCommits := t.history.GetCommitsAfter(englishPath, translationLatest.Date)
 	referenceCommit := t.history.GetCommitBeforeOrAt(englishPath, translationLatest.Date)
 
-	diff := t.buildDiff(ctx,
-		&HistoryAnalysis{
-			ReferenceCommit:     referenceCommit,
-			EnglishLatestCommit: englishLatest,
-		}, englishPath)
+	logger.Debugf("Outdated translation %s: %d days behind, %d missing commits",
+		englishPath, daysBehind, len(missingCommits))
+
+	analysis := &HistoryAnalysis{
+		ReferenceCommit:     referenceCommit,
+		EnglishLatestCommit: englishLatest,
+	}
+
+	diff, err := t.buildDiff(ctx, analysis, englishPath)
+	if err != nil {
+		logger.Errorf("Failed to calculate diff for %s: %v", englishPath, err)
+		return nil, fmt.Errorf("calculate diff for %s: %w", englishPath, err)
+	}
 
 	severity := SeverityCurrent
 	if diff != nil {
 		severity = calculateSeverity(diff.LinesChanged)
+		logger.Debugf("Diff calculated for %s: %d lines changed, severity: %s",
+			englishPath, diff.LinesChanged, severity)
 	}
 
 	return &HistoryAnalysis{
@@ -210,7 +241,7 @@ func (t *Tracker) buildOutdatedHistory(
 		CommitsBehind:       len(missingCommits),
 		MissingCommits:      missingCommits,
 		Diff:                diff,
-	}
+	}, nil
 }
 
 // buildPullRequests builds PR list for the file.
@@ -238,28 +269,34 @@ func (t *Tracker) buildIssues(path string) []*issue.Issue {
 	if issues == nil {
 		return []*issue.Issue{} // Return empty slice instead of nil
 	}
+
+	if len(issues) > 0 {
+		logger.Debugf("Found %d issues for %s", len(issues), path)
+	}
+
 	return issues
 }
 
 // buildURL builds URL information for the file.
-func (t *Tracker) buildURL(ctx context.Context, path string) *URL {
+func (t *Tracker) buildURL(ctx context.Context, path string) (*URL, error) {
 	if t.urlConverter == nil {
-		return nil
+		return nil, nil
 	}
 
 	githubURL := toGitHubURL(path)
 	websiteURL, err := t.urlConverter.Convert(ctx, path)
 	if err != nil {
-		// If URL generation fails, return GitHub URL only
+		logger.Debugf("Website URL conversion failed for %s, using GitHub URL only: %v", path, err)
+		// Return GitHub URL only on conversion error
 		return &URL{
 			GitHub: githubURL,
-		}
+		}, nil
 	}
 
 	return &URL{
 		Website: websiteURL,
 		GitHub:  githubURL,
-	}
+	}, nil
 }
 
 // buildDiff builds diff between reference English commit and latest English commit.
@@ -267,10 +304,16 @@ func (t *Tracker) buildDiff(
 	ctx context.Context,
 	historyAnalysis *HistoryAnalysis,
 	englishPath string,
-) *Diff {
+) (*Diff, error) {
 	if historyAnalysis.ReferenceCommit == nil || historyAnalysis.EnglishLatestCommit == nil {
-		return nil
+		logger.Debugf("Skipping diff for %s: missing reference or latest commit", englishPath)
+		return nil, nil
 	}
+
+	logger.Debugf("Calculating diff for %s (%s..%s)",
+		englishPath,
+		historyAnalysis.ReferenceCommit.Hash[:7],
+		historyAnalysis.EnglishLatestCommit.Hash[:7])
 
 	result, err := diff.CalculateDiff(
 		ctx,
@@ -280,7 +323,7 @@ func (t *Tracker) buildDiff(
 		englishPath,
 	)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 
 	return &Diff{
@@ -290,5 +333,5 @@ func (t *Tracker) buildDiff(
 		Deletions:     result.Deletions,
 		OldCommitHash: result.OldCommitHash,
 		NewCommitHash: result.NewCommitHash,
-	}
+	}, nil
 }
