@@ -31,7 +31,7 @@ func (p *YamlFrontMatterParser) Parse(path string) (*FrontMatter, error) {
 		return nil, err
 	}
 
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	content, err := extractFrontMatterString(file)
 	if err != nil {

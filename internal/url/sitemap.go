@@ -48,7 +48,7 @@ func (c *Client) fetchSitemap(ctx context.Context, lang string) ([]string, error
 		return nil, err
 	}
 
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("failed to fetch sitemap: %s", resp.Status)

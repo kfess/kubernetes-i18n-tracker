@@ -356,7 +356,9 @@ func (e *Exporter) writeJSON(filename string, data interface{}) error {
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+
+	// Ignore error, refactor exporter.go
+	defer func() { _ = file.Close() }()
 
 	encoder := json.NewEncoder(file)
 	encoder.SetIndent("", "  ")

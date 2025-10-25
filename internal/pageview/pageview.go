@@ -22,7 +22,8 @@ func AggregatePageViews(csvPath string, existingUrls map[string]bool, baseURL st
 	if err != nil {
 		return nil, fmt.Errorf("failed to open CSV file: %w", err)
 	}
-	defer file.Close()
+
+	defer func() { _ = file.Close() }()
 
 	return AggregateFromReader(file, existingUrls, baseURL)
 }

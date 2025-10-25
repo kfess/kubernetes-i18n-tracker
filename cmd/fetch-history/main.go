@@ -64,7 +64,13 @@ func main() {
 		logger.Error(fmt.Sprintf("Failed to create writer: %v", err))
 		os.Exit(1)
 	}
-	defer writer.Close()
+
+	defer func() {
+		if err := writer.Close(); err != nil {
+			logger.Error(fmt.Sprintf("Failed to close writer: %v", err))
+			os.Exit(1)
+		}
+	}()
 
 	if err := writer.WriteAll(events); err != nil {
 		logger.Error(fmt.Sprintf("Failed to write events: %v", err))
