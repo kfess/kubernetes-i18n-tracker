@@ -52,7 +52,7 @@ jobs:
         run: git clone -b main --single-branch https://github.com/kubernetes/website.git ./k8s-repo/website
 
       - name: Run data collection scripts
-        working-directory: ./scripts/shell
+        working-directory: ./scripts
         run: |
           chmod +x ./collect_all_files.sh
           ./collect_all_files.sh

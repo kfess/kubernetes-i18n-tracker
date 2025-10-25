@@ -13,7 +13,8 @@
         "golang.go",
         "ms-azuretools.vscode-docker",
         "eamodio.gitlens",
-        "wayou.vscode-todo-highlight"
+        "wayou.vscode-todo-highlight",
+        "timonwong.shellcheck"
       ],
       "settings": {
         "terminal.integrated.defaultProfile.linux": "bash",
