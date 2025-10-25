@@ -1,8 +1,10 @@
 import blogArticles from '@/data/output/matrix/blog.json';
+import careerArticles from '@/data/output/matrix/careers.json';
 import caseStudiesArticles from '@/data/output/matrix/case-studies.json';
 import communityArticles from '@/data/output/matrix/community.json';
 import docsConceptsArticles from '@/data/output/matrix/docs_concepts.json';
 import docsContributionArticles from '@/data/output/matrix/docs_contribute.json';
+import docsHomeArticles from '@/data/output/matrix/docs_home.json';
 import docsReferenceArticles from '@/data/output/matrix/docs_reference.json';
 import docsSetupArticles from '@/data/output/matrix/docs_setup.json';
 import docsTasksArticles from '@/data/output/matrix/docs_tasks.json';
@@ -26,6 +28,7 @@ const articles = {
   examples: examplesArticles as TranslationStatusReport,
   docsConcept: docsConceptsArticles as TranslationStatusReport,
   docsContribute: docsContributionArticles as TranslationStatusReport,
+  docsHome: docsHomeArticles as TranslationStatusReport,
   docsTask: docsTasksArticles as TranslationStatusReport,
   docsReference: docsReferenceArticles as TranslationStatusReport,
   docsSetup: docsSetupArticles as TranslationStatusReport,
@@ -34,6 +37,7 @@ const articles = {
   partner: partnerArticles as TranslationStatusReport,
   release: releaseArticles as TranslationStatusReport,
   training: trainingArticles as TranslationStatusReport,
+  career: careerArticles as TranslationStatusReport,
 };
 
 export const useFetchTranslationArticles = (

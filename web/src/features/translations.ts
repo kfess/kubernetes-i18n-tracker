@@ -1,6 +1,6 @@
 import { type LanguageCode } from '@/features/language/languageCodes';
 
-export type TranslationStatus = 'up_to_date' | 'outdated' | 'not_translated';
+export type TranslationStatus = 'up_to_date' | 'outdated' | 'not_translated' | "no_english_version";
 
 type Severity = 'current' | 'minor' | 'moderate' | 'significant' | 'critical';
 
@@ -55,6 +55,7 @@ export const articleCategories = [
   { value: 'docsReference', label: 'Docs / Reference' },
   { value: 'docsTutorial', label: 'Docs / Tutorial' },
   { value: 'docsContribute', label: 'Docs / Contribution' },
+  { value: 'docsHome', label: 'Docs / Home' },
   { value: 'blog', label: 'Blog' },
   { value: 'community', label: 'Community' },
   { value: 'caseStudy', label: 'Case Study' },
@@ -63,6 +64,7 @@ export const articleCategories = [
   { value: 'release', label: 'Release' },
   { value: 'partner', label: 'Partner' },
   { value: 'training', label: 'Training' },
+  { value: 'career', label: 'Career' },
 ] as const;
 
 export type ArticleCategory = (typeof articleCategories)[number]['value'];
