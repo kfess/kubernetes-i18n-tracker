@@ -193,7 +193,7 @@ func main() {
 	// Step 6: Fetch sitemaps for URL conversion
 	logger.Info("Fetching sitemaps...")
 	urlClient := url.NewClient("https://kubernetes.io")
-	sitemapURLs, err := urlClient.FetchAllSitemaps(ctx)
+	sitemapURLs, err := urlClient.FetchAllSitemaps(ctx, language.SupportedLanguages)
 	if err != nil {
 		logger.Errorf("Failed to fetch sitemaps: %v", err)
 		sitemapURLs = []string{}
