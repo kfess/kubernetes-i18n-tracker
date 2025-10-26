@@ -205,7 +205,8 @@ func main() {
 	logger.Infof("Fetched %d URLs from sitemaps", len(sitemapURLs))
 
 	// Step 7: Create URL converter
-	parser := url.NewYAMLFrontMatterParser(repoPath)
+
+	parser := url.NewYAMLFrontMatterParser()
 	urlConfig := url.Config{
 		BaseUrl:        "https://kubernetes.io",
 		ExistingUrls:   existingURLsMap,
@@ -217,7 +218,7 @@ func main() {
 			"_common-resources", "includes",
 		},
 	}
-	urlConverter := url.NewConverter(urlConfig, parser)
+	urlConverter := url.NewConverter(urlConfig)
 
 	// Step 8: Create translation tracker
 	logger.Info("Creating translation tracker...")
@@ -255,9 +256,22 @@ func main() {
 				translationPath = strings.Replace(englishPath, "content/en/", "content/"+lang+"/", 1)
 			}
 
-			status, err := tracker.GetTranslationStatus(ctx, translationPath)
+			contentBytes, err := os.ReadFile(filepath.Join(repoPath, translationPath))
+			var frontMatter *url.FrontMatter
 			if err != nil {
-				logger.Warnf("Failed to get status for %s: %v", translationPath, err)
+				// File doesn't exist - still create status for not_translated
+				frontMatter = nil
+			} else {
+				frontMatter, err = parser.Parse(string(contentBytes))
+				if err != nil {
+					logger.Errorf("Failed to parse front matter for %s: %v", translationPath, err)
+					continue
+				}
+			}
+
+			status, err := tracker.GetTranslationStatus(ctx, translationPath, frontMatter)
+			if err != nil {
+				logger.Errorf("Failed to get status for %s: %v", translationPath, err)
 				continue
 			}
 

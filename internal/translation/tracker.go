@@ -54,7 +54,11 @@ func NewTracker(
 }
 
 // GetTranslationStatus returns comprehensive translation status for a single file.
-func (t *Tracker) GetTranslationStatus(ctx context.Context, translationPath string) (*TranslationStatus, error) {
+func (t *Tracker) GetTranslationStatus(
+	ctx context.Context,
+	translationPath string,
+	fm *url.FrontMatter,
+) (*TranslationStatus, error) {
 	pathInfo := parsePath(translationPath)
 	englishPath := pathInfo.ToEnglishPath()
 
@@ -75,7 +79,7 @@ func (t *Tracker) GetTranslationStatus(ctx context.Context, translationPath stri
 
 	translationStatus.PullRequests = t.buildPullRequests(translationPath)
 	translationStatus.Issues = t.buildIssues(translationPath)
-	translationStatus.URL = t.buildURL(ctx, translationPath)
+	translationStatus.URL = t.buildURL(ctx, translationPath, fm)
 
 	return translationStatus, nil
 }
@@ -271,13 +275,13 @@ func (t *Tracker) buildIssues(path string) []*issue.Issue {
 }
 
 // buildURL builds URL information for the file.
-func (t *Tracker) buildURL(ctx context.Context, path string) *URL {
-	if t.urlConverter == nil {
+func (t *Tracker) buildURL(ctx context.Context, path string, fm *url.FrontMatter) *URL {
+	if t.urlConverter == nil || fm == nil {
 		return nil
 	}
 
 	githubURL := toGitHubURL(path)
-	websiteURL, err := t.urlConverter.Convert(ctx, path)
+	websiteURL, err := t.urlConverter.Convert(ctx, path, fm)
 	if err != nil {
 		logger.Debugf("Website URL conversion failed for %s, using GitHub URL only: %v", path, err)
 		// Return GitHub URL only on conversion error
