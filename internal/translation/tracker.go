@@ -18,6 +18,7 @@ import (
 type Tracker struct {
 	history       *history.History
 	urlConverter  *url.Converter
+	fmParser      url.FrontMatterParser
 	prIndex       *pr.Index
 	issueIndex    *issue.Index
 	repoPath      string
@@ -34,6 +35,7 @@ type Config struct {
 func NewTracker(
 	historyTracker *history.History,
 	urlConverter *url.Converter,
+	fmParser url.FrontMatterParser,
 	prIndex *pr.Index,
 	issueIndex *issue.Index,
 	config Config,
@@ -46,6 +48,7 @@ func NewTracker(
 	return &Tracker{
 		history:       historyTracker,
 		urlConverter:  urlConverter,
+		fmParser:      fmParser,
 		prIndex:       prIndex,
 		issueIndex:    issueIndex,
 		repoPath:      config.RepoPath,
@@ -57,7 +60,7 @@ func NewTracker(
 func (t *Tracker) GetTranslationStatus(
 	ctx context.Context,
 	translationPath string,
-	fm *url.FrontMatter,
+	translationContent string,
 ) (*TranslationStatus, error) {
 	pathInfo := parsePath(translationPath)
 	englishPath := pathInfo.ToEnglishPath()
@@ -76,10 +79,9 @@ func (t *Tracker) GetTranslationStatus(
 		return nil, fmt.Errorf("build history for %s: %w", translationPath, err)
 	}
 	translationStatus.History = history
-
 	translationStatus.PullRequests = t.buildPullRequests(translationPath)
 	translationStatus.Issues = t.buildIssues(translationPath)
-	translationStatus.URL = t.buildURL(ctx, translationPath, fm)
+	translationStatus.URL = t.buildURL(ctx, translationPath, translationContent)
 
 	return translationStatus, nil
 }
@@ -275,12 +277,22 @@ func (t *Tracker) buildIssues(path string) []*issue.Issue {
 }
 
 // buildURL builds URL information for the file.
-func (t *Tracker) buildURL(ctx context.Context, path string, fm *url.FrontMatter) *URL {
-	if t.urlConverter == nil || fm == nil {
+func (t *Tracker) buildURL(ctx context.Context, path string, content string) *URL {
+	if t.urlConverter == nil || t.fmParser == nil {
 		return nil
 	}
 
 	githubURL := toGitHubURL(path)
+
+	fm, err := t.fmParser.Parse(content)
+	if err != nil {
+		logger.Debugf("Front matter parsing failed for %s, using GitHub URL only: %v", path, err)
+		// Return GitHub URL only on parsing error
+		return &URL{
+			GitHub: toGitHubURL(path),
+		}
+	}
+
 	websiteURL, err := t.urlConverter.Convert(ctx, path, fm)
 	if err != nil {
 		logger.Debugf("Website URL conversion failed for %s, using GitHub URL only: %v", path, err)

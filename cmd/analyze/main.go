@@ -226,7 +226,7 @@ func main() {
 		RepoPath:      repoPath,
 		ExistingPaths: allPaths,
 	}
-	tracker := translation.NewTracker(historyTracker, urlConverter, prIndex, issueIndex, trackerConfig)
+	tracker := translation.NewTracker(historyTracker, urlConverter, parser, prIndex, issueIndex, trackerConfig)
 
 	// Step 9: Analyze translation status for all files
 	logger.Info("Analyzing translation status...")
@@ -257,19 +257,7 @@ func main() {
 			}
 
 			contentBytes, err := os.ReadFile(filepath.Join(repoPath, translationPath))
-			var frontMatter *url.FrontMatter
-			if err != nil {
-				// File doesn't exist - still create status for not_translated
-				frontMatter = nil
-			} else {
-				frontMatter, err = parser.Parse(string(contentBytes))
-				if err != nil {
-					logger.Errorf("Failed to parse front matter for %s: %v", translationPath, err)
-					continue
-				}
-			}
-
-			status, err := tracker.GetTranslationStatus(ctx, translationPath, frontMatter)
+			status, err := tracker.GetTranslationStatus(ctx, translationPath, string(contentBytes))
 			if err != nil {
 				logger.Errorf("Failed to get status for %s: %v", translationPath, err)
 				continue
