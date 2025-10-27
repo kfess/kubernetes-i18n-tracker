@@ -257,6 +257,10 @@ func main() {
 			}
 
 			contentBytes, err := os.ReadFile(filepath.Join(repoPath, translationPath))
+			if err != nil {
+				contentBytes = []byte{}
+			}
+
 			status, err := tracker.GetTranslationStatus(ctx, translationPath, string(contentBytes))
 			if err != nil {
 				logger.Errorf("Failed to get status for %s: %v", translationPath, err)

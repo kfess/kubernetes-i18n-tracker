@@ -17,8 +17,8 @@ import (
 // Tracker tracks and provides translation status by combining multiple data sources.
 type Tracker struct {
 	history       *history.History
-	urlConverter  *url.Converter
 	fmParser      url.FrontMatterParser
+	urlConverter  *url.Converter
 	prIndex       *pr.Index
 	issueIndex    *issue.Index
 	repoPath      string
@@ -278,25 +278,25 @@ func (t *Tracker) buildIssues(path string) []*issue.Issue {
 
 // buildURL builds URL information for the file.
 func (t *Tracker) buildURL(ctx context.Context, path string, content string) *URL {
-	if t.urlConverter == nil || t.fmParser == nil {
-		return nil
-	}
-
 	githubURL := toGitHubURL(path)
+
+	if content == "" || t.urlConverter == nil || t.fmParser == nil {
+		return &URL{
+			GitHub: githubURL,
+		}
+	}
 
 	fm, err := t.fmParser.Parse(content)
 	if err != nil {
 		logger.Debugf("Front matter parsing failed for %s, using GitHub URL only: %v", path, err)
-		// Return GitHub URL only on parsing error
 		return &URL{
-			GitHub: toGitHubURL(path),
+			GitHub: githubURL,
 		}
 	}
 
 	websiteURL, err := t.urlConverter.Convert(ctx, path, fm)
 	if err != nil {
 		logger.Debugf("Website URL conversion failed for %s, using GitHub URL only: %v", path, err)
-		// Return GitHub URL only on conversion error
 		return &URL{
 			GitHub: githubURL,
 		}
