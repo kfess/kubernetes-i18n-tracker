@@ -41,8 +41,14 @@ const scrape = async () => {
     await page.mouse.click(centerX, centerY, { button: "right" });
     console.log("Right-clicked");
 
-    await page.locator("text=Export Data").first().click();
-    console.log("Clicked context menu export");
+    try {
+      await page.locator("text=Export Data").first().click();
+      console.log("Clicked context menu export");
+    } catch (err) {
+      console.log("Trying Japanese text...");
+      await page.locator("text=データのエクスポート").first().click();
+      console.log("Clicked context menu export (Japanese)");
+    }
 
     await page.locator("text=エクスポート").nth(1).click();
     console.log("Clicked submenu export");
