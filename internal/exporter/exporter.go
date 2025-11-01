@@ -12,7 +12,6 @@ import (
 
 	"github.com/kfess/kubernetes-i18n-tracker/internal/language"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/logger"
-	"github.com/kfess/kubernetes-i18n-tracker/internal/pageview"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/translation"
 )
 
@@ -76,7 +75,6 @@ type MatrixOutput struct {
 // ExportOptions contains options for exporting translation status.
 type ExportOptions struct {
 	OutputDir string
-	PageViews map[string]*pageview.PageViewStats
 }
 
 // Exporter exports translation status to various formats.
@@ -240,11 +238,7 @@ func (e *Exporter) exportMatrices(byCategory map[string]map[string]*translation.
 			}
 
 			for lang, status := range translations {
-				translationURL := ""
-				if status.URL != nil {
-					translationURL = status.URL.Website
-				}
-				article.Translations[string(lang)] = e.buildMatrixTranslation(status, translationURL)
+				article.Translations[string(lang)] = e.buildMatrixTranslation(status)
 			}
 
 			articles = append(articles, article)
@@ -272,7 +266,7 @@ func (e *Exporter) exportMatrices(byCategory map[string]map[string]*translation.
 }
 
 // buildMatrixTranslation builds a MatrixTranslation from TranslationStatus.
-func (e *Exporter) buildMatrixTranslation(status *translation.TranslationStatus, translationURL string) MatrixTranslation {
+func (e *Exporter) buildMatrixTranslation(status *translation.TranslationStatus) MatrixTranslation {
 	// Calculate total change lines from diff if available
 	totalChangeLines := 0
 	if status.History.Diff != nil {
@@ -292,13 +286,11 @@ func (e *Exporter) buildMatrixTranslation(status *translation.TranslationStatus,
 		PRs:                    []MatrixPR{},
 	}
 
-	// Add page view data if available
-	if e.options.PageViews != nil && translationURL != "" {
-		if stats, exists := e.options.PageViews[translationURL]; exists {
-			mt.Views = stats.Views
-			mt.NewUsers = stats.NewUsers
-			mt.AverageSessionDuration = stats.AverageSessionDuration
-		}
+	// Add page view data from TranslationStatus if available
+	if status.PageViewStats != nil {
+		mt.Views = status.PageViewStats.Views
+		mt.NewUsers = status.PageViewStats.NewUsers
+		mt.AverageSessionDuration = status.PageViewStats.AverageSessionDuration
 	}
 
 	// Add dates

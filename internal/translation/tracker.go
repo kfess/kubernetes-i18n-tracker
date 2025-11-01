@@ -10,6 +10,7 @@ import (
 	"github.com/kfess/kubernetes-i18n-tracker/internal/history"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/issue"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/logger"
+	"github.com/kfess/kubernetes-i18n-tracker/internal/pageview"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/pr"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/url"
 )
@@ -21,6 +22,7 @@ type Tracker struct {
 	urlConverter  *url.Converter
 	prIndex       *pr.Index
 	issueIndex    *issue.Index
+	pageviewIndex *pageview.Index
 	repoPath      string
 	existingPaths map[string]bool
 }
@@ -38,6 +40,7 @@ func NewTracker(
 	fmParser url.FrontMatterParser,
 	prIndex *pr.Index,
 	issueIndex *issue.Index,
+	pageviewIndex *pageview.Index,
 	config Config,
 ) *Tracker {
 	pathMap := make(map[string]bool, len(config.ExistingPaths))
@@ -51,6 +54,7 @@ func NewTracker(
 		fmParser:      fmParser,
 		prIndex:       prIndex,
 		issueIndex:    issueIndex,
+		pageviewIndex: pageviewIndex,
 		repoPath:      config.RepoPath,
 		existingPaths: pathMap,
 	}
@@ -82,6 +86,10 @@ func (t *Tracker) GetTranslationStatus(
 	translationStatus.PullRequests = t.buildPullRequests(translationPath)
 	translationStatus.Issues = t.buildIssues(translationPath)
 	translationStatus.URL = t.buildURL(ctx, translationPath, translationContent)
+
+	if translationStatus.URL != nil {
+		translationStatus.PageViewStats = t.buildPageViewStats(translationStatus.URL.Website)
+	}
 
 	return translationStatus, nil
 }
@@ -274,6 +282,20 @@ func (t *Tracker) buildIssues(path string) []*issue.Issue {
 	}
 
 	return issues
+}
+
+// buildPageViewStats builds page view statistics for the URL.
+func (t *Tracker) buildPageViewStats(websiteUrl string) *pageview.PageViewStats {
+	if t.pageviewIndex == nil || websiteUrl == "" {
+		return nil
+	}
+
+	stats := t.pageviewIndex.GetPageViewStats(websiteUrl)
+	if stats != nil {
+		logger.Debugf("Found page view data for %s: %d views", websiteUrl, stats.Views)
+	}
+
+	return stats
 }
 
 // buildURL builds URL information for the file.

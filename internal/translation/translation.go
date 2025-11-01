@@ -6,6 +6,7 @@ import (
 	"github.com/kfess/kubernetes-i18n-tracker/internal/git"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/issue"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/language"
+	"github.com/kfess/kubernetes-i18n-tracker/internal/pageview"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/pr"
 )
 
@@ -34,6 +35,9 @@ type TranslationStatus struct {
 
 	// URL information
 	URL *URL `json:"url,omitempty"`
+
+	// Page view statistics
+	PageViewStats *pageview.PageViewStats `json:"page_view_stats,omitempty"`
 
 	// Timestamp when this status was created
 	CreatedAt time.Time `json:"created_at"`
