@@ -205,7 +205,6 @@ func main() {
 	logger.Infof("Fetched %d URLs from sitemaps", len(sitemapURLs))
 
 	// Step 7: Create URL converter
-
 	parser := url.NewYAMLFrontMatterParser()
 	urlConfig := url.Config{
 		BaseUrl:        "https://kubernetes.io",
@@ -220,15 +219,26 @@ func main() {
 	}
 	urlConverter := url.NewConverter(urlConfig)
 
-	// Step 8: Create translation tracker
+	// Step 8: Load page view data
+	logger.Info("Loading page view data...")
+	pageViewStats, err := pageview.AggregatePageViews(pageViewFile, existingURLsMap, "https://kubernetes.io")
+	if err != nil {
+		logger.Errorf("Failed to load page view data: %v", err)
+		pageViewStats = make(map[string]*pageview.PageViewStats)
+	} else {
+		logger.Infof("Loaded page view data for %d URLs", len(pageViewStats))
+	}
+	pageviewIndex := pageview.NewIndex(pageViewStats)
+
+	// Step 9: Create translation tracker
 	logger.Info("Creating translation tracker...")
 	trackerConfig := translation.Config{
 		RepoPath:      repoPath,
 		ExistingPaths: allPaths,
 	}
-	tracker := translation.NewTracker(historyTracker, urlConverter, parser, prIndex, issueIndex, trackerConfig)
+	tracker := translation.NewTracker(historyTracker, urlConverter, parser, prIndex, issueIndex, pageviewIndex, trackerConfig)
 
-	// Step 9: Analyze translation status for all files
+	// Step 10: Analyze translation status for all files
 	logger.Info("Analyzing translation status...")
 	results := make(map[string]*translation.TranslationStatus)
 
@@ -273,27 +283,16 @@ func main() {
 
 	logger.Infof("Analyzed %d translation files", len(results))
 
-	// Step 10: Load page view data
-	logger.Info("Loading page view data...")
-	pageViews, err := pageview.AggregatePageViews(pageViewFile, existingURLsMap, "https://kubernetes.io")
-	if err != nil {
-		logger.Errorf("Failed to load page view data: %v", err)
-		pageViews = make(map[string]*pageview.PageViewStats)
-	} else {
-		logger.Infof("Loaded page view data for %d URLs", len(pageViews))
-	}
-
-	// Step 11: Export results to diff_go and matrix_go
+	// Step 10: Export results to diff_go and matrix_go
 	logger.Info("Exporting results...")
 	exp := exporter.NewExporter(exporter.ExportOptions{
 		OutputDir: outputDir,
-		PageViews: pageViews,
 	})
 	if err := exp.Export(results); err != nil {
 		log.Fatalf("Failed to export results: %v", err)
 	}
 
-	// Step 12: Save complete results to JSON
+	// Step 11: Save complete results to JSON
 	logger.Info("Saving complete results...")
 	if err := saveResults(results); err != nil {
 		log.Fatalf("Failed to save results: %v", err)
