@@ -171,8 +171,9 @@ func (e *Exporter) exportDiffs(byCategory map[string]map[string]*translation.Tra
 		diffs := make(map[string]DiffEntry)
 
 		for path, status := range statuses {
-			// Only include outdated files with diff
-			if status.History != nil && status.History.Status == translation.StatusOutdated && status.History.Diff != nil {
+			if status.History != nil &&
+				(status.History.Status == translation.StatusOutdated || status.History.Status == translation.StatusNotTranslated) &&
+				status.History.Diff != nil {
 				refCommit := ""
 				if status.History.ReferenceCommit != nil {
 					refCommit = status.History.ReferenceCommit.Hash

@@ -1,10 +1,10 @@
-import { IconExternalLink, IconGitBranch } from '@tabler/icons-react';
-import { useNavigate } from 'react-router-dom';
-import { ActionIcon, Anchor, Group, rem, Table, Text, Tooltip } from '@mantine/core';
 import { type LanguageCode } from '@/features/language/languageCodes';
 import { StatusBadge } from '@/features/StatusBadge';
 import { ArticleCategory, type ArticleTranslation } from '@/features/translations';
 import { formatDateISO } from '@/utils/date';
+import { ActionIcon, Anchor, Group, rem, Table, Text, Tooltip } from '@mantine/core';
+import { IconExternalLink, IconGitBranch } from '@tabler/icons-react';
+import { useNavigate } from 'react-router-dom';
 
 export const TranslationStatusCell = ({
   article,
@@ -15,6 +15,14 @@ export const TranslationStatusCell = ({
   langCode: LanguageCode;
   category: ArticleCategory;
 }) => {
+
+  console.log('=== TranslationStatusCell Debug ===');
+  console.log('langCode:', langCode);
+  console.log('article.englishPath:', article.englishPath);
+  console.log('article.translations:', article.translations);
+  console.log('article.translations[langCode]:', article.translations[langCode]);
+  console.log('Available langCodes:', Object.keys(article.translations));
+
   const navigate = useNavigate();
   const { status, daysBehind, totalChangeLines, commitsBehind, targetLatestDate } =
     article.translations[langCode];

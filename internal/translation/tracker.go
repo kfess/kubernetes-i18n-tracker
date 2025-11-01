@@ -17,6 +17,7 @@ import (
 // Tracker tracks and provides translation status by combining multiple data sources.
 type Tracker struct {
 	history       *history.History
+	fmParser      url.FrontMatterParser
 	urlConverter  *url.Converter
 	prIndex       *pr.Index
 	issueIndex    *issue.Index
@@ -34,6 +35,7 @@ type Config struct {
 func NewTracker(
 	historyTracker *history.History,
 	urlConverter *url.Converter,
+	fmParser url.FrontMatterParser,
 	prIndex *pr.Index,
 	issueIndex *issue.Index,
 	config Config,
@@ -46,6 +48,7 @@ func NewTracker(
 	return &Tracker{
 		history:       historyTracker,
 		urlConverter:  urlConverter,
+		fmParser:      fmParser,
 		prIndex:       prIndex,
 		issueIndex:    issueIndex,
 		repoPath:      config.RepoPath,
@@ -54,7 +57,11 @@ func NewTracker(
 }
 
 // GetTranslationStatus returns comprehensive translation status for a single file.
-func (t *Tracker) GetTranslationStatus(ctx context.Context, translationPath string) (*TranslationStatus, error) {
+func (t *Tracker) GetTranslationStatus(
+	ctx context.Context,
+	translationPath string,
+	translationContent string,
+) (*TranslationStatus, error) {
 	pathInfo := parsePath(translationPath)
 	englishPath := pathInfo.ToEnglishPath()
 
@@ -72,10 +79,9 @@ func (t *Tracker) GetTranslationStatus(ctx context.Context, translationPath stri
 		return nil, fmt.Errorf("build history for %s: %w", translationPath, err)
 	}
 	translationStatus.History = history
-
 	translationStatus.PullRequests = t.buildPullRequests(translationPath)
 	translationStatus.Issues = t.buildIssues(translationPath)
-	translationStatus.URL = t.buildURL(ctx, translationPath)
+	translationStatus.URL = t.buildURL(ctx, translationPath, translationContent)
 
 	return translationStatus, nil
 }
@@ -271,16 +277,26 @@ func (t *Tracker) buildIssues(path string) []*issue.Issue {
 }
 
 // buildURL builds URL information for the file.
-func (t *Tracker) buildURL(ctx context.Context, path string) *URL {
-	if t.urlConverter == nil {
-		return nil
+func (t *Tracker) buildURL(ctx context.Context, path string, content string) *URL {
+	githubURL := toGitHubURL(path)
+
+	if content == "" || t.urlConverter == nil || t.fmParser == nil {
+		return &URL{
+			GitHub: githubURL,
+		}
 	}
 
-	githubURL := toGitHubURL(path)
-	websiteURL, err := t.urlConverter.Convert(ctx, path)
+	fm, err := t.fmParser.Parse(content)
+	if err != nil {
+		logger.Debugf("Front matter parsing failed for %s, using GitHub URL only: %v", path, err)
+		return &URL{
+			GitHub: githubURL,
+		}
+	}
+
+	websiteURL, err := t.urlConverter.Convert(ctx, path, fm)
 	if err != nil {
 		logger.Debugf("Website URL conversion failed for %s, using GitHub URL only: %v", path, err)
-		// Return GitHub URL only on conversion error
 		return &URL{
 			GitHub: githubURL,
 		}

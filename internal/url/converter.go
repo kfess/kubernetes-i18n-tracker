@@ -10,7 +10,6 @@ import (
 
 type Converter struct {
 	config Config
-	parser FrontMatterParser
 }
 
 type Config struct {
@@ -21,23 +20,22 @@ type Config struct {
 	ValidSections  []string
 }
 
-func NewConverter(config Config, parser FrontMatterParser) *Converter {
+func NewConverter(config Config) *Converter {
 	return &Converter{
 		config: config,
-		parser: parser,
 	}
 }
 
-func (c *Converter) Convert(ctx context.Context, path string) (string, error) {
+func (c *Converter) Convert(ctx context.Context, path string, fm *FrontMatter) (string, error) {
+	if fm == nil {
+		return "", fmt.Errorf("front matter is required for URL conversion of file: %s", path)
+	}
+
 	cp, err := parseContentPath(path, c.config.SupportedLangs, c.config.SupportedExts, c.config.ValidSections)
 	if err != nil {
 		return "", err
 	}
 
-	fm, err := c.parser.Parse(path)
-	if err != nil {
-		return "", err
-	}
 	if !fm.IsPublic() {
 		return "", fmt.Errorf("file %s is not public, skipping URL generation", path)
 	}

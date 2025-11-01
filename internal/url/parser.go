@@ -1,57 +1,45 @@
-// A Hugo's front matter parser
-
 package url
 
 import (
 	"bufio"
-	"os"
-	"path/filepath"
+	"fmt"
+	"io"
 	"strings"
 
 	"github.com/goccy/go-yaml"
 )
 
 type FrontMatterParser interface {
-	Parse(filePath string) (*FrontMatter, error)
+	Parse(content string) (*FrontMatter, error)
 }
 
-// Implements FrontMatterParser for YAML front matter
-type YamlFrontMatterParser struct {
-	rootDir string
+type YamlFrontMatterParser struct{}
+
+func NewYAMLFrontMatterParser() *YamlFrontMatterParser {
+	return &YamlFrontMatterParser{}
 }
 
-func NewYAMLFrontMatterParser(rootDir string) *YamlFrontMatterParser {
-	return &YamlFrontMatterParser{rootDir: rootDir}
-}
-
-func (p *YamlFrontMatterParser) Parse(path string) (*FrontMatter, error) {
-	fullPath := filepath.Join(p.rootDir, path)
-	file, err := os.Open(fullPath)
+func (p *YamlFrontMatterParser) Parse(content string) (*FrontMatter, error) {
+	fmString, err := extractFrontMatterString(strings.NewReader(content))
 	if err != nil {
 		return nil, err
 	}
 
-	defer func() { _ = file.Close() }()
-
-	content, err := extractFrontMatterString(file)
-	if err != nil {
-		return nil, err
-	}
-
-	if content == "" {
+	if fmString == "" {
 		return &FrontMatter{}, nil
 	}
 
 	fm := &FrontMatter{}
-	if err := yaml.UnmarshalWithOptions([]byte(content), fm, yaml.AllowDuplicateMapKey()); err != nil {
-		return nil, err
+	if err := yaml.UnmarshalWithOptions([]byte(fmString), fm, yaml.AllowDuplicateMapKey()); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal front matter: %w", err)
 	}
 
 	return fm, nil
 }
 
-func extractFrontMatterString(file *os.File) (string, error) {
-	scanner := bufio.NewScanner(file)
+// extractFrontMatterString extracts front matter string from reader
+func extractFrontMatterString(r io.Reader) (string, error) {
+	scanner := bufio.NewScanner(r)
 	var frontMatter strings.Builder
 
 	inFrontMatter := false
@@ -62,16 +50,19 @@ func extractFrontMatterString(file *os.File) (string, error) {
 		line := scanner.Text()
 
 		if firstLine {
-			// Some files has leading blank line
-			// e.g., content/en/blog/_posts/2019-08-30-announcing-etcd-3.4.,md
+			// Some files have leading blank lines
+			// e.g., content/en/blog/_posts/2019-08-30-announcing-etcd-3.4.md
 			// line 1: <blank line>
 			// line 2: ---
 			// line 3: layout: blog
+			line = strings.TrimPrefix(line, "\ufeff")
 			line = strings.TrimLeft(line, "\n\r\t ")
 			firstLine = false
 		}
 
-		if strings.TrimSpace(line) == "---" {
+		// Some files has invalid front matter delimiters like "------"
+		// https://github.com/kubernetes/website/blob/main/content/en/blog/_posts/2024-04-24-validating-admission-policy-ga/index.md
+		if strings.TrimSpace(line) == "---" || strings.TrimSpace(line) == "------" {
 			delimiterCount++
 			if delimiterCount == 1 {
 				inFrontMatter = true
@@ -86,6 +77,11 @@ func extractFrontMatterString(file *os.File) (string, error) {
 			frontMatter.WriteString(line)
 			frontMatter.WriteString("\n")
 		}
+	}
+
+	// If there are less than 2 delimiters, return empty string
+	if delimiterCount < 2 {
+		return "", nil
 	}
 
 	if err := scanner.Err(); err != nil {
