@@ -6,6 +6,8 @@ import (
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/kfess/kubernetes-i18n-tracker/internal/path"
 )
 
 func parseDate(dateStr string) (time.Time, error) {
@@ -26,10 +28,11 @@ func parseDate(dateStr string) (time.Time, error) {
 }
 
 // buildBlogUrl builds a blog URL with Hugo priority: slug+date > url > filename > title+date
-func generateBlogUrl(baseURL string, cp contentPath, fm *FrontMatter, existingUrls map[string]bool) string {
+func generateBlogUrl(baseURL string, p *path.Path, fm *FrontMatter, existingUrls map[string]bool) string {
+	lang := string(p.Language())
 	langPrefix := ""
-	if cp.language != "en" {
-		langPrefix = cp.language + "/"
+	if lang != "en" {
+		langPrefix = lang + "/"
 	}
 
 	// Priority 1: slug + date
@@ -47,7 +50,7 @@ func generateBlogUrl(baseURL string, cp contentPath, fm *FrontMatter, existingUr
 	}
 
 	// Priority 3: filename
-	if url := tryFilename(cp.raw, langPrefix, baseURL, existingUrls); url != "" {
+	if url := tryFilename(p.Original(), langPrefix, baseURL, existingUrls); url != "" {
 		return url
 	}
 
@@ -59,7 +62,7 @@ func generateBlogUrl(baseURL string, cp contentPath, fm *FrontMatter, existingUr
 	}
 
 	// Priority 5: blog category (fallback)
-	if url := tryFilenameAsIs(cp.raw, langPrefix, baseURL, existingUrls); url != "" {
+	if url := tryFilenameAsIs(p.Original(), langPrefix, baseURL, existingUrls); url != "" {
 		return url
 	}
 

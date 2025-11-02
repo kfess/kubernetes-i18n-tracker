@@ -18,7 +18,7 @@ func TestGuessLanguage(t *testing.T) {
 				Title:  "Update docs",
 				Labels: []string{"language/ja", "kind/localization"},
 			},
-			expected: language.LanguageJapanese,
+			expected: language.Japanese,
 		},
 		{
 			name: "from title prefix",
@@ -26,7 +26,7 @@ func TestGuessLanguage(t *testing.T) {
 				Title:  "[ko] Update documentation",
 				Labels: []string{},
 			},
-			expected: language.LanguageKorean,
+			expected: language.Korean,
 		},
 		{
 			name: "from title prefix with pt-br",
@@ -34,7 +34,7 @@ func TestGuessLanguage(t *testing.T) {
 				Title:  "[pt-br] Update docs",
 				Labels: []string{},
 			},
-			expected: language.LanguagePortugueseBR,
+			expected: language.PortugueseBR,
 		},
 		{
 			name: "no language found",
@@ -104,7 +104,7 @@ func TestGeneratePathCandidates(t *testing.T) {
 		{
 			name: "simple path",
 			path: "docs/concepts/overview.md",
-			lang: language.LanguageJapanese,
+			lang: language.Japanese,
 			shouldContain: []string{
 				"docs/concepts/overview.md",
 				"content/ja/docs/concepts/overview.md",
@@ -113,7 +113,7 @@ func TestGeneratePathCandidates(t *testing.T) {
 		{
 			name: "path with underscores",
 			path: "docs/pod_lifecycle.md",
-			lang: language.LanguageKorean,
+			lang: language.Korean,
 			shouldContain: []string{
 				"content/ko/docs/pod-lifecycle.md",
 			},
@@ -155,7 +155,7 @@ func TestGuessPath(t *testing.T) {
 			issue: Issue{
 				Title: "[ja] Update /content/ja/docs/concepts/overview.md",
 			},
-			lang:     language.LanguageJapanese,
+			lang:     language.Japanese,
 			expected: "content/ja/docs/concepts/overview.md",
 		},
 		{
@@ -163,7 +163,7 @@ func TestGuessPath(t *testing.T) {
 			issue: Issue{
 				Title: "[ko] Fix configure-pod.md",
 			},
-			lang:     language.LanguageKorean,
+			lang:     language.Korean,
 			expected: "content/ko/docs/tasks/configure-pod.md",
 		},
 		{
@@ -171,7 +171,7 @@ func TestGuessPath(t *testing.T) {
 			issue: Issue{
 				Title: "[ja] Translated /docs/concepts/cluster-administration/compatibility-version.md into Japanese",
 			},
-			lang:     language.LanguageJapanese,
+			lang:     language.Japanese,
 			expected: "", // File doesn't exist, so no match expected
 		},
 		{
@@ -179,7 +179,7 @@ func TestGuessPath(t *testing.T) {
 			issue: Issue{
 				Title: "[ja] Update nonexistent file",
 			},
-			lang:     language.LanguageJapanese,
+			lang:     language.Japanese,
 			expected: "",
 		},
 	}

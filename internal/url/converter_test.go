@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/kfess/kubernetes-i18n-tracker/internal/language"
+	"github.com/kfess/kubernetes-i18n-tracker/internal/path"
 )
 
 func TestConverter_DocsConcepts(t *testing.T) {
@@ -18,7 +19,7 @@ func TestConverter_DocsConcepts(t *testing.T) {
 		},
 		SupportedLangs: language.SupportedLanguages,
 		SupportedExts:  []string{".md", ".html"},
-		ValidSections:  []string{"docs"},
+		ValidSections:  []path.Category{path.Docs},
 	}
 	converter := NewConverter(*config)
 	ctx := context.Background()
@@ -86,7 +87,7 @@ func TestConverter_DocsTasks(t *testing.T) {
 		},
 		SupportedLangs: language.SupportedLanguages,
 		SupportedExts:  []string{".md", ".html"},
-		ValidSections:  []string{"docs"},
+		ValidSections:  []path.Category{path.Docs},
 	}
 	converter := NewConverter(*config)
 	ctx := context.Background()
@@ -153,7 +154,7 @@ func TestConverter_DocsSetup(t *testing.T) {
 		},
 		SupportedLangs: language.SupportedLanguages,
 		SupportedExts:  []string{".md", ".html"},
-		ValidSections:  []string{"docs"},
+		ValidSections:  []path.Category{path.Docs},
 	}
 	converter := NewConverter(*config)
 	ctx := context.Background()
@@ -220,7 +221,7 @@ func TestConverter_DocsReference(t *testing.T) {
 		},
 		SupportedLangs: language.SupportedLanguages,
 		SupportedExts:  []string{".md", ".html"},
-		ValidSections:  []string{"docs"},
+		ValidSections:  []path.Category{path.Docs},
 	}
 	converter := NewConverter(*config)
 	ctx := context.Background()
@@ -301,7 +302,7 @@ func TestConverter_DocsTutorials(t *testing.T) {
 		},
 		SupportedLangs: language.SupportedLanguages,
 		SupportedExts:  []string{".md", ".html"},
-		ValidSections:  []string{"docs"},
+		ValidSections:  []path.Category{path.Docs},
 	}
 	converter := NewConverter(*config)
 	ctx := context.Background()
@@ -367,7 +368,7 @@ func TestConverter_DocsContribute(t *testing.T) {
 		},
 		SupportedLangs: language.SupportedLanguages,
 		SupportedExts:  []string{".md", ".html"},
-		ValidSections:  []string{"docs"},
+		ValidSections:  []path.Category{path.Docs},
 	}
 	converter := NewConverter(*config)
 	ctx := context.Background()
@@ -426,7 +427,7 @@ func TestConverter_DocsHome(t *testing.T) {
 		},
 		SupportedLangs: language.SupportedLanguages,
 		SupportedExts:  []string{".md", ".html"},
-		ValidSections:  []string{"docs"},
+		ValidSections:  []path.Category{path.Docs},
 	}
 	converter := NewConverter(*config)
 	ctx := context.Background()
@@ -515,7 +516,7 @@ func TestConverter_Blog(t *testing.T) {
 		},
 		SupportedLangs: language.SupportedLanguages,
 		SupportedExts:  []string{".md", ".html"},
-		ValidSections:  []string{"blog"},
+		ValidSections:  []path.Category{path.Blog},
 	}
 	converter := NewConverter(*config)
 	ctx := context.Background()
@@ -863,7 +864,7 @@ func TestConverter_Community(t *testing.T) {
 		},
 		SupportedLangs: language.SupportedLanguages,
 		SupportedExts:  []string{".md", ".html"},
-		ValidSections:  []string{"community"},
+		ValidSections:  []path.Category{path.Community},
 	}
 	converter := NewConverter(*config)
 	ctx := context.Background()
@@ -960,7 +961,7 @@ func TestConverter_CaseStudy(t *testing.T) {
 		},
 		SupportedLangs: language.SupportedLanguages,
 		SupportedExts:  []string{".md", ".html"},
-		ValidSections:  []string{"case-studies"},
+		ValidSections:  []path.Category{path.CaseStudy},
 	}
 	converter := NewConverter(*config)
 	ctx := context.Background()
@@ -1088,7 +1089,7 @@ func TestConverter_Example(t *testing.T) {
 		},
 		SupportedLangs: language.SupportedLanguages,
 		SupportedExts:  []string{".md", ".html"},
-		ValidSections:  []string{"examples"},
+		ValidSections:  []path.Category{path.Example},
 	}
 	converter := NewConverter(*config)
 	ctx := context.Background()
@@ -1136,7 +1137,7 @@ func TestConverter_Includes(t *testing.T) {
 		ExistingUrls:   map[string]bool{},
 		SupportedLangs: language.SupportedLanguages,
 		SupportedExts:  []string{".md", ".html"},
-		ValidSections:  []string{"includes"},
+		ValidSections:  []path.Category{path.Includes},
 	}
 	converter := NewConverter(*config)
 	ctx := context.Background()
@@ -1207,7 +1208,7 @@ func TestConverter_Release(t *testing.T) {
 		},
 		SupportedLangs: language.SupportedLanguages,
 		SupportedExts:  []string{".md", ".html"},
-		ValidSections:  []string{"releases"},
+		ValidSections:  []path.Category{path.Release},
 	}
 	converter := NewConverter(*config)
 	ctx := context.Background()
@@ -1299,7 +1300,7 @@ func TestConverter_Partner(t *testing.T) {
 		},
 		SupportedLangs: language.SupportedLanguages,
 		SupportedExts:  []string{".md", ".html"},
-		ValidSections:  []string{"partners"},
+		ValidSections:  []path.Category{path.Partner},
 	}
 	converter := NewConverter(*config)
 	ctx := context.Background()
@@ -1342,7 +1343,7 @@ func TestConverter_Training(t *testing.T) {
 		},
 		SupportedLangs: language.SupportedLanguages,
 		SupportedExts:  []string{".md", ".html"},
-		ValidSections:  []string{"training"},
+		ValidSections:  []path.Category{path.Training},
 	}
 	converter := NewConverter(*config)
 	ctx := context.Background()
@@ -1385,7 +1386,7 @@ func TestConverter_Career(t *testing.T) {
 		},
 		SupportedLangs: language.SupportedLanguages,
 		SupportedExts:  []string{".md", ".html"},
-		ValidSections:  []string{"careers"},
+		ValidSections:  []path.Category{path.Career},
 	}
 	converter := NewConverter(*config)
 	ctx := context.Background()

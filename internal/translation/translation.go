@@ -7,6 +7,7 @@ import (
 	"github.com/kfess/kubernetes-i18n-tracker/internal/issue"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/language"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/pageview"
+	"github.com/kfess/kubernetes-i18n-tracker/internal/path"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/pr"
 )
 
@@ -22,7 +23,7 @@ type TranslationStatus struct {
 	Language language.Language `json:"language"`
 
 	// Content category (e.g., docs, blog, tutorials, etc.)
-	Category string `json:"category"`
+	Category path.Category `json:"category"`
 
 	// Git history analysis results
 	History *HistoryAnalysis `json:"history,omitempty"`

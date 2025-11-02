@@ -5,63 +5,74 @@ import "slices"
 type Language string
 
 const (
-	LanguageEnglish      Language = "en"
-	LanguageChinese      Language = "zh-cn"
-	LanguageKorean       Language = "ko"
-	LanguageJapanese     Language = "ja"
-	LanguageBengali      Language = "bn"
-	LanguageGerman       Language = "de"
-	LanguageSpanish      Language = "es"
-	LanguageFrench       Language = "fr"
-	LanguageHindi        Language = "hi"
-	LanguageIndonesian   Language = "id"
-	LanguageItalian      Language = "it"
-	LanguagePolish       Language = "pl"
-	LanguagePortugueseBR Language = "pt-br"
-	LanguageRussian      Language = "ru"
-	LanguageUkrainian    Language = "uk"
-	LanguageVietnamese   Language = "vi"
+	English      Language = "en"
+	Chinese      Language = "zh-cn"
+	Korean       Language = "ko"
+	Japanese     Language = "ja"
+	Bengali      Language = "bn"
+	German       Language = "de"
+	Spanish      Language = "es"
+	French       Language = "fr"
+	Hindi        Language = "hi"
+	Indonesian   Language = "id"
+	Italian      Language = "it"
+	Polish       Language = "pl"
+	PortugueseBR Language = "pt-br"
+	Russian      Language = "ru"
+	Ukrainian    Language = "uk"
+	Vietnamese   Language = "vi"
 
 	// Deprecated languages
-	LanguageChineseDeprecated Language = "cn"
-	LanguageNorwegian         Language = "no"
-	LanguagePortuguese        Language = "pt"
+	ChineseDeprecated Language = "cn"
+	Norwegian         Language = "no"
+	Portuguese        Language = "pt"
 
 	// Not supported yet languages
-	LanguageArabic Language = "ar"
+	Arabic Language = "ar"
 )
 
 // SupportedLanguages lists the languages currently supported by the Kubernetes documentation site.
 // Languages are sorted by their website traffic (highest to lowest).
-var SupportedLanguages = []string{
-	string(LanguageEnglish),
-	string(LanguageChinese),
-	string(LanguageKorean),
-	string(LanguageJapanese),
-	string(LanguageBengali),
-	string(LanguageGerman),
-	string(LanguageSpanish),
-	string(LanguageFrench),
-	string(LanguageHindi),
-	string(LanguageIndonesian),
-	string(LanguageItalian),
-	string(LanguagePolish),
-	string(LanguagePortugueseBR),
-	string(LanguageRussian),
-	string(LanguageUkrainian),
-	string(LanguageVietnamese),
+var SupportedLanguages = []Language{
+	English,
+	Japanese,
+	Korean,
+	Chinese,
+	PortugueseBR,
+	Spanish,
+	Hindi,
+	Indonesian,
+	German,
+	French,
+	Italian,
+	Vietnamese,
+	Russian,
+	Ukrainian,
+	Polish,
+	Bengali,
 }
 
-var DeprecatedLanguages = []string{
-	string(LanguageChineseDeprecated),
-	string(LanguageNorwegian),
-	string(LanguagePortuguese),
+var DeprecatedLanguages = []Language{
+	ChineseDeprecated,
+	Norwegian,
+	Portuguese,
 }
 
-var NotSupportedYetLanguages = []string{
-	string(LanguageArabic),
+var NotSupportedYetLanguages = []Language{
+	Arabic,
 }
 
-func IsSupportedLanguage(lang string) bool {
-	return slices.Contains(SupportedLanguages, lang)
+// IsSupported checks if the given language is in the SupportedLanguages list.
+func IsSupported(lang string) bool {
+	return slices.Contains(SupportedLanguages, Language(lang))
+}
+
+// IsDeprecated checks if the given language is in the DeprecatedLanguages list.
+func IsDeprecated(lang string) bool {
+	return slices.Contains(DeprecatedLanguages, Language(lang))
+}
+
+// IsNotSupportedYet checks if the given language is in the NotSupportedYetLanguages list.
+func IsNotSupportedYet(lang string) bool {
+	return slices.Contains(NotSupportedYetLanguages, Language(lang))
 }

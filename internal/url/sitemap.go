@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/kfess/kubernetes-i18n-tracker/internal/language"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/logger"
 	"golang.org/x/sync/errgroup"
 )
@@ -123,7 +124,7 @@ func (c *Client) fetchSitemapOnce(ctx context.Context, lang string) ([]string, i
 
 // FetchAllSitemaps fetches sitemaps for all supported languages concurrently
 // and returns a combined list of URLs.
-func (c *Client) FetchAllSitemaps(ctx context.Context, langs []string) ([]string, error) {
+func (c *Client) FetchAllSitemaps(ctx context.Context, langs []language.Language) ([]string, error) {
 	g, ctx := errgroup.WithContext(ctx)
 	g.SetLimit(10)
 
@@ -138,7 +139,7 @@ func (c *Client) FetchAllSitemaps(ctx context.Context, langs []string) ([]string
 			default:
 			}
 
-			urls, err := c.fetchSitemap(ctx, lang)
+			urls, err := c.fetchSitemap(ctx, string(lang))
 
 			if err != nil {
 				logger.Warnf("Failed to fetch sitemap for language %s after retries: %v", lang, err)

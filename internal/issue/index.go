@@ -50,22 +50,22 @@ func expandPathsForAllLanguages(existingPaths map[string]bool) map[string]bool {
 
 	// Add language variants
 	languages := []language.Language{
-		language.LanguageEnglish,
-		language.LanguageKorean,
-		language.LanguageJapanese,
-		language.LanguageChinese,
-		language.LanguagePortugueseBR,
-		language.LanguageSpanish,
-		language.LanguageHindi,
-		language.LanguageIndonesian,
-		language.LanguageGerman,
-		language.LanguageFrench,
-		language.LanguageItalian,
-		language.LanguageVietnamese,
-		language.LanguageRussian,
-		language.LanguageUkrainian,
-		language.LanguagePolish,
-		language.LanguageBengali,
+		language.English,
+		language.Korean,
+		language.Japanese,
+		language.Chinese,
+		language.PortugueseBR,
+		language.Spanish,
+		language.Hindi,
+		language.Indonesian,
+		language.German,
+		language.French,
+		language.Italian,
+		language.Vietnamese,
+		language.Russian,
+		language.Ukrainian,
+		language.Polish,
+		language.Bengali,
 	}
 
 	for path := range existingPaths {

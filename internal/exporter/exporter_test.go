@@ -73,7 +73,7 @@ func TestExportDiffs(t *testing.T) {
 			"content/ja/blog/_posts/2024-10-01-test.md": {
 				Path:        "content/ja/blog/_posts/2024-10-01-test.md",
 				EnglishPath: "content/en/blog/_posts/2024-10-01-test.md",
-				Language:    language.LanguageJapanese,
+				Language:    language.Japanese,
 				Category:    "blog",
 				History: &translation.HistoryAnalysis{
 					Status:   translation.StatusOutdated,
@@ -141,7 +141,7 @@ func TestExportMatrices(t *testing.T) {
 			"content/ja/blog/_posts/2024-10-01-test.md": {
 				Path:        "content/ja/blog/_posts/2024-10-01-test.md",
 				EnglishPath: "content/en/blog/_posts/2024-10-01-test.md",
-				Language:    language.LanguageJapanese,
+				Language:    language.Japanese,
 				Category:    "blog",
 				History: &translation.HistoryAnalysis{
 					Status:        translation.StatusUpToDate,

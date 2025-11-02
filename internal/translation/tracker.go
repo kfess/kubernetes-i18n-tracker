@@ -11,6 +11,7 @@ import (
 	"github.com/kfess/kubernetes-i18n-tracker/internal/issue"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/logger"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/pageview"
+	path "github.com/kfess/kubernetes-i18n-tracker/internal/path"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/pr"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/url"
 )
@@ -66,14 +67,18 @@ func (t *Tracker) GetTranslationStatus(
 	translationPath string,
 	translationContent string,
 ) (*TranslationStatus, error) {
-	pathInfo := parsePath(translationPath)
+	pathInfo, err := path.Parse(translationPath)
+	if err != nil {
+		return nil, fmt.Errorf("parse path %s: %w", translationPath, err)
+	}
+
 	englishPath := pathInfo.ToEnglishPath()
 
 	translationStatus := &TranslationStatus{
 		Path:        translationPath,
 		EnglishPath: englishPath,
-		Language:    pathInfo.Language,
-		Category:    pathInfo.Category,
+		Language:    pathInfo.Language(),
+		Category:    pathInfo.Category(),
 		CreatedAt:   time.Now(),
 	}
 
@@ -96,13 +101,16 @@ func (t *Tracker) GetTranslationStatus(
 
 // buildHistory builds history by comparing English and translation file.
 func (t *Tracker) buildHistory(ctx context.Context, englishPath string, translationPath string) (*HistoryAnalysis, error) {
-	pathInfo := parsePath(translationPath)
+	pathInfo, err := path.Parse(translationPath)
+	if err != nil {
+		return nil, fmt.Errorf("parse path %s: %w", translationPath, err)
+	}
 
 	englishCommits := t.history.GetCommits(englishPath)
 	translationCommits := t.history.GetCommits(translationPath)
 
 	status := calculateStatus(
-		string(pathInfo.Language),
+		string(pathInfo.Language()),
 		englishCommits,
 		translationCommits,
 	)
