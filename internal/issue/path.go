@@ -8,22 +8,22 @@ import (
 )
 
 var languageLabels = map[string]language.Language{
-	"language/en": language.LanguageEnglish,
-	"language/ko": language.LanguageKorean,
-	"language/ja": language.LanguageJapanese,
-	"language/zh": language.LanguageChinese,
-	"language/pt": language.LanguagePortugueseBR,
-	"language/es": language.LanguageSpanish,
-	"language/hi": language.LanguageHindi,
-	"language/id": language.LanguageIndonesian,
-	"language/de": language.LanguageGerman,
-	"language/fr": language.LanguageFrench,
-	"language/it": language.LanguageItalian,
-	"language/vi": language.LanguageVietnamese,
-	"language/ru": language.LanguageRussian,
-	"language/uk": language.LanguageUkrainian,
-	"language/pl": language.LanguagePolish,
-	"language/bn": language.LanguageBengali,
+	"language/en": language.English,
+	"language/ko": language.Korean,
+	"language/ja": language.Japanese,
+	"language/zh": language.Chinese,
+	"language/pt": language.PortugueseBR,
+	"language/es": language.Spanish,
+	"language/hi": language.Hindi,
+	"language/id": language.Indonesian,
+	"language/de": language.German,
+	"language/fr": language.French,
+	"language/it": language.Italian,
+	"language/vi": language.Vietnamese,
+	"language/ru": language.Russian,
+	"language/uk": language.Ukrainian,
+	"language/pl": language.Polish,
+	"language/bn": language.Bengali,
 }
 
 // GuessLanguage guesses the language from issue labels or title.
@@ -43,37 +43,37 @@ func GuessLanguage(issue Issue) language.Language {
 		// Map common title patterns to language codes
 		switch langStr {
 		case "en":
-			return language.LanguageEnglish
+			return language.English
 		case "ko":
-			return language.LanguageKorean
+			return language.Korean
 		case "ja":
-			return language.LanguageJapanese
+			return language.Japanese
 		case "zh", "zh-cn":
-			return language.LanguageChinese
+			return language.Chinese
 		case "pt", "pt-br":
-			return language.LanguagePortugueseBR
+			return language.PortugueseBR
 		case "es":
-			return language.LanguageSpanish
+			return language.Spanish
 		case "hi":
-			return language.LanguageHindi
+			return language.Hindi
 		case "id":
-			return language.LanguageIndonesian
+			return language.Indonesian
 		case "de":
-			return language.LanguageGerman
+			return language.German
 		case "fr":
-			return language.LanguageFrench
+			return language.French
 		case "it":
-			return language.LanguageItalian
+			return language.Italian
 		case "vi":
-			return language.LanguageVietnamese
+			return language.Vietnamese
 		case "ru":
-			return language.LanguageRussian
+			return language.Russian
 		case "uk":
-			return language.LanguageUkrainian
+			return language.Ukrainian
 		case "pl":
-			return language.LanguagePolish
+			return language.Polish
 		case "bn":
-			return language.LanguageBengali
+			return language.Bengali
 		}
 	}
 

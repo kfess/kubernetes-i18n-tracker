@@ -2,34 +2,38 @@ package url
 
 import (
 	"fmt"
-	"path/filepath"
 	"strings"
+
+	"github.com/kfess/kubernetes-i18n-tracker/internal/path"
 )
 
-func generateDocsUrl(baseUrl string, cp contentPath, fm *FrontMatter, existingUrls map[string]bool) string {
+func generateDocsUrl(baseUrl string, p *path.Path, fm *FrontMatter, existingUrls map[string]bool) string {
+	lang := string(p.Language())
 	langPrefix := ""
-	if cp.language != "en" {
-		langPrefix = cp.language + "/"
+	if lang != "en" {
+		langPrefix = lang + "/"
 	}
 
+	segments := p.Segments()
+
 	// Check if this is a special case
-	if len(cp.segments) >= 5 {
-		subSection := cp.segments[3] // e.g., "reference", "contribute"
+	if len(segments) >= 5 {
+		subSection := segments[3] // e.g., "reference", "contribute"
 
 		// Special case: docs/reference/glossary
-		if subSection == "reference" && len(cp.segments) >= 5 && cp.segments[4] == "glossary" {
+		if subSection == "reference" && len(segments) >= 5 && segments[4] == "glossary" {
 			return buildGlossaryUrl(baseUrl, langPrefix, fm)
 		}
 
 		// Special case: docs/contribute/blog
-		if subSection == "contribute" && len(cp.segments) >= 5 && cp.segments[4] == "blog" {
-			return buildContributeBlogUrl(baseUrl, langPrefix, cp, fm, existingUrls)
+		if subSection == "contribute" && len(segments) >= 5 && segments[4] == "blog" {
+			return buildContributeBlogUrl(baseUrl, langPrefix, p, fm, existingUrls)
 		}
 	}
 
 	// Normal docs URL handling
 	// e.g., content/en/docs/concepts/overview.md -> docs/concepts/overview
-	pathAfterLang := strings.Join(cp.segments[2:], "/") // Skip "content" and "{lang}"
+	pathAfterLang := strings.Join(segments[2:], "/") // Skip "content" and "{lang}"
 	pathAfterLang = strings.TrimSuffix(pathAfterLang, ".md")
 	pathAfterLang = strings.TrimSuffix(pathAfterLang, ".html")
 
@@ -69,7 +73,7 @@ func buildGlossaryUrl(baseUrl string, langPrefix string, fm *FrontMatter) string
 	return url
 }
 
-func buildContributeBlogUrl(baseUrl string, langPrefix string, cp contentPath, fm *FrontMatter, existingUrls map[string]bool) string {
+func buildContributeBlogUrl(baseUrl string, langPrefix string, p *path.Path, fm *FrontMatter, existingUrls map[string]bool) string {
 	// Priority 1: Use slug from front matter
 	if fm.HasSlug() {
 		candidate := fmt.Sprintf("%s/%sdocs/contribute/blog/%s/", baseUrl, langPrefix, fm.Slug)
@@ -78,12 +82,12 @@ func buildContributeBlogUrl(baseUrl string, langPrefix string, cp contentPath, f
 		}
 	}
 
-	// Priority 2: Use file path (remove content/{lang}/ and extension)
-	// e.g., content/en/docs/contribute/blog/example.md -> docs/contribute/blog/example
-	pathAfterLang := strings.Join(cp.segments[2:], "/")
-	pathAfterLang = strings.TrimSuffix(pathAfterLang, filepath.Ext(pathAfterLang))
+	// Priority 2: Use filename
+	filename := p.Filename()
+	filename = strings.TrimSuffix(filename, ".md")
+	filename = strings.TrimSuffix(filename, ".html")
 
-	candidate := fmt.Sprintf("%s/%s%s/", baseUrl, langPrefix, pathAfterLang)
+	candidate := fmt.Sprintf("%s/%sdocs/contribute/blog/%s/", baseUrl, langPrefix, filename)
 	if matched := matchUrl(candidate, existingUrls); matched != "" {
 		return matched
 	}

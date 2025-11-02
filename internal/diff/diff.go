@@ -101,7 +101,7 @@ func extractLanguageFromFilePath(filePath string) (string, error) {
 	parts := strings.Split(filePath, "/")
 	for i, part := range parts {
 		if part == "content" && i+1 < len(parts) {
-			if slices.Contains(language.SupportedLanguages, parts[i+1]) {
+			if slices.Contains(language.SupportedLanguages, language.Language(parts[i+1])) {
 				return parts[i+1], nil
 			}
 		}

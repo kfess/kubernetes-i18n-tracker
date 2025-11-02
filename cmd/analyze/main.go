@@ -18,8 +18,8 @@ import (
 	"github.com/kfess/kubernetes-i18n-tracker/internal/issue"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/language"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/logger"
-
 	"github.com/kfess/kubernetes-i18n-tracker/internal/pageview"
+	path "github.com/kfess/kubernetes-i18n-tracker/internal/path"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/pr"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/translation"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/url"
@@ -192,6 +192,7 @@ func main() {
 
 	// Step 6: Fetch sitemaps for URL conversion
 	logger.Info("Fetching sitemaps...")
+	// Step 1: Fetch sitemap URLs
 	urlClient := url.NewClient("https://kubernetes.io")
 	sitemapURLs, err := urlClient.FetchAllSitemaps(ctx, language.SupportedLanguages)
 	if err != nil {
@@ -211,11 +212,7 @@ func main() {
 		ExistingUrls:   existingURLsMap,
 		SupportedLangs: language.SupportedLanguages,
 		SupportedExts:  []string{".md", ".html"},
-		ValidSections: []string{
-			"docs", "blog", "case-studies", "careers", "community",
-			"examples", "partners", "releases", "training",
-			"_common-resources", "includes",
-		},
+		ValidSections:  path.SupportedCategories,
 	}
 	urlConverter := url.NewConverter(urlConfig)
 
@@ -231,40 +228,31 @@ func main() {
 	pageviewIndex := pageview.NewIndex(pageViewStats)
 
 	// Step 9: Create translation tracker
-	logger.Info("Creating translation tracker...")
 	trackerConfig := translation.Config{
 		RepoPath:      repoPath,
 		ExistingPaths: allPaths,
 	}
 	tracker := translation.NewTracker(historyTracker, urlConverter, parser, prIndex, issueIndex, pageviewIndex, trackerConfig)
 
-	// Step 10: Analyze translation status for all files
 	logger.Info("Analyzing translation status...")
 	results := make(map[string]*translation.TranslationStatus)
-
-	// Collect English files
-	englishFiles := []string{}
-	for _, path := range allPaths {
-		if strings.HasPrefix(path, "content/en/") {
-			ext := filepath.Ext(path)
-			if ext == ".md" || ext == ".html" {
-				englishFiles = append(englishFiles, path)
-			}
+	for _, englishPath := range allPaths {
+		pathInfo, err := path.Parse(englishPath)
+		if err != nil {
+			logger.Errorf("Failed to parse path %s: %v", englishPath, err)
+			continue
 		}
-	}
+		if pathInfo.Language() != language.English || !pathInfo.IsContentFile() {
+			continue
+		}
 
-	// For each English file, check all supported languages (including English)
-	supportedLangs := []string{"en", "bn", "de", "es", "fr", "hi", "id", "it", "ja", "ko", "pl", "pt-br", "ru", "uk", "vi", "zh-cn"}
-	for _, englishPath := range englishFiles {
-		for _, lang := range supportedLangs {
-			var translationPath string
-			if lang == "en" {
-				// For English, use the original path
-				translationPath = englishPath
-			} else {
-				// Convert English path to translation path
-				translationPath = strings.Replace(englishPath, "content/en/", "content/"+lang+"/", 1)
+		for _, lang := range language.SupportedLanguages {
+			pathInfo, err := path.Parse(englishPath)
+			if err != nil {
+				logger.Errorf("Failed to parse path %s: %v", englishPath, err)
+				continue
 			}
+			translationPath := pathInfo.ToLanguagePath(language.Language(lang))
 
 			contentBytes, err := os.ReadFile(filepath.Join(repoPath, translationPath))
 			if err != nil {

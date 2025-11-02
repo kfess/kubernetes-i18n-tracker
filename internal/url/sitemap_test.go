@@ -133,7 +133,7 @@ func TestFetchSitemap_WithRetry(t *testing.T) {
 
 	client := NewClient(server.URL).WithRetry(3, 100*time.Millisecond)
 
-	urls, err := client.FetchAllSitemaps(context.Background(), []string{"ja"})
+	urls, err := client.FetchAllSitemaps(context.Background(), []language.Language{language.Japanese})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -159,7 +159,7 @@ func TestFetchSitemap_ExceedsMaxRetries(t *testing.T) {
 
 	client := NewClient(server.URL).WithRetry(2, 50*time.Millisecond)
 
-	_, err := client.FetchAllSitemaps(context.Background(), []string{"ja"})
+	_, err := client.FetchAllSitemaps(context.Background(), []language.Language{language.Japanese})
 	if err == nil {
 		t.Error("expected error after max retries, got nil")
 	}
@@ -181,7 +181,7 @@ func TestFetchSitemap_NonRetryableError(t *testing.T) {
 
 	client := NewClient(server.URL).WithRetry(3, 50*time.Millisecond)
 
-	_, err := client.FetchAllSitemaps(context.Background(), []string{"ja"})
+	_, err := client.FetchAllSitemaps(context.Background(), []language.Language{language.Japanese})
 	if err == nil {
 		t.Error("expected error for 404, got nil")
 	}

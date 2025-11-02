@@ -145,7 +145,7 @@ func (e *Exporter) buildCategoryName(status *translation.TranslationStatus) stri
 			return "docs_" + subcategory
 		}
 	}
-	return status.Category
+	return string(status.Category)
 }
 
 // extractDocsSubcategory extracts the subcategory from a docs path.
@@ -227,7 +227,7 @@ func (e *Exporter) exportMatrices(byCategory map[string]map[string]*translation.
 		for englishPath, translations := range byEnglishPath {
 			// Use the existing generated website URL from the English status.
 			englishURL := ""
-			if engStatus, ok := translations[language.LanguageEnglish]; ok && engStatus.URL != nil {
+			if engStatus, ok := translations[language.English]; ok && engStatus.URL != nil {
 				englishURL = engStatus.URL.Website
 			}
 
