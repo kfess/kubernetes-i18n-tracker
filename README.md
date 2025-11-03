@@ -1,10 +1,10 @@
-# kubernetes i18n Tracker
+# kubernetes-i18n-Tracker
 
 A dashboard to visualize and track the translation status of Kubernetes website documentation across different languages. This tool helps contributors and maintainers monitor localization progress and identify areas requiring translation efforts.
 
 📍 **Live site**: [https://kfess.github.io/kubernetes-i18n-tracker](https://kfess.github.io/kubernetes-i18n-tracker) (Deployed on GitHub Pages)
 
-## [![Build and Deploy to GitHub Pages](https://github.com/kfess/kubernetes-i18n-tracker/actions/workflows/build_deploy.yaml/badge.svg)](https://github.com/kfess/kubernetes-i18n-tracker/actions/workflows/build_deploy.yaml)
+## [![Build and Deploy to GitHub Pages](https://github.com/kfess/kubernetes-i18n-tracker/actions/workflows/build_deploy.yaml/badge.svg)](https://github.com/kfess/kubernetes-i18n-tracker/actions/workflows/build_deploy.yaml) 
 
 ## 🚀 Features
 
@@ -18,17 +18,6 @@ A dashboard to visualize and track the translation status of Kubernetes website 
 - **Localization contributors** who want to see which files need translation
 - **SIG Docs reviewers** managing the progress of i18n
 - **New translators** who want to identify good entry points for contribution
-
----
-
-## 🛠 Tech Stack
-
-- Frontend: React + Vite
-- Data Source: [kubernetes/website](https://github.com/kubernetes/website)
-- CI/CD: GitHub Actions
-- Hosting: GitHub Pages
-
----
 
 ## 🧩 How it works
 
