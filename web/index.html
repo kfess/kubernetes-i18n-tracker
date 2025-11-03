@@ -9,6 +9,19 @@
     />
     <title>Kubernetes i18n Tracker</title>
 
+    <!-- GitHub Pages SPA redirect handler -->
+    <script>
+      (function () {
+        var query = window.location.search;
+        if (query) {
+          var redirect = new URLSearchParams(query).get('redirect');
+          if (redirect) {
+            window.history.replaceState(null, null, redirect);
+          }
+        }
+      })();
+    </script>
+
     <!-- SEO Basic Settings -->
     <meta
       name="description"
