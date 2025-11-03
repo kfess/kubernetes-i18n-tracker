@@ -16,7 +16,8 @@ func loadAllPaths(path string) ([]string, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to open file: %w", err)
 	}
-	defer file.Close()
+
+	defer func() { _ = file.Close() }()
 
 	var allPaths []string
 	scanner := bufio.NewScanner(file)
@@ -41,7 +42,8 @@ func loadEvents(path string) ([]*git.Event, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to open file: %w", err)
 	}
-	defer file.Close()
+
+	defer func() { _ = file.Close() }()
 
 	var events []*git.Event
 	scanner := bufio.NewScanner(file)

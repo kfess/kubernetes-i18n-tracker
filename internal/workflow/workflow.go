@@ -243,7 +243,8 @@ func (w *Workflow) saveResults(results map[string]*translation.TranslationStatus
 	if err != nil {
 		return fmt.Errorf("failed to create output file: %w", err)
 	}
-	defer file.Close()
+
+	defer func() { _ = file.Close() }()
 
 	encoder := json.NewEncoder(file)
 	encoder.SetIndent("", "  ")
