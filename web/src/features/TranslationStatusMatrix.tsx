@@ -1,4 +1,3 @@
-import { Box, rem, Table, Text } from '@mantine/core';
 import { EnglishSourceInfo } from '@/features/EnglishSourceInfo';
 import {
   getSortedLangCodes,
@@ -7,6 +6,7 @@ import {
 } from '@/features/language/languageCodes';
 import { ArticleCategory, type ArticleTranslation } from '@/features/translations';
 import { TranslationStatusCell } from '@/features/TranslationStatusCell';
+import { Box, rem, Table, Text } from '@mantine/core';
 
 interface Props {
   articles: ArticleTranslation[];

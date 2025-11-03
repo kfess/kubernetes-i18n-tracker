@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <script>
+      // GitHub Pages SPA redirect
+      // Store the current path and redirect to index.html
+      var pathSegmentsToKeep = 1; // for /kubernetes-i18n-tracker/
+      var l = window.location;
+      var redirect =
+        l.pathname.slice(0, l.pathname.indexOf('/', 1) + 1) +
+        '?redirect=' +
+        encodeURIComponent(
+          l.pathname.slice(l.pathname.indexOf('/', 1) + 1) + l.search
+        ) +
+        l.hash;
+      l.replace(redirect);
+    </script>
+  </head>
+  <body></body>
+</html>
