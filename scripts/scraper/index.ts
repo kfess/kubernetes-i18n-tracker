@@ -22,7 +22,8 @@ const scrape = async () => {
   const page = await context.newPage();
 
   try {
-    await page.goto(url, { waitUntil: 'networkidle' });
+    await page.goto(url);
+    await page.waitForTimeout(10000);
 
     const mainArea = page.locator("body");
     const box = await mainArea.boundingBox();
@@ -35,22 +36,15 @@ const scrape = async () => {
     const centerY = box.y + box.height / 2;
     await page.mouse.click(centerX, centerY, { button: "right" });
 
-    await page.waitForSelector('[role="menu"]', { state: 'visible' });
-
-    await page
-      .getByRole('menuitem')
-      .filter({ hasText: /export data|データのエクスポート/i })
-      .click();
-
-    await page.waitForSelector('[role="dialog"]', { state: 'visible' });
+    try {
+      await page.locator("text=Export Data").first().click();
+    } catch (err) {
+      await page.locator("text=データのエクスポート").first().click();
+    }
 
     const [download] = await Promise.all([
       page.waitForEvent("download", { timeout: 15000 }),
-      page
-        .locator('[role="dialog"]')
-        .getByRole('button')
-        .filter({ hasText: /^エクスポート$|^Export$/i })
-        .click(),
+      page.locator("text=エクスポート").first().click(),
     ]);
 
     await download.saveAs(savePath);
