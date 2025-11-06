@@ -1,7 +1,6 @@
 import path from "path";
-import { fileURLToPath } from "url";
-
 import { chromium } from "playwright";
+import { fileURLToPath } from "url";
 
 const url =
   "https://lookerstudio.google.com/u/0/reporting/fe615dc5-59b0-4db5-8504-ef9eacb663a9/page/p_ognozybded";
@@ -31,39 +30,32 @@ const scrape = async () => {
     const box = await mainArea.boundingBox();
 
     if (!box) {
-      throw new Error(
-        "Bounding box not found. Ensure the page is loaded correctly."
-      );
+      throw new Error("Bounding box not found");
     }
 
     const centerX = box.x + box.width / 2;
     const centerY = box.y + box.height / 2;
     await page.mouse.click(centerX, centerY, { button: "right" });
-    console.log("Right-clicked");
 
-    try {
-      await page.locator("text=Export Data").first().click();
-      console.log("Clicked context menu export");
-    } catch (err) {
-      console.log("Trying Japanese text...");
-      await page.locator("text=データのエクスポート").first().click();
-      console.log("Clicked context menu export (Japanese)");
-    }
+    await page.waitForSelector('[role="menu"]', { state: 'visible' });
 
-    await page.locator("text=エクスポート").nth(1).click();
-    console.log("Clicked submenu export");
+    await page
+      .getByRole('menuitem')
+      .filter({ hasText: /export data|データのエクスポート/i })
+      .click();
+
+    await page.waitForSelector('[role="dialog"]', { state: 'visible' });
 
     const [download] = await Promise.all([
       page.waitForEvent("download", { timeout: 15000 }),
       page
-        .locator('button:has-text("エクスポート"), button:has-text("Export")')
+        .locator('[role="dialog"]')
+        .getByRole('button')
+        .filter({ hasText: /^エクスポート$|^Export$/i })
         .click(),
     ]);
 
     await download.saveAs(savePath);
-    console.log("Download completed");
-  } catch (err: unknown) {
-    console.error("Error:", (err as Error).message);
   } finally {
     await browser.close();
   }
