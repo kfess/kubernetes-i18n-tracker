@@ -42,11 +42,11 @@ const scrape = async () => {
       await page.locator("text=データのエクスポート").first().click();
     }
 
-    await page.locator("text=エクスポート").first().click();
+    await page.waitForTimeout(1000);
 
     const [download] = await Promise.all([
       page.waitForEvent("download", { timeout: 15000 }),
-      page.locator("text=エクスポート").nth(1).click(),
+      page.locator("text=エクスポート").first().click(),
     ]);
 
     await download.saveAs(savePath);
