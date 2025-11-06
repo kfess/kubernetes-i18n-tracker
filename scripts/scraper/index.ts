@@ -46,7 +46,7 @@ const scrape = async () => {
 
     const [download] = await Promise.all([
       page.waitForEvent("download", { timeout: 15000 }),
-      page.locator("text=エクスポート").first().click(),
+      page.locator("text=エクスポート").last().click(),
     ]);
 
     await download.saveAs(savePath);
