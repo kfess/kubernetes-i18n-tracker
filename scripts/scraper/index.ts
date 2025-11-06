@@ -22,7 +22,9 @@ const scrape = async () => {
   const page = await context.newPage();
 
   try {
-    await page.goto(url, { waitUntil: 'networkidle' });
+    await page.goto(url);
+    await page.waitForTimeout(10000);
+    console.log("Page loaded");
 
     const mainArea = page.locator("body");
     const box = await mainArea.boundingBox();
