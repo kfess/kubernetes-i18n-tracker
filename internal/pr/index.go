@@ -8,17 +8,24 @@ import (
 type Index struct {
 	// Map from file path to list of PRs that modified that file
 	byFile map[string][]*PullRequest
+
+	// Map from PR number to PR for quick lookup
+	byNumber map[int]*PullRequest
 }
 
 // BuildPRIndex creates an Index from a list of pull requests.
 // It indexes PRs by their modified files for quick lookup.
 func BuildPRIndex(prs []PullRequest) *Index {
 	index := &Index{
-		byFile: make(map[string][]*PullRequest),
+		byFile:   make(map[string][]*PullRequest),
+		byNumber: make(map[int]*PullRequest),
 	}
 
 	for i := range prs {
 		prPtr := &prs[i]
+
+		// Index by number
+		index.byNumber[prPtr.Number] = prPtr
 
 		for _, file := range prPtr.Files {
 			index.byFile[file] = append(index.byFile[file], prPtr)
@@ -80,11 +87,11 @@ func (idx *Index) TotalFiles() int {
 
 // TotalPRs returns the total number of unique PRs in the index.
 func (idx *Index) TotalPRs() int {
-	seen := make(map[int]bool)
-	for _, prs := range idx.byFile {
-		for _, pr := range prs {
-			seen[pr.Number] = true
-		}
-	}
-	return len(seen)
+	return len(idx.byNumber)
+}
+
+// GetPRByNumber returns a PR by its number.
+// Returns nil if the PR is not found.
+func (idx *Index) GetPRByNumber(number int) *PullRequest {
+	return idx.byNumber[number]
 }
