@@ -15,13 +15,19 @@ import (
 
 // FetchOptions contains options for fetching git history.
 type FetchOptions struct {
-	RepoPath        string   // Path to the git repository
-	Workers         int      // Number of parallel workers for fetching history
-	ValidExtensions []string // Valid file extensions to consider
+	// Path to the git repository
+	RepoPath string
+
+	// Number of parallel workers for fetching history
+	Workers int
+
+	// Valid file extensions to consider
+	ValidExtensions []string
 }
 
 // Fetcher fetches git history for files in a repository.
 type Fetcher struct {
+	// Fetch options
 	options FetchOptions
 }
 

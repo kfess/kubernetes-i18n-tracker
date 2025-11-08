@@ -136,6 +136,17 @@ func (t *Tracker) buildHistory(ctx context.Context, englishPath string, translat
 		return t.buildNotTranslatedHistory(englishCommits, englishLatest), nil
 	}
 
+	if status == StatusPossiblyOutdated {
+		return t.buildPossiblyOutdatedHistory(
+			ctx,
+			englishPath,
+			englishCommits,
+			englishLatest,
+			translationCommits,
+			translationLatest,
+		)
+	}
+
 	if status == StatusUpToDate {
 		return t.buildUpToDateHistory(
 			englishCommits,
@@ -207,6 +218,31 @@ func (t *Tracker) buildUpToDateHistory(
 		CommitsBehind:       0,
 		MissingCommits:      []*git.Commit{},
 	}
+}
+
+func (t *Tracker) buildPossiblyOutdatedHistory(
+	ctx context.Context,
+	englishPath string,
+	englishCommits []*git.Commit,
+	englishLatest *git.Commit,
+	translationCommits []*git.Commit,
+	translationLatest *git.Commit,
+) (*HistoryAnalysis, error) {
+	daysBehind := calculateDaysBehind(englishCommits, translationCommits)
+
+	return &HistoryAnalysis{
+		Status:              StatusPossiblyOutdated,
+		Severity:            SeverityCurrent,
+		LastModified:        &translationLatest.Date,
+		LatestCommit:        translationLatest,
+		CommitHistory:       translationCommits,
+		EnglishLastModified: &englishLatest.Date,
+		EnglishLatestCommit: englishLatest,
+		ReferenceCommit:     translationLatest,
+		DaysBehind:          daysBehind,
+		CommitsBehind:       0,
+		MissingCommits:      []*git.Commit{},
+	}, nil
 }
 
 // buildOutdatedHistory creates history analysis for outdated translations.
