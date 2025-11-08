@@ -187,10 +187,15 @@ func (f *Fetcher) processRegularCommit(ctx context.Context, commitHash string) (
 
 // processMergeCommit processes a merge commit.
 func (f *Fetcher) processMergeCommit(ctx context.Context, commitHash string) ([]*Event, error) {
-	// Get merge commit subject
-	mergeSubject, err := f.getCommitSubject(ctx, commitHash)
+	// Get the first commit message from the feature branch
+	firstCommitMessage, err := f.getFirstFeatureBranchCommitMessage(ctx, commitHash)
 	if err != nil {
-		return nil, err
+		// Fallback to merge commit subject if we can't get feature branch message
+		logger.Warn(fmt.Sprintf("Failed to get first feature branch commit message for %s: %v, using merge commit message", commitHash, err))
+		firstCommitMessage, err = f.getCommitSubject(ctx, commitHash)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// Get diff between commit^1 and commit
@@ -224,8 +229,8 @@ func (f *Fetcher) processMergeCommit(ctx context.Context, commitHash string) ([]
 			lastCommit = commitHash
 		}
 
-		// Get commit info - use lastCommit hash but mergeSubject as message
-		event, err := f.createEventFromCommit(ctx, lastCommit, file, mergeSubject, parts)
+		// Get commit info - use lastCommit hash but firstCommitMessage from feature branch
+		event, err := f.createEventFromCommit(ctx, lastCommit, file, firstCommitMessage, parts)
 		if err != nil {
 			logger.Warn(fmt.Sprintf("Failed to create event for %s: %v", file, err))
 			continue
@@ -251,6 +256,28 @@ func (f *Fetcher) getCommitSubject(ctx context.Context, commitHash string) (stri
 	}
 
 	return string(bytes.TrimSpace(output)), nil
+}
+
+// getFirstFeatureBranchCommitMessage gets the message of the first (oldest) commit from the feature branch.
+func (f *Fetcher) getFirstFeatureBranchCommitMessage(ctx context.Context, mergeCommit string) (string, error) {
+	// Get commits from feature branch (^2) excluding main branch (^1)
+	cmd := exec.CommandContext(ctx,
+		"git", "log", "--pretty=format:%s", "--reverse",
+		fmt.Sprintf("%s^2", mergeCommit),
+		fmt.Sprintf("^%s^1", mergeCommit))
+	cmd.Dir = f.options.RepoPath
+
+	output, err := cmd.Output()
+	if err != nil {
+		return "", fmt.Errorf("git log failed: %w", err)
+	}
+
+	lines := bytes.Split(output, []byte("\n"))
+	if len(lines) > 0 && len(lines[0]) > 0 {
+		return string(lines[0]), nil
+	}
+
+	return "", fmt.Errorf("no commits found in feature branch")
 }
 
 // getDiffNumstat returns the numstat diff between two commits for content/ files.
