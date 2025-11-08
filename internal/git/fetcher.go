@@ -151,16 +151,6 @@ func (f *Fetcher) isMergeCommit(ctx context.Context, commitHash string) (bool, e
 	return len(parts) > 2, nil
 }
 
-// isAncestor checks if commit is an ancestor of base.
-func (f *Fetcher) isAncestor(ctx context.Context, commit string, base string) (bool, error) {
-	cmd := exec.CommandContext(ctx,
-		"git", "merge-base", "--is-ancestor", commit, base)
-	cmd.Dir = f.options.RepoPath
-
-	err := cmd.Run()
-	return err == nil, nil
-}
-
 // processCommit processes a single commit and returns events.
 func (f *Fetcher) processCommit(ctx context.Context, commitHash string) ([]*Event, error) {
 	// Check if it's a merge commit
@@ -193,17 +183,6 @@ func (f *Fetcher) processRegularCommit(ctx context.Context, commitHash string) (
 
 // processMergeCommit processes a merge commit.
 func (f *Fetcher) processMergeCommit(ctx context.Context, commitHash string) ([]*Event, error) {
-	// Get the first commit message from the feature branch
-	firstCommitMessage, err := f.getFirstFeatureBranchCommitMessage(ctx, commitHash)
-	if err != nil {
-		// Fallback to merge commit subject if we can't get feature branch message
-		logger.Warn(fmt.Sprintf("Failed to get first feature branch commit message for %s: %v, using merge commit message", commitHash, err))
-		firstCommitMessage, err = f.getCommitSubject(ctx, commitHash)
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	// Get diff between commit^1 and commit
 	diffOutput, err := f.getDiffNumstat(ctx, fmt.Sprintf("%s^1", commitHash), commitHash)
 	if err != nil {
@@ -228,15 +207,26 @@ func (f *Fetcher) processMergeCommit(ctx context.Context, commitHash string) ([]
 
 		file := string(parts[2])
 
-		// Find the last commit that actually modified this file
-		lastCommit, err := f.findLastCommit(ctx, commitHash, file, "")
-		if err != nil {
-			logger.Warn(fmt.Sprintf("Failed to find last commit for %s in %s: %v", file, commitHash, err))
-			lastCommit = commitHash
+		// Extract the new path from rename notation: {old => new} or just use the path as-is
+		searchPath := extractNewPath(file)
+
+		// Find the actual commit from feature branch that modified this file
+		// Use git log on the feature branch (^2) to find the last commit touching this file
+		actualCommit, err := f.getFeatureBranchCommitForFile(ctx, commitHash, searchPath)
+		if err != nil || actualCommit == "" {
+			logger.Warn(fmt.Sprintf("Failed to find feature branch commit for %s in %s: %v, using merge commit", file, commitHash, err))
+			actualCommit = commitHash
 		}
 
-		// Get commit info - use lastCommit hash but firstCommitMessage from feature branch
-		event, err := f.createEventFromCommit(ctx, lastCommit, file, firstCommitMessage, parts)
+		// Get the correct commit message for this specific file's commit
+		commitMessage, err := f.getCommitSubject(ctx, actualCommit)
+		if err != nil {
+			logger.Warn(fmt.Sprintf("Failed to get commit message for %s: %v, using fallback", actualCommit, err))
+			commitMessage = ""
+		}
+
+		// Get commit info - use the actual commit that modified this file
+		event, err := f.createEventFromCommit(ctx, actualCommit, file, commitMessage, parts)
 		if err != nil {
 			logger.Warn(fmt.Sprintf("Failed to create event for %s: %v", file, err))
 			continue
@@ -264,13 +254,46 @@ func (f *Fetcher) getCommitSubject(ctx context.Context, commitHash string) (stri
 	return string(bytes.TrimSpace(output)), nil
 }
 
-// getFirstFeatureBranchCommitMessage gets the message of the first (oldest) commit from the feature branch.
-func (f *Fetcher) getFirstFeatureBranchCommitMessage(ctx context.Context, mergeCommit string) (string, error) {
-	// Get commits from feature branch (^2) excluding main branch (^1)
+// extractNewPath extracts the new path from a rename notation.
+// Examples:
+//   - "path/{old => new}/file.md" -> "path/new/file.md"
+//   - "regular/path.md" -> "regular/path.md"
+func extractNewPath(path string) string {
+	// Check if path contains rename notation: {old => new}
+	if !bytes.Contains([]byte(path), []byte("{")) {
+		return path
+	}
+
+	// Use regex or simple string manipulation
+	// Pattern: {old => new}
+	start := bytes.Index([]byte(path), []byte("{"))
+	end := bytes.Index([]byte(path), []byte("}"))
+	if start == -1 || end == -1 || end <= start {
+		return path
+	}
+
+	// Extract the part inside braces
+	inside := path[start+1 : end]
+	parts := bytes.Split([]byte(inside), []byte(" => "))
+	if len(parts) != 2 {
+		return path
+	}
+
+	// Replace {old => new} with just new
+	newPath := path[:start] + string(parts[1]) + path[end+1:]
+	return newPath
+}
+
+// getFeatureBranchCommitForFile finds the actual commit from the feature branch that modified a file.
+// For a merge commit M, this looks in M^2 (feature branch) for commits that touched the file.
+func (f *Fetcher) getFeatureBranchCommitForFile(ctx context.Context, mergeCommit string, file string) (string, error) {
+	// Get commits from feature branch (^2) that are not in main (^1)
+	// This gives us all commits in the PR/feature branch
 	cmd := exec.CommandContext(ctx,
-		"git", "log", "--pretty=format:%s", "--reverse",
+		"git", "log", "--pretty=format:%H", "--follow",
 		fmt.Sprintf("%s^2", mergeCommit),
-		fmt.Sprintf("^%s^1", mergeCommit))
+		fmt.Sprintf("^%s^1", mergeCommit),
+		"--", file)
 	cmd.Dir = f.options.RepoPath
 
 	output, err := cmd.Output()
@@ -278,12 +301,13 @@ func (f *Fetcher) getFirstFeatureBranchCommitMessage(ctx context.Context, mergeC
 		return "", fmt.Errorf("git log failed: %w", err)
 	}
 
-	lines := bytes.Split(output, []byte("\n"))
-	if len(lines) > 0 && len(lines[0]) > 0 {
-		return string(lines[0]), nil
+	// Return the first (most recent) commit that touched this file
+	scanner := bufio.NewScanner(bytes.NewReader(output))
+	if scanner.Scan() {
+		return scanner.Text(), nil
 	}
 
-	return "", fmt.Errorf("no commits found in feature branch")
+	return "", fmt.Errorf("no commits found for file %s in feature branch", file)
 }
 
 // getDiffNumstat returns the numstat diff between two commits for content/ files.
@@ -298,114 +322,6 @@ func (f *Fetcher) getDiffNumstat(ctx context.Context, from string, to string) ([
 	}
 
 	return output, nil
-}
-
-// findLastCommit finds the last commit that modified a file in a merge.
-func (f *Fetcher) findLastCommit(ctx context.Context, mergeCommit string, file string, originalMainParent string) (string, error) {
-	// Set original main parent on first call
-	if originalMainParent == "" {
-		originalMainParent = fmt.Sprintf("%s^1", mergeCommit)
-	}
-
-	// Search from ^1 excluding ^2
-	fromFirst, err := f.getCommitFromBranch(ctx, mergeCommit, file, "^1", "^2")
-	if err != nil {
-		return mergeCommit, err
-	}
-
-	// Search from ^2 excluding ^1
-	fromSecond, err := f.getCommitFromBranch(ctx, mergeCommit, file, "^2", "^1")
-	if err != nil {
-		return mergeCommit, err
-	}
-
-	// Both empty
-	if fromFirst == "" && fromSecond == "" {
-		return mergeCommit, nil
-	}
-
-	// Select the commit from feature branch (not in main)
-	last := ""
-
-	if fromFirst != "" && fromSecond != "" {
-		// Both found - choose the one not in main
-		firstInMain, _ := f.isAncestor(ctx, fromFirst, originalMainParent)
-		secondInMain, _ := f.isAncestor(ctx, fromSecond, originalMainParent)
-
-		if firstInMain && !secondInMain {
-			last = fromSecond
-		} else if !firstInMain && secondInMain {
-			last = fromFirst
-		} else if !firstInMain && !secondInMain {
-			// Both not in main - choose newer
-			firstDate, _ := f.getCommitDate(ctx, fromFirst)
-			secondDate, _ := f.getCommitDate(ctx, fromSecond)
-			if secondDate > firstDate {
-				last = fromSecond
-			} else {
-				last = fromFirst
-			}
-		}
-	} else if fromFirst != "" {
-		inMain, _ := f.isAncestor(ctx, fromFirst, originalMainParent)
-		if !inMain {
-			last = fromFirst
-		}
-	} else if fromSecond != "" {
-		inMain, _ := f.isAncestor(ctx, fromSecond, originalMainParent)
-		if !inMain {
-			last = fromSecond
-		}
-	}
-
-	// No feature branch commit found
-	if last == "" {
-		return mergeCommit, nil
-	}
-
-	// If it's also a merge commit, recurse
-	isMerge, _ := f.isMergeCommit(ctx, last)
-	if isMerge {
-		return f.findLastCommit(ctx, last, file, originalMainParent)
-	}
-
-	return last, nil
-}
-
-// getCommitFromBranch gets the first commit for a file from a specific parent.
-func (f *Fetcher) getCommitFromBranch(ctx context.Context, mergeCommit, file, parent, exclude string) (string, error) {
-	cmd := exec.CommandContext(ctx,
-		"git", "log", "--pretty=format:%H",
-		fmt.Sprintf("%s%s", mergeCommit, parent),
-		fmt.Sprintf("^%s%s", mergeCommit, exclude),
-		"--", file)
-	cmd.Dir = f.options.RepoPath
-
-	output, err := cmd.Output()
-	if err != nil {
-		return "", nil // Not an error, just no commits found
-	}
-
-	scanner := bufio.NewScanner(bytes.NewReader(output))
-	if scanner.Scan() {
-		return scanner.Text(), nil
-	}
-
-	return "", nil
-}
-
-// getCommitDate returns the commit date as unix timestamp.
-func (f *Fetcher) getCommitDate(ctx context.Context, commitHash string) (int64, error) {
-	cmd := exec.CommandContext(ctx,
-		"git", "log", "--pretty=format:%at", "-n", "1", commitHash)
-	cmd.Dir = f.options.RepoPath
-
-	output, err := cmd.Output()
-	if err != nil {
-		return 0, err
-	}
-
-	return strconv.ParseInt(string(bytes.TrimSpace(output)), 10, 64)
 }
 
 // createEventFromCommit creates an Event from commit info and numstat line.

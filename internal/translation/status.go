@@ -47,30 +47,34 @@ func calculateStatus(
 		return StatusOutdated
 	}
 
-	// Translation appears to be up-to-date, but check if it's truly up-to-date
-	// or possibly outdated (latest translation commits are only minor changes)
+	// Translation appears to be up-to-date, but re-evaluate by looking at
+	// translation commits that happened after the English latest commit.
+	// If all such commits are minor, treat the translation as possibly_outdated
+	// (it only appears up-to-date because of trivial edits).
 	if translationLatest.Date.Equal(englishLatest.Date) || translationLatest.Date.After(englishLatest.Date) {
-		// Filter out minor commits from translation files
-		majorTranslationCommits := filterMajorCommits(translationCommits)
+		// Collect translation commits that occurred after the English latest commit
+		var afterEnglish []*git.Commit
+		for _, c := range translationCommits {
+			if c.Date.After(englishLatest.Date) {
+				afterEnglish = append(afterEnglish, c)
+			}
+		}
 
-		// If there are no major translation commits, it's outdated (no real translation work)
-		if len(majorTranslationCommits) == 0 {
-			// This is not true, but just to be safe
+		// If there are no translation commits after English, it's truly up-to-date
+		if len(afterEnglish) == 0 {
 			return StatusUpToDate
 		}
 
-		// Compare English latest with the latest *major* translation commit
-		majorTranslationLatest := majorTranslationCommits[len(majorTranslationCommits)-1]
-
-		// If major translation commit is older than English, it's possibly outdated
-		// (the translation appears up-to-date only because of minor commits like typo fixes)
-		if englishLatest.Date.After(majorTranslationLatest.Date) {
-			logger.Infof("Possibly outdated translation for language %s, English hash: %s, major translation hash: %s", language, englishLatest.Hash, majorTranslationLatest.Hash)
-			return StatusPossiblyOutdated
+		// If any commit after English is a major change, the translation is truly up-to-date
+		for _, c := range afterEnglish {
+			if !isMinorCommit(c) {
+				return StatusUpToDate
+			}
 		}
 
-		// Major translation commit is same or newer than English, truly up-to-date
-		return StatusUpToDate
+		// All commits that happened after the English latest are minor -> possibly outdated
+		logger.Infof("Possibly outdated translation for language %s, English hash: %s, translation latest: %s", language, englishLatest.Hash, translationLatest.Hash)
+		return StatusPossiblyOutdated
 	}
 
 	// This should not be reachable, but just in case
@@ -138,42 +142,25 @@ func mustBeMajorChange(commit git.Commit) bool {
 // This is heuristic-based to filter out trivial changes in translation files.
 // So, there may be false positives/negatives.
 // A commit is minor if:
-//  1. Contains minor keywords (typo, spelling, etc.) - takes precedence even if major keywords present
-//  2. OR total changes <= 20 lines AND does NOT contain major keywords
+//  1. Contains major keywords (translate, sync, etc.) → NOT minor (major takes precedence)
+//  2. Contains minor keywords (typo, spelling, etc.) AND small changes → minor
+//  3. Very small changes (<= 5 lines) without major keywords → minor
+//  4. Otherwise → NOT minor (default to major to avoid false negatives)
 func isMinorCommit(commit *git.Commit) bool {
 	hasMinor := maybeMinorChange(*commit)
 	hasMajor := mustBeMajorChange(*commit)
 
-	// If minor keywords present, evaluate as minor regardless of major keywords
-	if hasMinor {
-		return true
-	}
-
-	// If major keywords without minor keywords, definitely not minor
+	// If major keywords present, it's definitely NOT minor (major takes precedence)
 	if hasMajor {
 		return false
 	}
 
-	// No keywords - check modification size
 	totalChanges := commit.Insertions + commit.Deletions
 
-	// Very small changes (1-10 lines) are considered minor
-	if totalChanges > 0 && totalChanges <= 10 {
+	if hasMinor || totalChanges <= 10 {
 		return true
 	}
 
+	// Default to NOT minor (stricter heuristic to avoid false positives)
 	return false
-}
-
-// filterMajorCommits returns only the commits that are considered major (important).
-// Minor commits are filtered out for translation files to provide more accurate status.
-func filterMajorCommits(commits []*git.Commit) []*git.Commit {
-	major := make([]*git.Commit, 0, len(commits))
-	for _, commit := range commits {
-		if !isMinorCommit(commit) {
-			major = append(major, commit)
-		}
-	}
-
-	return major
 }
