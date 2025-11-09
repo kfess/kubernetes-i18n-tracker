@@ -2,7 +2,6 @@ package translation
 
 import (
 	"math"
-	"strings"
 	"time"
 
 	"github.com/kfess/kubernetes-i18n-tracker/internal/git"
@@ -66,29 +65,32 @@ func calculateStatus(
 				return StatusPossiblyOutdated
 			}
 		}
-		// Collect translation commits that occurred after the English latest commit
-		var afterEnglish []*git.Commit
-		for _, c := range translationCommits {
-			if c.Date.After(englishLatest.Date) {
-				afterEnglish = append(afterEnglish, c)
-			}
-		}
 
-		// If there are no translation commits after English, it's truly up-to-date
-		if len(afterEnglish) == 0 {
-			return StatusUpToDate
-		}
+		return StatusUpToDate
 
-		// If any commit after English is a major change, the translation is truly up-to-date
-		for _, c := range afterEnglish {
-			if !isMinorCommit(c) {
-				return StatusUpToDate
-			}
-		}
+		// // Collect translation commits that occurred after the English latest commit
+		// var afterEnglish []*git.Commit
+		// for _, c := range translationCommits {
+		// 	if c.Date.After(englishLatest.Date) {
+		// 		afterEnglish = append(afterEnglish, c)
+		// 	}
+		// }
 
-		// All commits that happened after the English latest are minor -> possibly outdated
-		logger.Infof("Possibly outdated translation for language %s, English hash: %s, translation latest: %s", language, englishLatest.Hash, translationLatest.Hash)
-		return StatusPossiblyOutdated
+		// // If there are no translation commits after English, it's truly up-to-date
+		// if len(afterEnglish) == 0 {
+		// 	return StatusUpToDate
+		// }
+
+		// // If any commit after English is a major change, the translation is truly up-to-date
+		// for _, c := range afterEnglish {
+		// 	if !isMinorCommit(c) {
+		// 		return StatusUpToDate
+		// 	}
+		// }
+
+		// // All commits that happened after the English latest are minor -> possibly outdated
+		// logger.Infof("Possibly outdated translation for language %s, English hash: %s, translation latest: %s", language, englishLatest.Hash, translationLatest.Hash)
+		// return StatusPossiblyOutdated
 	}
 
 	// This should not be reachable, but just in case
@@ -123,58 +125,58 @@ func calculateDaysBehind(englishCommits []*git.Commit, translationCommits []*git
 	return daysBehind
 }
 
-func maybeMinorChange(commit git.Commit) bool {
-	msg := commit.Message
-	minorKeywords := []string{
-		"typo", "spelling", "grammar", "format", "whitespace",
-		"punctuation", "minor", "chore", "fix",
-	}
+// func maybeMinorChange(commit git.Commit) bool {
+// 	msg := commit.Message
+// 	minorKeywords := []string{
+// 		"typo", "spelling", "grammar", "format", "whitespace",
+// 		"punctuation", "minor", "chore", "fix",
+// 	}
 
-	for _, keyword := range minorKeywords {
-		if strings.Contains(strings.ToLower(msg), keyword) {
-			return true
-		}
-	}
+// 	for _, keyword := range minorKeywords {
+// 		if strings.Contains(strings.ToLower(msg), keyword) {
+// 			return true
+// 		}
+// 	}
 
-	return false
-}
+// 	return false
+// }
 
-func mustBeMajorChange(commit git.Commit) bool {
-	msg := commit.Message
-	majorKeywords := []string{"translate", "sync", "create", "add", "update"}
+// func mustBeMajorChange(commit git.Commit) bool {
+// 	msg := commit.Message
+// 	majorKeywords := []string{"translate", "sync", "create", "add", "update"}
 
-	for _, keyword := range majorKeywords {
-		if strings.Contains(strings.ToLower(msg), keyword) {
-			return true
-		}
-	}
+// 	for _, keyword := range majorKeywords {
+// 		if strings.Contains(strings.ToLower(msg), keyword) {
+// 			return true
+// 		}
+// 	}
 
-	return false
-}
+// 	return false
+// }
 
-// isMinorCommit determines if a commit should be considered minor and ignored for status calculation.
-// This is heuristic-based to filter out trivial changes in translation files.
-// So, there may be false positives/negatives.
-// A commit is minor if:
-// 1. Contains major keywords (translate, sync, etc.) → NOT minor (major takes precedence)
-// 2. Contains minor keywords (typo, formatting, etc.) → minor
-// 3. Has small number of changes (<=10 lines) → minor
-// 4. Otherwise → NOT minor
-func isMinorCommit(commit *git.Commit) bool {
-	hasMinor := maybeMinorChange(*commit)
-	hasMajor := mustBeMajorChange(*commit)
+// // isMinorCommit determines if a commit should be considered minor and ignored for status calculation.
+// // This is heuristic-based to filter out trivial changes in translation files.
+// // So, there may be false positives/negatives.
+// // A commit is minor if:
+// // 1. Contains major keywords (translate, sync, etc.) → NOT minor (major takes precedence)
+// // 2. Contains minor keywords (typo, formatting, etc.) → minor
+// // 3. Has small number of changes (<=10 lines) → minor
+// // 4. Otherwise → NOT minor
+// func isMinorCommit(commit *git.Commit) bool {
+// 	hasMinor := maybeMinorChange(*commit)
+// 	hasMajor := mustBeMajorChange(*commit)
 
-	// If major keywords present, it's definitely NOT minor (major takes precedence)
-	if hasMajor {
-		return false
-	}
+// 	// If major keywords present, it's definitely NOT minor (major takes precedence)
+// 	if hasMajor {
+// 		return false
+// 	}
 
-	totalChanges := commit.Insertions + commit.Deletions
+// 	totalChanges := commit.Insertions + commit.Deletions
 
-	if hasMinor || totalChanges <= 10 {
-		return true
-	}
+// 	if hasMinor || totalChanges <= 10 {
+// 		return true
+// 	}
 
-	// Default to NOT minor (stricter heuristic to avoid false positives)
-	return false
-}
+// 	// Default to NOT minor (stricter heuristic to avoid false positives)
+// 	return false
+// }
