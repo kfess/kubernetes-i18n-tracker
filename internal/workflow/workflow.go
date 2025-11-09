@@ -203,15 +203,24 @@ func (w *Workflow) analyzeTranslations(
 			continue
 		}
 
+		// Read English content once for all translations
+		englishContentBytes, err := os.ReadFile(filepath.Join(w.config.RepoPath, englishPath))
+		if err != nil {
+			logger.Warnf("Failed to read English file %s: %v", englishPath, err)
+			englishContentBytes = []byte{}
+		}
+		englishContent := string(englishContentBytes)
+
 		for _, lang := range language.SupportedLanguages {
 			translationPath := pathInfo.ToLanguagePath(language.Language(lang))
 
-			contentBytes, err := os.ReadFile(filepath.Join(w.config.RepoPath, translationPath))
+			translationContentBytes, err := os.ReadFile(filepath.Join(w.config.RepoPath, translationPath))
 			if err != nil {
-				contentBytes = []byte{}
+				translationContentBytes = []byte{}
 			}
+			translationContent := string(translationContentBytes)
 
-			status, err := tracker.GetTranslationStatus(ctx, translationPath, string(contentBytes))
+			status, err := tracker.GetTranslationStatus(ctx, translationPath, englishContent, translationContent)
 			if err != nil {
 				logger.Errorf("Failed to get status for %s: %v", translationPath, err)
 				continue

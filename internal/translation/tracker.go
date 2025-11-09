@@ -65,6 +65,7 @@ func NewTracker(
 func (t *Tracker) GetTranslationStatus(
 	ctx context.Context,
 	translationPath string,
+	englishContent string,
 	translationContent string,
 ) (*TranslationStatus, error) {
 	pathInfo, err := path.Parse(translationPath)
@@ -83,7 +84,7 @@ func (t *Tracker) GetTranslationStatus(
 	}
 
 	// Build each component
-	history, err := t.buildHistory(ctx, englishPath, translationPath)
+	history, err := t.buildHistory(ctx, englishPath, translationPath, englishContent, translationContent)
 	if err != nil {
 		return nil, fmt.Errorf("build history for %s: %w", translationPath, err)
 	}
@@ -100,7 +101,7 @@ func (t *Tracker) GetTranslationStatus(
 }
 
 // buildHistory builds history by comparing English and translation file.
-func (t *Tracker) buildHistory(ctx context.Context, englishPath string, translationPath string) (*HistoryAnalysis, error) {
+func (t *Tracker) buildHistory(ctx context.Context, englishPath string, translationPath string, englishContent string, translationContent string) (*HistoryAnalysis, error) {
 	pathInfo, err := path.Parse(translationPath)
 	if err != nil {
 		return nil, fmt.Errorf("parse path %s: %w", translationPath, err)
@@ -113,6 +114,8 @@ func (t *Tracker) buildHistory(ctx context.Context, englishPath string, translat
 		string(pathInfo.Language()),
 		englishCommits,
 		translationCommits,
+		englishContent,
+		translationContent,
 	)
 
 	logger.Debugf("Translation status for %s: %s (EN commits: %d, Translation commits: %d)",
@@ -138,8 +141,6 @@ func (t *Tracker) buildHistory(ctx context.Context, englishPath string, translat
 
 	if status == StatusPossiblyOutdated {
 		return t.buildPossiblyOutdatedHistory(
-			ctx,
-			englishPath,
 			englishCommits,
 			englishLatest,
 			translationCommits,
@@ -221,8 +222,6 @@ func (t *Tracker) buildUpToDateHistory(
 }
 
 func (t *Tracker) buildPossiblyOutdatedHistory(
-	ctx context.Context,
-	englishPath string,
 	englishCommits []*git.Commit,
 	englishLatest *git.Commit,
 	translationCommits []*git.Commit,

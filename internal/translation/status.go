@@ -22,10 +22,13 @@ const (
 )
 
 // calculateStatus determines the translation status of a file based on its history.
+// It now includes header count comparison to detect structural differences.
 func calculateStatus(
 	language string,
 	englishCommits []*git.Commit,
 	translationCommits []*git.Commit,
+	englishContent string,
+	translationContent string,
 ) Status {
 	if len(englishCommits) == 0 {
 		return StatusNoEnglishVersion
@@ -47,11 +50,22 @@ func calculateStatus(
 		return StatusOutdated
 	}
 
-	// Translation appears to be up-to-date, but re-evaluate by looking at
-	// translation commits that happened after the English latest commit.
-	// If all such commits are minor, treat the translation as possibly_outdated
-	// (it only appears up-to-date because of trivial edits).
+	// Translation appears to be up-to-date, but re-evaluate by:
+	// 1. Checking if header counts match (structural similarity)
+	// 2. Looking at translation commits that happened after the English latest commit
+	//    If all such commits are minor, treat as possibly_outdated
 	if translationLatest.Date.Equal(englishLatest.Date) || translationLatest.Date.After(englishLatest.Date) {
+		// Check header counts - if they differ, the translation is possibly outdated
+		if englishContent != "" && translationContent != "" {
+			englishHeaders := CountHeadersFromContent(englishContent)
+			translationHeaders := CountHeadersFromContent(translationContent)
+
+			if !HeadersMatch(englishHeaders, translationHeaders) {
+				logger.Infof("Header mismatch detected (EN: %d, Trans: %d) - marking as possibly_outdated",
+					englishHeaders.Total, translationHeaders.Total)
+				return StatusPossiblyOutdated
+			}
+		}
 		// Collect translation commits that occurred after the English latest commit
 		var afterEnglish []*git.Commit
 		for _, c := range translationCommits {
@@ -142,10 +156,10 @@ func mustBeMajorChange(commit git.Commit) bool {
 // This is heuristic-based to filter out trivial changes in translation files.
 // So, there may be false positives/negatives.
 // A commit is minor if:
-//  1. Contains major keywords (translate, sync, etc.) → NOT minor (major takes precedence)
-//  2. Contains minor keywords (typo, spelling, etc.) AND small changes → minor
-//  3. Very small changes (<= 5 lines) without major keywords → minor
-//  4. Otherwise → NOT minor (default to major to avoid false negatives)
+// 1. Contains major keywords (translate, sync, etc.) → NOT minor (major takes precedence)
+// 2. Contains minor keywords (typo, formatting, etc.) → minor
+// 3. Has small number of changes (<=10 lines) → minor
+// 4. Otherwise → NOT minor
 func isMinorCommit(commit *git.Commit) bool {
 	hasMinor := maybeMinorChange(*commit)
 	hasMajor := mustBeMajorChange(*commit)

@@ -56,11 +56,11 @@ func TestCalculateStatus(t *testing.T) {
 			name:     "Translation is up-to-date",
 			language: "ja",
 			englishCommits: []*git.Commit{
-				{Date: twoDaysAgo},
+				{Date: twoDaysAgo, Message: "Add new content"},
 			},
 			translationCommits: []*git.Commit{
-				{Date: yesterday},
-				{Date: now},
+				{Date: yesterday, Message: "Translate page"},
+				{Date: now, Message: "Update translation"}, // Major change after English
 			},
 			want: StatusUpToDate,
 		},
@@ -79,7 +79,86 @@ func TestCalculateStatus(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := calculateStatus(tt.language, tt.englishCommits, tt.translationCommits)
+			// For unit tests, we pass empty strings for content to skip header checking
+			got := calculateStatus(tt.language, tt.englishCommits, tt.translationCommits, "", "")
+			if got != tt.want {
+				t.Errorf("CalculateStatus() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestCalculateStatusWithHeaderCheck(t *testing.T) {
+	now := time.Now()
+	yesterday := now.Add(-24 * time.Hour)
+
+	tests := []struct {
+		name               string
+		language           string
+		englishCommits     []*git.Commit
+		translationCommits []*git.Commit
+		englishContent     string
+		translationContent string
+		want               Status
+	}{
+		{
+			name:     "Header mismatch marks as possibly_outdated",
+			language: "ja",
+			englishCommits: []*git.Commit{
+				{Date: yesterday, Message: "Add content"},
+			},
+			translationCommits: []*git.Commit{
+				{Date: now, Message: "Translate content"},
+			},
+			englishContent: `---
+title: Test
+---
+# Header 1
+## Header 2
+### Header 3
+Content here
+`,
+			translationContent: `---
+title: Test
+---
+# Header 1
+## Header 2
+Content here
+`,
+			want: StatusPossiblyOutdated,
+		},
+		{
+			name:     "Header match confirms up_to_date",
+			language: "ja",
+			englishCommits: []*git.Commit{
+				{Date: yesterday, Message: "Add content"},
+			},
+			translationCommits: []*git.Commit{
+				{Date: now, Message: "Update translation"},
+			},
+			englishContent: `---
+title: Test
+---
+# Header 1
+## Header 2
+### Header 3
+Content here
+`,
+			translationContent: `---
+title: テスト
+---
+# ヘッダー 1
+## ヘッダー 2
+### ヘッダー 3
+翻訳内容
+`,
+			want: StatusUpToDate,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := calculateStatus(tt.language, tt.englishCommits, tt.translationCommits, tt.englishContent, tt.translationContent)
 			if got != tt.want {
 				t.Errorf("CalculateStatus() = %v, want %v", got, tt.want)
 			}
