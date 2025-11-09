@@ -2,6 +2,7 @@ import { IconExternalLink, IconGitBranch } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
 import { ActionIcon, Anchor, Box, Card, Divider, Group, Stack, Text, Tooltip } from '@mantine/core';
 import { EnglishSourceInfo } from '@/features/EnglishSourceInfo';
+import { GitHubIssueButton } from '@/features/GitHubIssueButton';
 import {
   getLanguageName,
   languageCodes,
@@ -108,21 +109,30 @@ export const MobileTranslationStatusMatrix = ({
                                   : ''}{' '}
                                 (UTC)
                               </Text>
-                              {translation?.translationUrl && (
-                                <ActionIcon
-                                  component="a"
-                                  href={translation.translationUrl || ''}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  size="xs"
-                                  radius="xs"
-                                  c="gray"
-                                  variant="subtle"
-                                  title="View on Kubernetes site"
-                                >
-                                  <IconExternalLink size={14} />
-                                </ActionIcon>
-                              )}
+                              <Group gap="0">
+                                {translation?.translationUrl && (
+                                  <ActionIcon
+                                    component="a"
+                                    href={translation.translationUrl || ''}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    size="xs"
+                                    radius="xs"
+                                    c="gray"
+                                    variant="subtle"
+                                    title="View on Kubernetes site"
+                                  >
+                                    <IconExternalLink size={14} />
+                                  </ActionIcon>
+                                )}
+                                {translation.status === 'possibly_outdated' && (
+                                  <GitHubIssueButton
+                                    englishPath={article.englishPath}
+                                    langCode={code.value}
+                                    variant="update"
+                                  />
+                                )}
+                              </Group>
                             </Group>
                           </Group>
                           {translation.prs.length > 0 && (
@@ -238,17 +248,24 @@ export const MobileTranslationStatusMatrix = ({
                                     </ActionIcon>
                                   )}
                                   {translation.status === 'outdated' && (
-                                    <ActionIcon
-                                      onClick={handleDiffClick}
-                                      size="xs"
-                                      radius="xs"
-                                      c="blue"
-                                      variant="subtle"
-                                      title="View translation diff"
-                                      style={{ cursor: 'pointer' }}
-                                    >
-                                      <IconGitBranch size={14} />
-                                    </ActionIcon>
+                                    <>
+                                      <ActionIcon
+                                        onClick={handleDiffClick}
+                                        size="xs"
+                                        radius="xs"
+                                        c="blue"
+                                        variant="subtle"
+                                        title="View translation diff"
+                                        style={{ cursor: 'pointer' }}
+                                      >
+                                        <IconGitBranch size={14} />
+                                      </ActionIcon>
+                                      <GitHubIssueButton
+                                        englishPath={article.englishPath}
+                                        langCode={code.value}
+                                        variant="update"
+                                      />
+                                    </>
                                   )}
                                 </Group>
                               </Group>
@@ -343,7 +360,14 @@ export const MobileTranslationStatusMatrix = ({
                               fontWeight: 500,
                             }}
                           >
-                            {getLanguageName(code.value)}
+                            <Group gap={4} align="center">
+                              {getLanguageName(code.value)}
+                              <GitHubIssueButton
+                                englishPath={article.englishPath}
+                                langCode={code.value}
+                                variant="new"
+                              />
+                            </Group>
                             {translation.issues.length > 0 && (
                               <Text size="xs" c="dimmed" mt="xs" component="span">
                                 {' '}
