@@ -17,7 +17,6 @@ export const generateIssueUrl = (
 
   const languageName =
     languageCodes.find((lang) => lang.value === langCode)?.label || langCode.toUpperCase();
-  const languageLabel = `language/${langCode}`;
 
   if (isNewTranslation) {
     const title = `[${langCode}] Translate ${englishPath} into ${languageName}`;
