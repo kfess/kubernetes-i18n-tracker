@@ -15,14 +15,6 @@ export const TranslationStatusCell = ({
   langCode: LanguageCode;
   category: ArticleCategory;
 }) => {
-
-  console.log('=== TranslationStatusCell Debug ===');
-  console.log('langCode:', langCode);
-  console.log('article.englishPath:', article.englishPath);
-  console.log('article.translations:', article.translations);
-  console.log('article.translations[langCode]:', article.translations[langCode]);
-  console.log('Available langCodes:', Object.keys(article.translations));
-
   const navigate = useNavigate();
   const { status, daysBehind, totalChangeLines, commitsBehind, targetLatestDate } =
     article.translations[langCode];
@@ -38,7 +30,7 @@ export const TranslationStatusCell = ({
   };
 
   const bgColor =
-    status === 'up_to_date'
+    status === 'up_to_date' || status === 'possibly_outdated'
       ? 'rgba(34, 139, 34, 0.05)'
       : status === 'outdated'
         ? 'rgba(255, 165, 0, 0.1)'
@@ -78,7 +70,7 @@ export const TranslationStatusCell = ({
           {daysBehind !== 1 ? 's' : ''} behind
         </Text>
       )}
-      {(status === 'outdated' || status === 'up_to_date') && targetLatestDate && (
+      {(status === 'outdated' || status === 'up_to_date' || status === 'possibly_outdated') && targetLatestDate && (
         <Group gap="2" justify="center" align="center">
           <Text size="xs" c="dimmed">
             Updated: {formatDateISO(targetLatestDate)} (UTC)

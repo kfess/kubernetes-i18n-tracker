@@ -11,7 +11,7 @@ import (
 	"github.com/kfess/kubernetes-i18n-tracker/internal/issue"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/logger"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/pageview"
-	path "github.com/kfess/kubernetes-i18n-tracker/internal/path"
+	"github.com/kfess/kubernetes-i18n-tracker/internal/path"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/pr"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/url"
 )
@@ -65,6 +65,7 @@ func NewTracker(
 func (t *Tracker) GetTranslationStatus(
 	ctx context.Context,
 	translationPath string,
+	englishContent string,
 	translationContent string,
 ) (*TranslationStatus, error) {
 	pathInfo, err := path.Parse(translationPath)
@@ -83,7 +84,7 @@ func (t *Tracker) GetTranslationStatus(
 	}
 
 	// Build each component
-	history, err := t.buildHistory(ctx, englishPath, translationPath)
+	history, err := t.buildHistory(ctx, englishPath, translationPath, englishContent, translationContent)
 	if err != nil {
 		return nil, fmt.Errorf("build history for %s: %w", translationPath, err)
 	}
@@ -100,7 +101,7 @@ func (t *Tracker) GetTranslationStatus(
 }
 
 // buildHistory builds history by comparing English and translation file.
-func (t *Tracker) buildHistory(ctx context.Context, englishPath string, translationPath string) (*HistoryAnalysis, error) {
+func (t *Tracker) buildHistory(ctx context.Context, englishPath string, translationPath string, englishContent string, translationContent string) (*HistoryAnalysis, error) {
 	pathInfo, err := path.Parse(translationPath)
 	if err != nil {
 		return nil, fmt.Errorf("parse path %s: %w", translationPath, err)
@@ -113,6 +114,8 @@ func (t *Tracker) buildHistory(ctx context.Context, englishPath string, translat
 		string(pathInfo.Language()),
 		englishCommits,
 		translationCommits,
+		englishContent,
+		translationContent,
 	)
 
 	logger.Debugf("Translation status for %s: %s (EN commits: %d, Translation commits: %d)",
@@ -134,6 +137,15 @@ func (t *Tracker) buildHistory(ctx context.Context, englishPath string, translat
 
 	if status == StatusNotTranslated {
 		return t.buildNotTranslatedHistory(englishCommits, englishLatest), nil
+	}
+
+	if status == StatusPossiblyOutdated {
+		return t.buildPossiblyOutdatedHistory(
+			englishCommits,
+			englishLatest,
+			translationCommits,
+			translationLatest,
+		)
 	}
 
 	if status == StatusUpToDate {
@@ -207,6 +219,29 @@ func (t *Tracker) buildUpToDateHistory(
 		CommitsBehind:       0,
 		MissingCommits:      []*git.Commit{},
 	}
+}
+
+func (t *Tracker) buildPossiblyOutdatedHistory(
+	englishCommits []*git.Commit,
+	englishLatest *git.Commit,
+	translationCommits []*git.Commit,
+	translationLatest *git.Commit,
+) (*HistoryAnalysis, error) {
+	daysBehind := calculateDaysBehind(englishCommits, translationCommits)
+
+	return &HistoryAnalysis{
+		Status:              StatusPossiblyOutdated,
+		Severity:            SeverityCurrent,
+		LastModified:        &translationLatest.Date,
+		LatestCommit:        translationLatest,
+		CommitHistory:       translationCommits,
+		EnglishLastModified: &englishLatest.Date,
+		EnglishLatestCommit: englishLatest,
+		ReferenceCommit:     translationLatest,
+		DaysBehind:          daysBehind,
+		CommitsBehind:       0,
+		MissingCommits:      []*git.Commit{},
+	}, nil
 }
 
 // buildOutdatedHistory creates history analysis for outdated translations.

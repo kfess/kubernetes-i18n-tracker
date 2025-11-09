@@ -5,6 +5,8 @@ export const StatusBadge = ({ status }: { status: TranslationStatus }) => {
     switch (status) {
       case 'up_to_date':
         return { emoji: '✅', label: 'Up to date' };
+      case 'possibly_outdated':
+        return { emoji: '✅ ⚠️', label: 'Possibly outdated' };
       case 'outdated':
         return { emoji: '⚠️', label: 'Outdated' };
       case 'not_translated':
