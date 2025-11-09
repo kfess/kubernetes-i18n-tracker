@@ -101,9 +101,10 @@ export const ArticleListControl = ({
 
   const statusOptions = [
     { value: 'all', label: 'All Status' },
-    { value: 'up_to_date', label: '✅ Up to date' },
-    { value: 'outdated', label: '⚠️ Outdated' },
-    { value: 'not_translated', label: '— Not translated' },
+    { value: 'up_to_date', label: 'Up to date' },
+    { value: 'possibly_outdated', label: 'Possibly outdated' },
+    { value: 'outdated', label: 'Outdated' },
+    { value: 'not_translated', label: 'Not translated' },
   ];
 
   const sortedLangCodes = getSortedLangCodes(selectedLanguages);
@@ -129,7 +130,7 @@ export const ArticleListControl = ({
               setActivePage(1);
             }}
             data={languageOptions}
-            w={160}
+            w={180}
           />
           <Select
             label="Translation Status"
@@ -141,7 +142,7 @@ export const ArticleListControl = ({
               setActivePage(1);
             }}
             data={statusOptions}
-            w={160}
+            w={180}
           />
           <Select
             label="Issue"
@@ -157,7 +158,7 @@ export const ArticleListControl = ({
               { value: 'withIssues', label: 'With Issues' },
               { value: 'withoutIssues', label: 'No Issues' },
             ]}
-            w={160}
+            w={180}
           />
           <Select
             label="Pull Request"
@@ -173,7 +174,7 @@ export const ArticleListControl = ({
               { value: 'withPr', label: 'Pull Request' },
               { value: 'withoutPr', label: 'No Pull Request' },
             ]}
-            w={160}
+            w={180}
           />
           <TextInput
             label="Search"

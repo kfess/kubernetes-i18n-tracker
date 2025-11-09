@@ -41,8 +41,11 @@ export const MobileTranslationStatusMatrix = ({
   return (
     <Stack gap="md">
       {articles.map((article) => {
-        const upToDateLangs = sortedLangCodes.filter(
-          (code) => code.value !== 'en' && article.translations[code.value]?.status === 'up_to_date'
+        const upToDateOrPossiblyOutdatedLangs = sortedLangCodes.filter(
+          (code) =>
+            code.value !== 'en' &&
+            (article.translations[code.value]?.status === 'up_to_date' ||
+              article.translations[code.value]?.status === 'possibly_outdated')
         );
         const outdatedLangs = sortedLangCodes.filter(
           (code) => code.value !== 'en' && article.translations[code.value]?.status === 'outdated'
@@ -65,9 +68,9 @@ export const MobileTranslationStatusMatrix = ({
             ) : (
               <Stack gap="md">
                 {/* Up to date languages */}
-                {upToDateLangs.length > 0 && (
+                {upToDateOrPossiblyOutdatedLangs.length > 0 && (
                   <Stack gap="xs">
-                    {upToDateLangs.map((code) => {
+                    {upToDateOrPossiblyOutdatedLangs.map((code) => {
                       const translation = article.translations[code.value];
                       const translationPath = article.englishPath.replace(
                         '/en/',
@@ -86,7 +89,7 @@ export const MobileTranslationStatusMatrix = ({
                         >
                           <Group justify="space-between" align="center">
                             <Group gap="xs" align="center">
-                              <StatusBadge status="up_to_date" />
+                              <StatusBadge status={translation.status} />
                               <Anchor
                                 href={`https://github.com/kubernetes/website/blob/main/${translationPath}`}
                                 target="_blank"

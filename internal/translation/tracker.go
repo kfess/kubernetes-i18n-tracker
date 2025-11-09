@@ -11,7 +11,7 @@ import (
 	"github.com/kfess/kubernetes-i18n-tracker/internal/issue"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/logger"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/pageview"
-	path "github.com/kfess/kubernetes-i18n-tracker/internal/path"
+	"github.com/kfess/kubernetes-i18n-tracker/internal/path"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/pr"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/url"
 )

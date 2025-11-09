@@ -1,4 +1,4 @@
-import { IconBrandGithubFilled, IconHeartFilled } from '@tabler/icons-react';
+import { IconBrandGithubFilled, IconHeartFilled, IconInfoCircle } from '@tabler/icons-react';
 import { Link } from 'react-router-dom';
 import { ActionIcon, Anchor, AppShell, Flex, Group, Image, Text, Tooltip } from '@mantine/core';
 import logo from '../assets/logo.svg';
@@ -22,6 +22,19 @@ export const NavigationBar = ({ children }: { children: React.ReactNode }) => {
               </Anchor>
             </Group>
             <Group gap={8}>
+              {/* <ActionIcon
+                component="a"
+                href="/information"
+                target="_blank"
+                variant="default"
+                radius="md"
+                size="lg"
+                aria-label="GitHub"
+              >
+                <Tooltip label="Information" position="bottom" withArrow offset={10}>
+                  <IconInfoCircle size={20} />
+                </Tooltip>
+              </ActionIcon> */}
               <ActionIcon
                 component="a"
                 href="https://github.com/kfess/kubernetes-i18n-tracker"
