@@ -29,11 +29,12 @@ Translate [${englishPath}](https://kubernetes.io${englishUrl}) into ${languageNa
 
 **Why is this needed**
 
-This page is not translated yet.`;
+This page is not translated yet.
+
+/language ${langCode}`;
 
     return (
       `https://github.com/kubernetes/website/issues/new?` +
-      `labels=${encodeURIComponent(languageLabel)}&` +
       `title=${encodeURIComponent(title)}&` +
       `body=${encodeURIComponent(body)}`
     );
@@ -50,11 +51,12 @@ Update the ${languageName} translation of the following page to match the latest
 
 **Why is this needed**
 
-The current ${languageName} translation is outdated.`;
+The current ${languageName} translation is outdated.
+
+/language ${langCode}`;
 
     return (
       `https://github.com/kubernetes/website/issues/new?` +
-      `labels=${encodeURIComponent(languageLabel)}&` +
       `title=${encodeURIComponent(title)}&` +
       `body=${encodeURIComponent(body)}`
     );
