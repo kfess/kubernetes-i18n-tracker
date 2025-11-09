@@ -108,6 +108,8 @@ export const TranslationStatusCell = ({
             {(status === 'outdated' || status === 'possibly_outdated') && (
               <GitHubIssueButton
                 englishPath={article.englishPath}
+                englishUrl={article.englishUrl}
+                translationUrl={article.translations[langCode]?.translationUrl || null}
                 langCode={langCode}
                 variant="update"
               />
@@ -116,7 +118,13 @@ export const TranslationStatusCell = ({
         )}
       <div>
         {status === 'not_translated' && (
-          <GitHubIssueButton englishPath={article.englishPath} langCode={langCode} variant="new" />
+          <GitHubIssueButton
+            englishPath={article.englishPath}
+            englishUrl={article.englishUrl}
+            translationUrl={null}
+            langCode={langCode}
+            variant="new"
+          />
         )}
       </div>
       {article.translations[langCode] && article.translations[langCode].issues.length > 0 && (

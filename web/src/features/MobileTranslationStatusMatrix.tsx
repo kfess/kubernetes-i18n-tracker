@@ -128,6 +128,8 @@ export const MobileTranslationStatusMatrix = ({
                                 {translation.status === 'possibly_outdated' && (
                                   <GitHubIssueButton
                                     englishPath={article.englishPath}
+                                    englishUrl={article.englishUrl}
+                                    translationUrl={translation.translationUrl}
                                     langCode={code.value}
                                     variant="update"
                                   />
@@ -262,6 +264,8 @@ export const MobileTranslationStatusMatrix = ({
                                       </ActionIcon>
                                       <GitHubIssueButton
                                         englishPath={article.englishPath}
+                                        englishUrl={article.englishUrl}
+                                        translationUrl={translation.translationUrl}
                                         langCode={code.value}
                                         variant="update"
                                       />
@@ -364,6 +368,8 @@ export const MobileTranslationStatusMatrix = ({
                               {getLanguageName(code.value)}
                               <GitHubIssueButton
                                 englishPath={article.englishPath}
+                                englishUrl={article.englishUrl}
+                                translationUrl={null}
                                 langCode={code.value}
                                 variant="new"
                               />
