@@ -67,6 +67,7 @@ The current ${languageName} translation is outdated.
 
     return (
       `https://github.com/kubernetes/website/issues/new?` +
+      `template=feature-request.md&` +
       `title=${encodeURIComponent(title)}&` +
       `body=${encodeURIComponent(body)}`
     );
