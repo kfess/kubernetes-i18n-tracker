@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ActionIcon, Anchor, Box, Card, Divider, Group, Stack, Text, Tooltip } from '@mantine/core';
 import { EnglishSourceInfo } from '@/features/EnglishSourceInfo';
 import { GitHubIssueButton } from '@/features/GitHubIssueButton';
+import { GitHubPRTemplateGenerator } from '@/features/GitHubPRTemplateGenerator';
 import {
   getLanguageName,
   languageCodes,
@@ -126,13 +127,22 @@ export const MobileTranslationStatusMatrix = ({
                                   </ActionIcon>
                                 )}
                                 {translation.status === 'possibly_outdated' && (
-                                  <GitHubIssueButton
-                                    englishPath={article.englishPath}
-                                    englishUrl={article.englishUrl}
-                                    translationUrl={translation.translationUrl}
-                                    langCode={code.value}
-                                    variant="update"
-                                  />
+                                  <>
+                                    <GitHubIssueButton
+                                      englishPath={article.englishPath}
+                                      englishUrl={article.englishUrl}
+                                      translationUrl={translation.translationUrl}
+                                      langCode={code.value}
+                                      variant="update"
+                                    />
+                                    <GitHubPRTemplateGenerator
+                                      englishPath={article.englishPath}
+                                      englishUrl={article.englishUrl}
+                                      translationUrl={translation.translationUrl}
+                                      langCode={code.value}
+                                      isNewTranslation={false}
+                                    />
+                                  </>
                                 )}
                               </Group>
                             </Group>
@@ -269,6 +279,13 @@ export const MobileTranslationStatusMatrix = ({
                                         langCode={code.value}
                                         variant="update"
                                       />
+                                      <GitHubPRTemplateGenerator
+                                        englishPath={article.englishPath}
+                                        englishUrl={article.englishUrl}
+                                        translationUrl={translation.translationUrl}
+                                        langCode={code.value}
+                                        isNewTranslation={false}
+                                      />
                                     </>
                                   )}
                                 </Group>
@@ -372,6 +389,13 @@ export const MobileTranslationStatusMatrix = ({
                                 translationUrl={null}
                                 langCode={code.value}
                                 variant="new"
+                              />
+                              <GitHubPRTemplateGenerator
+                                englishPath={article.englishPath}
+                                englishUrl={article.englishUrl}
+                                translationUrl={null}
+                                langCode={code.value}
+                                isNewTranslation={true}
                               />
                             </Group>
                             {translation.issues.length > 0 && (

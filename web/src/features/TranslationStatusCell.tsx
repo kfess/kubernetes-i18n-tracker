@@ -6,6 +6,7 @@ import { type LanguageCode } from '@/features/language/languageCodes';
 import { StatusBadge } from '@/features/StatusBadge';
 import { ArticleCategory, type ArticleTranslation } from '@/features/translations';
 import { formatDateISO } from '@/utils/date';
+import { GitHubPRTemplateGenerator } from './GitHubPRTemplateGenerator';
 
 export const TranslationStatusCell = ({
   article,
@@ -114,17 +115,35 @@ export const TranslationStatusCell = ({
                 variant="update"
               />
             )}
+            {(status === 'outdated' || status === 'possibly_outdated') && (
+              <GitHubPRTemplateGenerator
+                englishPath={article.englishPath}
+                englishUrl={article.englishUrl}
+                translationUrl={article.translations[langCode]?.translationUrl || null}
+                langCode={langCode}
+                isNewTranslation={false}
+              />
+            )}
           </Group>
         )}
       <div>
         {status === 'not_translated' && (
-          <GitHubIssueButton
-            englishPath={article.englishPath}
-            englishUrl={article.englishUrl}
-            translationUrl={null}
-            langCode={langCode}
-            variant="new"
-          />
+          <>
+            <GitHubIssueButton
+              englishPath={article.englishPath}
+              englishUrl={article.englishUrl}
+              translationUrl={null}
+              langCode={langCode}
+              variant="new"
+            />
+            <GitHubPRTemplateGenerator
+              englishPath={article.englishPath}
+              englishUrl={article.englishUrl}
+              translationUrl={null}
+              langCode={langCode}
+              isNewTranslation={true}
+            />
+          </>
         )}
       </div>
       {article.translations[langCode] && article.translations[langCode].issues.length > 0 && (
