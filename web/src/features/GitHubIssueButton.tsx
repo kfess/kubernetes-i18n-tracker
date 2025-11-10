@@ -18,7 +18,7 @@ export const generateIssueUrl = (
 
     let whatToAdd = `Translate \`${englishPath}\` into ${languageName}`;
     if (englishUrl) {
-      whatToAdd += `\n\n**Website Link**\n- English: ${englishUrl}`;
+      whatToAdd += `\n\n**Website Link**\n\n- English: ${englishUrl}`;
     }
 
     const body = `**This is a Feature Request**
@@ -35,6 +35,7 @@ This page is not translated yet.
 
     return (
       `https://github.com/kubernetes/website/issues/new?` +
+      `template=feature-request.md&` +
       `title=${encodeURIComponent(title)}&` +
       `body=${encodeURIComponent(body)}`
     );
@@ -44,7 +45,7 @@ This page is not translated yet.
     let whatToAdd = `Update the ${languageName} translation of \`${translationPath}\` to match the latest English version.`;
 
     if (englishUrl || translationUrl) {
-      whatToAdd += '\n\n**Website Link**';
+      whatToAdd += '\n\n**Website Link**\n';
       if (translationUrl) {
         whatToAdd += `\n- ${languageName}: ${translationUrl}`;
       }
@@ -67,6 +68,7 @@ The current ${languageName} translation is outdated.
 
     return (
       `https://github.com/kubernetes/website/issues/new?` +
+      `template=feature-request.md&` +
       `title=${encodeURIComponent(title)}&` +
       `body=${encodeURIComponent(body)}`
     );
