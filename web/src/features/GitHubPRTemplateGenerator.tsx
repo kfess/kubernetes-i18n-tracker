@@ -23,7 +23,8 @@ const generatePRTemplateMarkdown = (
     description = `### Description\n\nUpdated ${languageName} translation: \`${translationPath}\`.\n\n`;
   }
 
-  if (translationUrl || englishUrl) {
+  const hasLinks = translationUrl || englishUrl;
+  if (hasLinks) {
     description += '**Website Link**:\n\n';
     if (translationUrl) {
       description += `- ${languageName}: ${translationUrl}\n`;
@@ -31,7 +32,10 @@ const generatePRTemplateMarkdown = (
     if (englishUrl) {
       description += `- English: ${englishUrl}\n`;
     }
-  } // Issue section
+    description += '\n';
+  }
+
+  // Issue section
   const issueSection = `\n### Issue\n\nCloses: ${issueNumber ? `#${issueNumber}` : '#'}\n\n/area localization\n/language ${langCode}\n`;
 
   return description + issueSection;

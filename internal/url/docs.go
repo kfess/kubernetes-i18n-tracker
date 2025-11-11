@@ -47,30 +47,18 @@ func generateDocsUrl(baseUrl string, p *path.Path, fm *FrontMatter, existingUrls
 }
 
 func buildGlossaryUrl(baseUrl string, langPrefix string, fm *FrontMatter) string {
-	fullLink := fm.FullLink
-	if fullLink == "" {
-		return ""
+	// For glossary entries, use tags to generate a filtered glossary URL
+	// Example: https://kubernetes.io/docs/reference/glossary/?tool=true
+	base := strings.TrimRight(baseUrl, "/")
+
+	// If tags are available, use the first tag as the filter parameter
+	if len(fm.Tags) > 0 && fm.Tags[0] != "" {
+		tag := fm.Tags[0]
+		return fmt.Sprintf("%s/docs/reference/glossary/?%s=true", base, tag)
 	}
 
-	// full_link must start with "/"
-	if !strings.HasPrefix(fullLink, "/") {
-		return ""
-	}
-
-	// Build URL: baseUrl + langPrefix + full_link (without leading /)
-	url := fmt.Sprintf("%s/%s%s", baseUrl, langPrefix, strings.TrimPrefix(fullLink, "/"))
-
-	// If full_link contains a fragment (#), don't add trailing slash
-	if strings.Contains(fullLink, "#") {
-		return strings.TrimSuffix(url, "/")
-	}
-
-	// Otherwise, ensure trailing slash
-	if !strings.HasSuffix(url, "/") {
-		url += "/"
-	}
-
-	return url
+	// Fallback to "all" if no tags are present
+	return fmt.Sprintf("%s/docs/reference/glossary/?all=true", base)
 }
 
 func buildContributeBlogUrl(baseUrl string, langPrefix string, p *path.Path, fm *FrontMatter, existingUrls map[string]bool) string {
