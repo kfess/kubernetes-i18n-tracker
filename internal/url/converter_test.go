@@ -476,9 +476,6 @@ func TestConverter_DocsHome(t *testing.T) {
 	}
 }
 
-func TestConverter_DocsReferenceGlossary(t *testing.T) {
-}
-
 func TestConverter_Blog(t *testing.T) {
 	config := &Config{
 		BaseUrl: "https://kubernetes.io",
