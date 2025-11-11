@@ -6,6 +6,7 @@ type FrontMatter struct {
 	Date     string         `yaml:"date"`
 	Title    string         `yaml:"title"`
 	FullLink string         `yaml:"full_link"`
+	Tags     []string       `yaml:"tags"`
 	Build    *BuildSettings `yaml:"_build"`
 }
 
@@ -49,4 +50,8 @@ func (fm *FrontMatter) HasFullLink() bool {
 
 func (fm *FrontMatter) HasTitle() bool {
 	return fm.Title != ""
+}
+
+func (fm *FrontMatter) HasTags() bool {
+	return len(fm.Tags) > 0
 }

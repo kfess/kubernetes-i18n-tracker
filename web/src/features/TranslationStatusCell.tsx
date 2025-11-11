@@ -150,8 +150,11 @@ export const TranslationStatusCell = ({
         <Text size="xs" c="dimmed">
           Issue:{' '}
           {article.translations[langCode].issues.map((issue) => (
-            <Tooltip key={issue.number} label={`Issue #${issue.number} - ${issue.title}`}>
-              <Text key={issue.number} size="xs" c="dimmed" component="span">
+            <Tooltip
+              key={`issue-${issue.number}`}
+              label={`Issue #${issue.number} - ${issue.title}`}
+            >
+              <Text size="xs" c="dimmed" component="span">
                 <Anchor href={`${issue.url}`} target="_blank" rel="noopener noreferrer">
                   #{issue.number}{' '}
                 </Anchor>
@@ -164,8 +167,8 @@ export const TranslationStatusCell = ({
         <Text size="xs" c="dimmed">
           PR:{' '}
           {article.translations[langCode].prs.map((pr) => (
-            <Tooltip key={pr.number} label={`PR #${pr.number} - ${pr.title}`}>
-              <Text key={pr.number} size="xs" c="dimmed" component="span">
+            <Tooltip key={`pr-${pr.number}`} label={`PR #${pr.number} - ${pr.title}`}>
+              <Text size="xs" c="dimmed" component="span">
                 <Anchor href={`${pr.url}`} target="_blank" rel="noopener noreferrer">
                   #{pr.number}{' '}
                 </Anchor>

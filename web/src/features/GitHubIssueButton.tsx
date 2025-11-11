@@ -44,7 +44,8 @@ This page is not translated yet.
 
     let whatToAdd = `Update the ${languageName} translation of \`${translationPath}\` to match the latest English version.`;
 
-    if (englishUrl || translationUrl) {
+    const hasLinks = englishUrl || translationUrl;
+    if (hasLinks) {
       whatToAdd += '\n\n**Website Link**\n';
       if (translationUrl) {
         whatToAdd += `\n- ${languageName}: ${translationUrl}`;
