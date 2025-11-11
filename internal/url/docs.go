@@ -48,17 +48,17 @@ func generateDocsUrl(baseUrl string, p *path.Path, fm *FrontMatter, existingUrls
 
 func buildGlossaryUrl(baseUrl string, langPrefix string, fm *FrontMatter) string {
 	// For glossary entries, use tags to generate a filtered glossary URL
-	// Example: https://kubernetes.io/docs/reference/glossary/?tool=true
+	// Example: https://kubernetes.io/ja/docs/reference/glossary/?tool=true
 	base := strings.TrimRight(baseUrl, "/")
 
 	// If tags are available, use the first tag as the filter parameter
 	if len(fm.Tags) > 0 && fm.Tags[0] != "" {
 		tag := fm.Tags[0]
-		return fmt.Sprintf("%s/docs/reference/glossary/?%s=true", base, tag)
+		return fmt.Sprintf("%s/%sdocs/reference/glossary/?%s=true", base, langPrefix, tag)
 	}
 
 	// Fallback to "all" if no tags are present
-	return fmt.Sprintf("%s/docs/reference/glossary/?all=true", base)
+	return fmt.Sprintf("%s/%sdocs/reference/glossary/?all=true", base, langPrefix)
 }
 
 func buildContributeBlogUrl(baseUrl string, langPrefix string, p *path.Path, fm *FrontMatter, existingUrls map[string]bool) string {
