@@ -31,7 +31,9 @@ ${whatToAdd}
 
 This page is not translated yet.
 
-/language ${langCode}`;
+/area localization
+/language ${langCode}
+/assign`;
 
     return (
       `https://github.com/kubernetes/website/issues/new?` +
@@ -65,7 +67,9 @@ ${whatToAdd}
 
 The current ${languageName} translation is outdated.
 
-/language ${langCode}`;
+/area localization
+/language ${langCode}
+/assign`;
 
     return (
       `https://github.com/kubernetes/website/issues/new?` +
