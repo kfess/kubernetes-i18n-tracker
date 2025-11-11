@@ -476,6 +476,9 @@ func TestConverter_DocsHome(t *testing.T) {
 	}
 }
 
+func TestConverter_DocsReferenceGlossary(t *testing.T) {
+}
+
 func TestConverter_Blog(t *testing.T) {
 	config := &Config{
 		BaseUrl: "https://kubernetes.io",
@@ -1403,6 +1406,94 @@ func TestConverter_Career(t *testing.T) {
 			path:    "content/en/careers/_index.html",
 			fm:      &FrontMatter{},
 			want:    "https://kubernetes.io/careers/",
+			wantErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := converter.Convert(ctx, tt.path, tt.fm)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Convert() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("Convert() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestConverter_Glossary(t *testing.T) {
+	config := &Config{
+		BaseUrl:        "https://kubernetes.io",
+		ExistingUrls:   map[string]bool{},
+		SupportedLangs: language.SupportedLanguages,
+		SupportedExts:  []string{".md", ".html"},
+		ValidSections:  []path.Category{path.Docs},
+	}
+	converter := NewConverter(*config)
+	ctx := context.Background()
+
+	tests := []struct {
+		name    string
+		path    string
+		fm      *FrontMatter
+		want    string
+		wantErr bool
+	}{
+		{
+			name: "Glossary with tool tag",
+			path: "content/en/docs/reference/glossary/addons.md",
+			fm: &FrontMatter{
+				Tags: []string{"tool"},
+			},
+			want:    "https://kubernetes.io/docs/reference/glossary/?tool=true",
+			wantErr: false,
+		},
+		{
+			name: "Glossary with user-type tag",
+			path: "content/en/docs/reference/glossary/cluster-architect.md",
+			fm: &FrontMatter{
+				Tags: []string{"user-type"},
+			},
+			want:    "https://kubernetes.io/docs/reference/glossary/?user-type=true",
+			wantErr: false,
+		},
+		{
+			name: "Glossary with fundamental tag",
+			path: "content/en/docs/reference/glossary/ephemeral-container.md",
+			fm: &FrontMatter{
+				Tags: []string{"fundamental"},
+			},
+			want:    "https://kubernetes.io/docs/reference/glossary/?fundamental=true",
+			wantErr: false,
+		},
+		{
+			name: "Glossary with no tags (fallback to all)",
+			path: "content/en/docs/reference/glossary/sample.md",
+			fm: &FrontMatter{
+				Tags: []string{},
+			},
+			want:    "https://kubernetes.io/docs/reference/glossary/?all=true",
+			wantErr: false,
+		},
+		{
+			name: "Glossary with multiple tags (use first tag)",
+			path: "content/en/docs/reference/glossary/multi-tag.md",
+			fm: &FrontMatter{
+				Tags: []string{"fundamental", "tool"},
+			},
+			want:    "https://kubernetes.io/docs/reference/glossary/?fundamental=true",
+			wantErr: false,
+		},
+		{
+			name: "Glossary with Japanese language",
+			path: "content/ja/docs/reference/glossary/cluster-architect.md",
+			fm: &FrontMatter{
+				Tags: []string{"user-type"},
+			},
+			want:    "https://kubernetes.io/ja/docs/reference/glossary/?user-type=true",
 			wantErr: false,
 		},
 	}

@@ -216,3 +216,31 @@ func TestFrontMatter_HasTitle(t *testing.T) {
 		})
 	}
 }
+
+func TestHasTags(t *testing.T) {
+	tests := []struct {
+		name     string
+		fm       *FrontMatter
+		expected bool
+	}{
+		{
+			name:     "No tags",
+			fm:       &FrontMatter{Tags: []string{}},
+			expected: false,
+		},
+		{
+			name:     "With tags",
+			fm:       &FrontMatter{Tags: []string{"kubernetes", "docs"}},
+			expected: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := tt.fm.HasTags()
+			if got != tt.expected {
+				t.Errorf("HasTags() = %v, want %v", got, tt.expected)
+			}
+		})
+	}
+}
