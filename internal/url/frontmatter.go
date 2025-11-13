@@ -2,6 +2,7 @@ package url
 
 type FrontMatter struct {
 	Url      string         `yaml:"url"`
+	Id       string         `yaml:"id"`
 	Slug     string         `yaml:"slug"`
 	Date     string         `yaml:"date"`
 	Title    string         `yaml:"title"`
@@ -54,4 +55,8 @@ func (fm *FrontMatter) HasTitle() bool {
 
 func (fm *FrontMatter) HasTags() bool {
 	return len(fm.Tags) > 0
+}
+
+func (fm *FrontMatter) HasId() bool {
+	return fm.Id != ""
 }

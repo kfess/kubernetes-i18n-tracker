@@ -1476,12 +1476,42 @@ func TestConverter_Glossary(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "Glossary with multiple tags (use first tag)",
+			name: "Glossary with multiple tags",
 			path: "content/en/docs/reference/glossary/multi-tag.md",
 			fm: &FrontMatter{
 				Tags: []string{"fundamental", "tool"},
 			},
-			want:    "https://kubernetes.io/docs/reference/glossary/?fundamental=true",
+			want:    "https://kubernetes.io/docs/reference/glossary/?fundamental=true&tool=true",
+			wantErr: false,
+		},
+		{
+			name: "Glossary with id, no tags",
+			path: "content/en/docs/reference/glossary/addons.md",
+			fm: &FrontMatter{
+				Id:   "addons",
+				Tags: []string{},
+			},
+			want:    "https://kubernetes.io/docs/reference/glossary/?all=true#term-addons",
+			wantErr: false,
+		},
+		{
+			name: "Glossary with id and single tag",
+			path: "content/en/docs/reference/glossary/cluster-architect.md",
+			fm: &FrontMatter{
+				Id:   "cluster-architect",
+				Tags: []string{"user-type"},
+			},
+			want:    "https://kubernetes.io/docs/reference/glossary/?user-type=true#term-cluster-architect",
+			wantErr: false,
+		},
+		{
+			name: "Glossary with id and multiple tags",
+			path: "content/en/docs/reference/glossary/ephemeral-container.md",
+			fm: &FrontMatter{
+				Id:   "ephemeral-container",
+				Tags: []string{"fundamental", "core-object"},
+			},
+			want:    "https://kubernetes.io/docs/reference/glossary/?fundamental=true&core-object=true#term-ephemeral-container",
 			wantErr: false,
 		},
 		{
@@ -1491,6 +1521,16 @@ func TestConverter_Glossary(t *testing.T) {
 				Tags: []string{"user-type"},
 			},
 			want:    "https://kubernetes.io/ja/docs/reference/glossary/?user-type=true",
+			wantErr: false,
+		},
+		{
+			name: "Glossary with Japanese language and id",
+			path: "content/ja/docs/reference/glossary/addons.md",
+			fm: &FrontMatter{
+				Id:   "addons",
+				Tags: []string{"tool"},
+			},
+			want:    "https://kubernetes.io/ja/docs/reference/glossary/?tool=true#term-addons",
 			wantErr: false,
 		},
 	}

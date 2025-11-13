@@ -46,19 +46,35 @@ func generateDocsUrl(baseUrl string, p *path.Path, fm *FrontMatter, existingUrls
 	return ""
 }
 
-func buildGlossaryUrl(baseUrl string, langPrefix string, fm *FrontMatter) string {
-	// For glossary entries, use tags to generate a filtered glossary URL
-	// Example: https://kubernetes.io/ja/docs/reference/glossary/?tool=true
-	base := strings.TrimRight(baseUrl, "/")
+// For glossary entries, use tags to generate a filtered glossary URL
+// Example: https://kubernetes.io/ja/docs/reference/glossary/?tool=true
+// Example with id: https://kubernetes.io/ja/docs/reference/glossary/?tool=true#addon
 
-	// If tags are available, use the first tag as the filter parameter
+func buildGlossaryUrl(baseUrl string, langPrefix string, fm *FrontMatter) string {
+	base := strings.TrimRight(baseUrl, "/")
+	id := fm.Id
+
+	var queryParams []string
 	if len(fm.Tags) > 0 && fm.Tags[0] != "" {
-		tag := fm.Tags[0]
-		return fmt.Sprintf("%s/%sdocs/reference/glossary/?%s=true", base, langPrefix, tag)
+		for _, tag := range fm.Tags {
+			if tag != "" {
+				queryParams = append(queryParams, fmt.Sprintf("%s=true", tag))
+			}
+		}
 	}
 
-	// Fallback to "all" if no tags are present
-	return fmt.Sprintf("%s/%sdocs/reference/glossary/?all=true", base, langPrefix)
+	var url string
+	if len(queryParams) > 0 {
+		url = fmt.Sprintf("%s/%sdocs/reference/glossary/?%s", base, langPrefix, strings.Join(queryParams, "&"))
+	} else {
+		url = fmt.Sprintf("%s/%sdocs/reference/glossary/?all=true", base, langPrefix)
+	}
+
+	if id != "" {
+		url += "#term-" + id
+	}
+
+	return url
 }
 
 func buildContributeBlogUrl(baseUrl string, langPrefix string, p *path.Path, fm *FrontMatter, existingUrls map[string]bool) string {
