@@ -23,6 +23,14 @@ export const TranslationStatusCell = ({
 
   const status = article.translations[langCode]?.status;
 
+  // Apply background color even before inView to prevent flashing
+  const getBackgroundColor = () => {
+    if (status === 'up_to_date') return 'rgba(34, 139, 34, 0.05)';
+    if (status === 'outdated') return 'rgba(255, 165, 0, 0.1)';
+    if (status === 'possibly_outdated') return 'rgba(34, 139, 34, 0.05)';
+    return undefined;
+  };
+
   if (!inView) {
     return (
       <Table.Td
@@ -30,6 +38,7 @@ export const TranslationStatusCell = ({
           textAlign: 'center',
           whiteSpace: 'nowrap',
           minWidth: rem(200),
+          backgroundColor: getBackgroundColor(),
         }}
         ref={ref}
       >
