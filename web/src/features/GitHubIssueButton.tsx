@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { IconCircleDot } from '@tabler/icons-react';
 import { ActionIcon, Tooltip } from '@mantine/core';
 import { languageCodes, type LanguageCode } from '@/features/language/languageCodes';
@@ -88,34 +89,38 @@ interface GitHubIssueButtonProps {
   variant: 'update' | 'new';
 }
 
-export const GitHubIssueButton = ({
-  englishPath,
-  englishUrl,
-  translationUrl,
-  langCode,
-  variant,
-}: GitHubIssueButtonProps) => {
-  const isNewTranslation = variant === 'new';
-  const tooltipLabel = isNewTranslation
-    ? 'Request new translation Issue'
-    : 'Report outdated translation Issue';
-  const title = isNewTranslation ? 'Request translation on GitHub' : 'Report issue on GitHub';
+export const GitHubIssueButton = memo(
+  ({ englishPath, englishUrl, translationUrl, langCode, variant }: GitHubIssueButtonProps) => {
+    const isNewTranslation = variant === 'new';
+    const tooltipLabel = isNewTranslation
+      ? 'Request new translation Issue'
+      : 'Report outdated translation Issue';
+    const title = isNewTranslation ? 'Request translation on GitHub' : 'Report issue on GitHub';
 
-  return (
-    <Tooltip label={tooltipLabel} position="top" withArrow>
-      <ActionIcon
-        component="a"
-        href={generateIssueUrl(englishPath, englishUrl, translationUrl, langCode, isNewTranslation)}
-        target="_blank"
-        rel="noopener noreferrer"
-        size="xs"
-        radius="xs"
-        c="blue"
-        variant="subtle"
-        title={title}
-      >
-        <IconCircleDot size={14} />
-      </ActionIcon>
-    </Tooltip>
-  );
-};
+    return (
+      <Tooltip label={tooltipLabel} position="top" withArrow>
+        <ActionIcon
+          component="a"
+          href={generateIssueUrl(
+            englishPath,
+            englishUrl,
+            translationUrl,
+            langCode,
+            isNewTranslation
+          )}
+          target="_blank"
+          rel="noopener noreferrer"
+          size="xs"
+          radius="xs"
+          c="blue"
+          variant="subtle"
+          title={title}
+        >
+          <IconCircleDot size={14} />
+        </ActionIcon>
+      </Tooltip>
+    );
+  }
+);
+
+GitHubIssueButton.displayName = 'GitHubIssueButton';

@@ -1,6 +1,6 @@
 import { type LanguageCode } from '@/features/language/languageCodes';
 
-export type TranslationStatus = 'up_to_date' | 'outdated' | 'not_translated' | "possibly_outdated";
+export type TranslationStatus = 'up_to_date' | 'outdated' | 'not_translated' | 'possibly_outdated';
 
 type Severity = 'current' | 'minor' | 'moderate' | 'significant' | 'critical';
 

@@ -1,6 +1,6 @@
+import { memo, useCallback } from 'react';
 import { IconGitPullRequest } from '@tabler/icons-react';
 import { ActionIcon, Tooltip } from '@mantine/core';
-import { useClipboard } from '@mantine/hooks';
 import { languageCodes, type LanguageCode } from '@/features/language/languageCodes';
 
 const generatePRTemplateMarkdown = (
@@ -15,7 +15,6 @@ const generatePRTemplateMarkdown = (
   const languageName =
     languageCodes.find((lang) => lang.value === langCode)?.label || langCode.toUpperCase();
 
-  // Description section
   let description: string;
   if (isNewTranslation) {
     description = `### Description\n\nTranslated \`${englishPath}\` into ${languageName}: \`${translationPath}\`.\n\n`;
@@ -35,7 +34,6 @@ const generatePRTemplateMarkdown = (
     description += '\n';
   }
 
-  // Issue section
   const issueSection = `\n### Issue\n\nCloses: ${issueNumber ? `#${issueNumber}` : '#'}\n\n/area localization\n/language ${langCode}\n`;
 
   return description + issueSection;
@@ -49,36 +47,27 @@ interface Props {
   isNewTranslation: boolean;
 }
 
-export const GitHubPRTemplateGenerator = ({
-  englishPath,
-  englishUrl,
-  translationUrl,
-  langCode,
-  isNewTranslation,
-}: Props) => {
-  const clipboard = useClipboard({ timeout: 500 });
+export const GitHubPRTemplateGenerator = memo(
+  ({ englishPath, englishUrl, translationUrl, langCode, isNewTranslation }: Props) => {
+    const handleCopy = useCallback(() => {
+      const markdown = generatePRTemplateMarkdown(
+        englishPath,
+        englishUrl,
+        translationUrl,
+        langCode,
+        isNewTranslation
+      );
+      navigator.clipboard.writeText(markdown);
+    }, [englishPath, englishUrl, translationUrl, langCode, isNewTranslation]);
 
-  return (
-    <Tooltip label="Copy PR template markdown to clipboard" position="top" withArrow>
-      <ActionIcon
-        component="button"
-        size="xs"
-        radius="xs"
-        c={clipboard.copied ? 'teal' : 'blue'}
-        variant="subtle"
-        onClick={() => {
-          const markdown = generatePRTemplateMarkdown(
-            englishPath,
-            englishUrl,
-            translationUrl,
-            langCode,
-            isNewTranslation
-          );
-          clipboard.copy(markdown);
-        }}
-      >
-        <IconGitPullRequest size={14} />
-      </ActionIcon>
-    </Tooltip>
-  );
-};
+    return (
+      <Tooltip label="Copy PR template markdown to clipboard" position="top" withArrow>
+        <ActionIcon component="button" size="xs" radius="xs" variant="subtle" onClick={handleCopy}>
+          <IconGitPullRequest size={14} />
+        </ActionIcon>
+      </Tooltip>
+    );
+  }
+);
+
+GitHubPRTemplateGenerator.displayName = 'GitHubPRTemplateGenerator';

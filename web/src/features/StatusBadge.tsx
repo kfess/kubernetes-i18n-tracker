@@ -1,3 +1,4 @@
+import { Tooltip } from '@mantine/core';
 import { type TranslationStatus } from '@/features/translations';
 
 export const StatusBadge = ({ status }: { status: TranslationStatus }) => {
@@ -6,7 +7,7 @@ export const StatusBadge = ({ status }: { status: TranslationStatus }) => {
       case 'up_to_date':
         return { emoji: '✅', label: 'Up to date' };
       case 'possibly_outdated':
-        return { emoji: '✅ ⚠️', label: 'Possibly outdated (Document\'s header structures differ)' };
+        return { emoji: '✅ ⚠️', label: "Possibly outdated (Document's header structures differ)" };
       case 'outdated':
         return { emoji: '⚠️', label: 'Outdated' };
       case 'not_translated':
@@ -18,5 +19,9 @@ export const StatusBadge = ({ status }: { status: TranslationStatus }) => {
 
   const statusConfig = getStatusConfig(status);
 
-  return <span title={statusConfig.label}>{statusConfig.emoji}</span>;
+  return (
+    <Tooltip label={statusConfig.label} withArrow>
+      <span>{statusConfig.emoji}</span>
+    </Tooltip>
+  );
 };
