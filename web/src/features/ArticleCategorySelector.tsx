@@ -44,13 +44,13 @@ export const ArticleCategorySelector = ({ articleCategory, onArticleCategoryChan
     transition: 'all 0.2s ease',
   };
 
+  const handleTabChange = (value: string | null) => {
+    onArticleCategoryChange(value as ArticleCategory);
+  };
+
   return (
     <Box mb="md">
-      <Tabs
-        value={articleCategory}
-        onChange={(value) => onArticleCategoryChange(value as ArticleCategory)}
-        variant="none"
-      >
+      <Tabs value={articleCategory} onChange={handleTabChange} variant="none">
         <Tabs.List ref={setRootRef} style={tabListStyle}>
           {articleCategories.map((category) => (
             <Tabs.Tab

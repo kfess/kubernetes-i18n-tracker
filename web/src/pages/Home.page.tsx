@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { startTransition, useMemo, useState } from 'react';
 import { Container, Stack, Text } from '@mantine/core';
 import { useLocalStorage, useMediaQuery } from '@mantine/hooks';
 import { ArticleCategorySelector } from '@/features/ArticleCategorySelector';
@@ -151,8 +151,10 @@ export function HomePage() {
   const currentArticles = filteredArticles.slice(startIndex, endIndex);
 
   const onArticleCategoryChange = (category: ArticleCategory) => {
-    setSelectedArticleCategory(category);
-    setActivePage(1);
+    startTransition(() => {
+      setSelectedArticleCategory(category);
+      setActivePage(1);
+    });
   };
 
   return (

@@ -1,3 +1,5 @@
+import { useInView } from 'react-intersection-observer';
+import { Box, rem, Table, Text } from '@mantine/core';
 import { EnglishSourceInfo } from '@/features/EnglishSourceInfo';
 import {
   getSortedLangCodes,
@@ -6,7 +8,6 @@ import {
 } from '@/features/language/languageCodes';
 import { ArticleCategory, type ArticleTranslation } from '@/features/translations';
 import { TranslationStatusCell } from '@/features/TranslationStatusCell';
-import { Box, rem, Table, Text } from '@mantine/core';
 
 interface Props {
   articles: ArticleTranslation[];
@@ -14,6 +15,46 @@ interface Props {
   selectedLanguages: LanguageCode[];
   selectedArticleCategory: ArticleCategory;
 }
+
+const TableRow = ({
+  article,
+  sortedLangCodes,
+  selectedArticleCategory,
+}: {
+  article: ArticleTranslation;
+  sortedLangCodes: { value: LanguageCode; label: string }[];
+  selectedArticleCategory: ArticleCategory;
+}) => {
+  const { ref, inView } = useInView({
+    triggerOnce: true,
+    rootMargin: '200px',
+    initialInView: true,
+  });
+
+  return (
+    <Table.Tr ref={ref}>
+      {inView ? (
+        <>
+          <Table.Td>
+            <EnglishSourceInfo article={article} />
+          </Table.Td>
+          {sortedLangCodes.map((code) => (
+            <TranslationStatusCell
+              key={code.value}
+              article={article}
+              langCode={code.value}
+              category={selectedArticleCategory}
+            />
+          ))}
+        </>
+      ) : (
+        <Table.Td colSpan={sortedLangCodes.length + 1}>
+          <div style={{ minHeight: '60px' }} />
+        </Table.Td>
+      )}
+    </Table.Tr>
+  );
+};
 
 export const TranslationStatusMatrix = ({
   articles,
@@ -45,19 +86,12 @@ export const TranslationStatusMatrix = ({
         <Table.Tbody>
           {articles.length > 0 ? (
             articles.map((article) => (
-              <Table.Tr key={article.englishPath}>
-                <Table.Td>
-                  <EnglishSourceInfo article={article} />
-                </Table.Td>
-                {sortedLangCodes.map((code) => (
-                  <TranslationStatusCell
-                    key={code.value}
-                    article={article}
-                    langCode={code.value}
-                    category={selectedArticleCategory}
-                  />
-                ))}
-              </Table.Tr>
+              <TableRow
+                key={article.englishPath}
+                article={article}
+                sortedLangCodes={sortedLangCodes}
+                selectedArticleCategory={selectedArticleCategory}
+              />
             ))
           ) : (
             <Table.Tr>
