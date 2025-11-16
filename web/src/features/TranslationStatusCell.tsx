@@ -1,4 +1,5 @@
 import { IconExternalLink, IconGitBranch } from '@tabler/icons-react';
+import { useInView } from 'react-intersection-observer';
 import { useNavigate } from 'react-router-dom';
 import { ActionIcon, Anchor, Group, rem, Table, Text, Tooltip } from '@mantine/core';
 import { GitHubIssueButton } from '@/features/GitHubIssueButton';
@@ -17,6 +18,11 @@ export const TranslationStatusCell = ({
   langCode: LanguageCode;
   category: ArticleCategory;
 }) => {
+  const { ref, inView } = useInView({
+    triggerOnce: true,
+    rootMargin: '100px', // load before it comes into view
+  });
+
   const navigate = useNavigate();
   const { status, daysBehind, totalChangeLines, commitsBehind, targetLatestDate } =
     article.translations[langCode];
@@ -46,136 +52,141 @@ export const TranslationStatusCell = ({
         backgroundColor: bgColor,
         minWidth: rem(200),
       }}
+      ref={ref}
     >
-      <>
-        {status !== 'not_translated' ? (
-          <Anchor
-            href={`https://github.com/kubernetes/website/blob/main/${translationPath}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            underline="never"
-            title={`Edit ${langCode} translation on GitHub`}
-          >
-            <StatusBadge status={status} />
-          </Anchor>
-        ) : (
-          <StatusBadge status={status} />
-        )}
-      </>
-      {totalChangeLines > 0 && status === 'outdated' && (
-        <Text size="sm">{totalChangeLines.toLocaleString()} lines changed</Text>
-      )}
-      {status === 'outdated' && daysBehind && (
-        <Text size="xs" c="dimmed">
-          {commitsBehind.toLocaleString()} commit{commitsBehind > 1 ? 's' : ''} /{' '}
-          {daysBehind.toLocaleString()} day
-          {daysBehind !== 1 ? 's' : ''} behind
-        </Text>
-      )}
-      {(status === 'outdated' || status === 'up_to_date' || status === 'possibly_outdated') &&
-        targetLatestDate && (
-          <Group gap="2" justify="center" align="center">
-            <Text size="xs" c="dimmed">
-              Updated: {formatDateISO(targetLatestDate)} (UTC)
-            </Text>
-            {article.translations[langCode].translationUrl && (
-              <ActionIcon
-                component="a"
-                href={article.translations[langCode].translationUrl || ''}
-                target="_blank"
-                rel="noopener noreferrer"
-                size="xs"
-                radius="xs"
-                c="gray"
-                variant="subtle"
-                title="Kubernetes documentation"
-              >
-                <IconExternalLink size={14} />
-              </ActionIcon>
-            )}
-            {article.translations[langCode].status === 'outdated' && (
-              <ActionIcon
-                onClick={handleDiffClick}
-                size="xs"
-                radius="xs"
-                c="blue"
-                variant="subtle"
-                title="View translation diff"
-                style={{ cursor: 'pointer' }}
-              >
-                <IconGitBranch size={14} />
-              </ActionIcon>
-            )}
-            {(status === 'outdated' || status === 'possibly_outdated') && (
-              <GitHubIssueButton
-                englishPath={article.englishPath}
-                englishUrl={article.englishUrl}
-                translationUrl={article.translations[langCode]?.translationUrl || null}
-                langCode={langCode}
-                variant="update"
-              />
-            )}
-            {(status === 'outdated' || status === 'possibly_outdated') && (
-              <GitHubPRTemplateGenerator
-                englishPath={article.englishPath}
-                englishUrl={article.englishUrl}
-                translationUrl={article.translations[langCode]?.translationUrl || null}
-                langCode={langCode}
-                isNewTranslation={false}
-              />
-            )}
-          </Group>
-        )}
-      <div>
-        {status === 'not_translated' && (
-          <>
-            <GitHubIssueButton
-              englishPath={article.englishPath}
-              englishUrl={article.englishUrl}
-              translationUrl={null}
-              langCode={langCode}
-              variant="new"
-            />
-            <GitHubPRTemplateGenerator
-              englishPath={article.englishPath}
-              englishUrl={article.englishUrl}
-              translationUrl={null}
-              langCode={langCode}
-              isNewTranslation={true}
-            />
-          </>
-        )}
-      </div>
-      {article.translations[langCode] && article.translations[langCode].issues.length > 0 && (
-        <Text size="xs" c="dimmed">
-          Issue:{' '}
-          {article.translations[langCode].issues.map((issue) => (
-            <Tooltip
-              key={`issue-${issue.number}`}
-              label={`Issue #${issue.number} - ${issue.title}`}
+      {!inView ? (
+        <div style={{ minHeight: '60px' }} />
+      ) : (
+        <>
+          {status !== 'not_translated' ? (
+            <Anchor
+              href={`https://github.com/kubernetes/website/blob/main/${translationPath}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              underline="never"
+              title={`Edit ${langCode} translation on GitHub`}
             >
-              <Text size="xs" c="dimmed" component="span">
-                <Anchor href={`${issue.url}`} target="_blank" rel="noopener noreferrer">
-                  #{issue.number}{' '}
-                </Anchor>
-              </Text>
-            </Tooltip>
-          ))}
-        </Text>
-      )}
-      {article.translations[langCode] && article.translations[langCode].prs.length > 0 && (
-        <Text size="xs" c="dimmed">
-          PR:{' '}
-          {article.translations[langCode].prs.map((pr) => (
-            <Tooltip key={`pr-${pr.number}`} label={`PR #${pr.number} - ${pr.title}`}>
-              <Text size="xs" c="dimmed" component="span">
-                <Anchor href={`${pr.url}`} target="_blank" rel="noopener noreferrer">
-                  #{pr.number}{' '}
-                </Anchor>
-              </Text>
-            </Tooltip>
-          ))}
-        </Text>
+              <StatusBadge status={status} />
+            </Anchor>
+          ) : (
+            <StatusBadge status={status} />
+          )}
+          {totalChangeLines > 0 && status === 'outdated' && (
+            <Text size="sm">{totalChangeLines.toLocaleString()} lines changed</Text>
+          )}
+          {status === 'outdated' && daysBehind && (
+            <Text size="xs" c="dimmed">
+              {commitsBehind.toLocaleString()} commit{commitsBehind > 1 ? 's' : ''} /{' '}
+              {daysBehind.toLocaleString()} day
+              {daysBehind !== 1 ? 's' : ''} behind
+            </Text>
+          )}
+          {(status === 'outdated' || status === 'up_to_date' || status === 'possibly_outdated') &&
+            targetLatestDate && (
+              <Group gap="2" justify="center" align="center">
+                <Text size="xs" c="dimmed">
+                  Updated: {formatDateISO(targetLatestDate)} (UTC)
+                </Text>
+                {article.translations[langCode].translationUrl && (
+                  <ActionIcon
+                    component="a"
+                    href={article.translations[langCode].translationUrl || ''}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    size="xs"
+                    radius="xs"
+                    c="gray"
+                    variant="subtle"
+                    title="Kubernetes documentation"
+                  >
+                    <IconExternalLink size={14} />
+                  </ActionIcon>
+                )}
+                {article.translations[langCode].status === 'outdated' && (
+                  <ActionIcon
+                    onClick={handleDiffClick}
+                    size="xs"
+                    radius="xs"
+                    c="blue"
+                    variant="subtle"
+                    title="View translation diff"
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <IconGitBranch size={14} />
+                  </ActionIcon>
+                )}
+                {(status === 'outdated' || status === 'possibly_outdated') && (
+                  <GitHubIssueButton
+                    englishPath={article.englishPath}
+                    englishUrl={article.englishUrl}
+                    translationUrl={article.translations[langCode]?.translationUrl || null}
+                    langCode={langCode}
+                    variant="update"
+                  />
+                )}
+                {(status === 'outdated' || status === 'possibly_outdated') && (
+                  <GitHubPRTemplateGenerator
+                    englishPath={article.englishPath}
+                    englishUrl={article.englishUrl}
+                    translationUrl={article.translations[langCode]?.translationUrl || null}
+                    langCode={langCode}
+                    isNewTranslation={false}
+                  />
+                )}
+              </Group>
+            )}
+          <div>
+            {status === 'not_translated' && (
+              <>
+                <GitHubIssueButton
+                  englishPath={article.englishPath}
+                  englishUrl={article.englishUrl}
+                  translationUrl={null}
+                  langCode={langCode}
+                  variant="new"
+                />
+                <GitHubPRTemplateGenerator
+                  englishPath={article.englishPath}
+                  englishUrl={article.englishUrl}
+                  translationUrl={null}
+                  langCode={langCode}
+                  isNewTranslation={true}
+                />
+              </>
+            )}
+          </div>
+          {article.translations[langCode] && article.translations[langCode].issues.length > 0 && (
+            <Text size="xs" c="dimmed">
+              Issue:{' '}
+              {article.translations[langCode].issues.map((issue) => (
+                <Tooltip
+                  key={`issue-${issue.number}`}
+                  label={`Issue #${issue.number} - ${issue.title}`}
+                >
+                  <Text size="xs" c="dimmed" component="span">
+                    <Anchor href={`${issue.url}`} target="_blank" rel="noopener noreferrer">
+                      #{issue.number}{' '}
+                    </Anchor>
+                  </Text>
+                </Tooltip>
+              ))}
+            </Text>
+          )}
+          {article.translations[langCode] && article.translations[langCode].prs.length > 0 && (
+            <Text size="xs" c="dimmed">
+              PR:{' '}
+              {article.translations[langCode].prs.map((pr) => (
+                <Tooltip key={`pr-${pr.number}`} label={`PR #${pr.number} - ${pr.title}`}>
+                  <Text size="xs" c="dimmed" component="span">
+                    <Anchor href={`${pr.url}`} target="_blank" rel="noopener noreferrer">
+                      #{pr.number}{' '}
+                    </Anchor>
+                  </Text>
+                </Tooltip>
+              ))}
+            </Text>
+          )}
+        </>
       )}
     </Table.Td>
   );
