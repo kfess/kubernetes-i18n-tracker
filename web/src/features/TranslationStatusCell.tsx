@@ -1,13 +1,11 @@
-import { IconExternalLink, IconGitBranch } from '@tabler/icons-react';
 import { useInView } from 'react-intersection-observer';
-import { useNavigate } from 'react-router-dom';
-import { ActionIcon, Anchor, Group, rem, Table, Text, Tooltip } from '@mantine/core';
-import { GitHubIssueButton } from '@/features/GitHubIssueButton';
+import { rem, Table } from '@mantine/core';
 import { type LanguageCode } from '@/features/language/languageCodes';
-import { StatusBadge } from '@/features/StatusBadge';
 import { ArticleCategory, type ArticleTranslation } from '@/features/translations';
-import { formatDateISO } from '@/utils/date';
-import { GitHubPRTemplateGenerator } from './GitHubPRTemplateGenerator';
+import { NotTranslatedStatusCell } from './NotTranslatedStatusCell';
+import { OutdatedStatusCell } from './OutdatedStatusCell';
+import { PossiblyOutdatedStatusCell } from './PossiblyOutdatedStatusCell';
+import { UpToDateStatusCell } from './UpToDateStatusCell';
 
 export const TranslationStatusCell = ({
   article,
@@ -23,171 +21,38 @@ export const TranslationStatusCell = ({
     rootMargin: '100px', // load before it comes into view
   });
 
-  const navigate = useNavigate();
-  const { status, daysBehind, totalChangeLines, commitsBehind, targetLatestDate } =
-    article.translations[langCode];
-  const translationPath = article.englishPath.replace('/en/', `/${langCode}/`);
+  const status = article.translations[langCode]?.status;
 
-  const handleDiffClick = () => {
-    const params = new URLSearchParams({
-      category,
-      translationPath,
-      language: langCode,
-    });
-    navigate(`/detail?${params.toString()}`);
-  };
+  if (!inView) {
+    return (
+      <Table.Td
+        style={{
+          textAlign: 'center',
+          whiteSpace: 'nowrap',
+          minWidth: rem(200),
+        }}
+        ref={ref}
+      >
+        <div style={{ minHeight: '100px' }} />
+      </Table.Td>
+    );
+  }
 
-  const bgColor =
-    status === 'up_to_date' || status === 'possibly_outdated'
-      ? 'rgba(34, 139, 34, 0.05)'
-      : status === 'outdated'
-        ? 'rgba(255, 165, 0, 0.1)'
-        : '';
+  if (status === 'not_translated') {
+    return <NotTranslatedStatusCell article={article} langCode={langCode} />;
+  }
 
-  return (
-    <Table.Td
-      style={{
-        textAlign: 'center',
-        whiteSpace: 'nowrap',
-        backgroundColor: bgColor,
-        minWidth: rem(200),
-      }}
-      ref={ref}
-    >
-      {!inView ? (
-        <div style={{ minHeight: '60px' }} />
-      ) : (
-        <>
-          {status !== 'not_translated' ? (
-            <Anchor
-              href={`https://github.com/kubernetes/website/blob/main/${translationPath}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              underline="never"
-              title={`Edit ${langCode} translation on GitHub`}
-            >
-              <StatusBadge status={status} />
-            </Anchor>
-          ) : (
-            <StatusBadge status={status} />
-          )}
-          {totalChangeLines > 0 && status === 'outdated' && (
-            <Text size="sm">{totalChangeLines.toLocaleString()} lines changed</Text>
-          )}
-          {status === 'outdated' && daysBehind && (
-            <Text size="xs" c="dimmed">
-              {commitsBehind.toLocaleString()} commit{commitsBehind > 1 ? 's' : ''} /{' '}
-              {daysBehind.toLocaleString()} day
-              {daysBehind !== 1 ? 's' : ''} behind
-            </Text>
-          )}
-          {(status === 'outdated' || status === 'up_to_date' || status === 'possibly_outdated') &&
-            targetLatestDate && (
-              <Group gap="2" justify="center" align="center">
-                <Text size="xs" c="dimmed">
-                  Updated: {formatDateISO(targetLatestDate)} (UTC)
-                </Text>
-                {article.translations[langCode].translationUrl && (
-                  <ActionIcon
-                    component="a"
-                    href={article.translations[langCode].translationUrl || ''}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    size="xs"
-                    radius="xs"
-                    c="gray"
-                    variant="subtle"
-                    title="Kubernetes documentation"
-                  >
-                    <IconExternalLink size={14} />
-                  </ActionIcon>
-                )}
-                {article.translations[langCode].status === 'outdated' && (
-                  <ActionIcon
-                    onClick={handleDiffClick}
-                    size="xs"
-                    radius="xs"
-                    c="blue"
-                    variant="subtle"
-                    title="View translation diff"
-                    style={{ cursor: 'pointer' }}
-                  >
-                    <IconGitBranch size={14} />
-                  </ActionIcon>
-                )}
-                {(status === 'outdated' || status === 'possibly_outdated') && (
-                  <GitHubIssueButton
-                    englishPath={article.englishPath}
-                    englishUrl={article.englishUrl}
-                    translationUrl={article.translations[langCode]?.translationUrl || null}
-                    langCode={langCode}
-                    variant="update"
-                  />
-                )}
-                {(status === 'outdated' || status === 'possibly_outdated') && (
-                  <GitHubPRTemplateGenerator
-                    englishPath={article.englishPath}
-                    englishUrl={article.englishUrl}
-                    translationUrl={article.translations[langCode]?.translationUrl || null}
-                    langCode={langCode}
-                    isNewTranslation={false}
-                  />
-                )}
-              </Group>
-            )}
-          <div>
-            {status === 'not_translated' && (
-              <>
-                <GitHubIssueButton
-                  englishPath={article.englishPath}
-                  englishUrl={article.englishUrl}
-                  translationUrl={null}
-                  langCode={langCode}
-                  variant="new"
-                />
-                <GitHubPRTemplateGenerator
-                  englishPath={article.englishPath}
-                  englishUrl={article.englishUrl}
-                  translationUrl={null}
-                  langCode={langCode}
-                  isNewTranslation={true}
-                />
-              </>
-            )}
-          </div>
-          {article.translations[langCode] && article.translations[langCode].issues.length > 0 && (
-            <Text size="xs" c="dimmed">
-              Issue:{' '}
-              {article.translations[langCode].issues.map((issue) => (
-                <Tooltip
-                  key={`issue-${issue.number}`}
-                  label={`Issue #${issue.number} - ${issue.title}`}
-                >
-                  <Text size="xs" c="dimmed" component="span">
-                    <Anchor href={`${issue.url}`} target="_blank" rel="noopener noreferrer">
-                      #{issue.number}{' '}
-                    </Anchor>
-                  </Text>
-                </Tooltip>
-              ))}
-            </Text>
-          )}
-          {article.translations[langCode] && article.translations[langCode].prs.length > 0 && (
-            <Text size="xs" c="dimmed">
-              PR:{' '}
-              {article.translations[langCode].prs.map((pr) => (
-                <Tooltip key={`pr-${pr.number}`} label={`PR #${pr.number} - ${pr.title}`}>
-                  <Text size="xs" c="dimmed" component="span">
-                    <Anchor href={`${pr.url}`} target="_blank" rel="noopener noreferrer">
-                      #{pr.number}{' '}
-                    </Anchor>
-                  </Text>
-                </Tooltip>
-              ))}
-            </Text>
-          )}
-        </>
-      )}
-    </Table.Td>
-  );
+  if (status === 'up_to_date') {
+    return <UpToDateStatusCell article={article} langCode={langCode} />;
+  }
+
+  if (status === 'possibly_outdated') {
+    return <PossiblyOutdatedStatusCell article={article} langCode={langCode} />;
+  }
+
+  if (status === 'outdated') {
+    return <OutdatedStatusCell article={article} langCode={langCode} category={category} />;
+  }
+
+  return null;
 };

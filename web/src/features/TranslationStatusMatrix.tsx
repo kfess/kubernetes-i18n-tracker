@@ -1,4 +1,3 @@
-import { useInView } from 'react-intersection-observer';
 import { Box, rem, Table, Text } from '@mantine/core';
 import { EnglishSourceInfo } from '@/features/EnglishSourceInfo';
 import {
@@ -25,33 +24,19 @@ const TableRow = ({
   sortedLangCodes: { value: LanguageCode; label: string }[];
   selectedArticleCategory: ArticleCategory;
 }) => {
-  const { ref, inView } = useInView({
-    triggerOnce: true,
-    rootMargin: '200px',
-    initialInView: true,
-  });
-
   return (
-    <Table.Tr ref={ref}>
-      {inView ? (
-        <>
-          <Table.Td>
-            <EnglishSourceInfo article={article} />
-          </Table.Td>
-          {sortedLangCodes.map((code) => (
-            <TranslationStatusCell
-              key={code.value}
-              article={article}
-              langCode={code.value}
-              category={selectedArticleCategory}
-            />
-          ))}
-        </>
-      ) : (
-        <Table.Td colSpan={sortedLangCodes.length + 1}>
-          <div style={{ minHeight: '60px' }} />
-        </Table.Td>
-      )}
+    <Table.Tr>
+      <Table.Td>
+        <EnglishSourceInfo article={article} />
+      </Table.Td>
+      {sortedLangCodes.map((code) => (
+        <TranslationStatusCell
+          key={code.value}
+          article={article}
+          langCode={code.value}
+          category={selectedArticleCategory}
+        />
+      ))}
     </Table.Tr>
   );
 };

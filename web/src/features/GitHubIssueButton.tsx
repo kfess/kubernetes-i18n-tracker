@@ -93,9 +93,8 @@ export const GitHubIssueButton = memo(
   ({ englishPath, englishUrl, translationUrl, langCode, variant }: GitHubIssueButtonProps) => {
     const isNewTranslation = variant === 'new';
     const tooltipLabel = isNewTranslation
-      ? 'Request new translation Issue'
-      : 'Report outdated translation Issue';
-    const title = isNewTranslation ? 'Request translation on GitHub' : 'Report issue on GitHub';
+      ? 'Request new translation Issue on GitHub'
+      : 'Report outdated translation Issue on GitHub';
 
     return (
       <Tooltip label={tooltipLabel} position="top" withArrow>
@@ -114,7 +113,6 @@ export const GitHubIssueButton = memo(
           radius="xs"
           c="blue"
           variant="subtle"
-          title={title}
         >
           <IconCircleDot size={14} />
         </ActionIcon>
