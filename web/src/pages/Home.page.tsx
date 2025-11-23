@@ -15,7 +15,7 @@ import {
   type SortDirection,
   type SortMode,
 } from '@/features/types';
-import { useQueryParams } from '@/hooks/useQueryParams';
+import { useQueryParams, useUpdateQueryParams } from '@/hooks/useQueryParams';
 import { getDeploymentInfo } from '@/utils/deploy';
 
 export function HomePage() {
@@ -70,17 +70,11 @@ export function HomePage() {
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState<string>(searchQuery);
 
   // Sort states
-  const [sortMode, setSortMode] = useQueryParams<SortMode>(
-    'sortMode',
-    'default',
-    String,
-    (value) => (sortModes.includes(value as SortMode) ? (value as SortMode) : 'default')
+  const [sortMode] = useQueryParams<SortMode>('sortMode', 'default', String, (value) =>
+    sortModes.includes(value as SortMode) ? (value as SortMode) : 'default'
   );
-  const [sortDirection, setSortDirection] = useQueryParams<SortDirection>(
-    'sortDirection',
-    'desc',
-    String,
-    (value) => (value === 'asc' || value === 'desc' ? value : 'desc')
+  const [sortDirection] = useQueryParams<SortDirection>('sortDirection', 'desc', String, (value) =>
+    value === 'asc' || value === 'desc' ? value : 'desc'
   );
 
   // Selected languages from localStorage
@@ -224,6 +218,14 @@ export function HomePage() {
     });
   };
 
+  const updateQueryParams = useUpdateQueryParams();
+  const handleSortChange = (mode: SortMode, direction: SortDirection) => {
+    updateQueryParams({
+      sortMode: mode,
+      sortDirection: direction,
+    });
+  };
+
   return (
     <Container fluid px={{ base: '0', sm: 'md' }} mt={{ base: 'xs', sm: 'md' }}>
       <Stack gap="sm">
@@ -252,9 +254,8 @@ export function HomePage() {
           debouncedSearchQuery={debouncedSearchQuery}
           setDebouncedSearchQuery={setDebouncedSearchQuery}
           sortMode={sortMode}
-          setSortMode={setSortMode}
           sortDirection={sortDirection}
-          setSortDirection={setSortDirection}
+          onSortChange={handleSortChange}
           selectedLanguages={selectedLanguages || []}
           startIndex={startIndex}
           endIndex={endIndex}

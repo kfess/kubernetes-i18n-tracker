@@ -14,9 +14,8 @@ import { type SortDirection, type SortMode } from './types';
 
 interface Props {
   sortMode: SortMode;
-  setSortMode: (mode: SortMode) => void;
   sortDirection: SortDirection;
-  setSortDirection: (direction: SortDirection) => void;
+  onSortChange: (mode: SortMode, direction: SortDirection) => void;
 }
 
 const sortOptions: { mode: SortMode; label: string; icon: JSX.Element }[] = [
@@ -31,11 +30,11 @@ const sortOptions: { mode: SortMode; label: string; icon: JSX.Element }[] = [
   { mode: 'updatedAt', label: 'Updated At', icon: <IconCalendar size={14} /> },
 ];
 
-export const SortMenu = ({ sortMode, setSortMode, sortDirection, setSortDirection }: Props) => {
+export const SortMenu = ({ sortMode, sortDirection, onSortChange }: Props) => {
   const handleClick = (mode: SortMode) => {
     const isSame = sortMode === mode;
-    setSortMode(mode);
-    setSortDirection(isSame ? (sortDirection === 'asc' ? 'desc' : 'asc') : 'desc');
+    const newDirection = isSame ? (sortDirection === 'asc' ? 'desc' : 'asc') : 'desc';
+    onSortChange(mode, newDirection);
   };
 
   const renderSortIcon = (mode: SortMode) => {

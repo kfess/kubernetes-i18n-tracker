@@ -13,12 +13,31 @@ export function useQueryParams<T>(
 
   const setValue = useCallback(
     (newValue: T) => {
-      const next = new URLSearchParams(searchParams);
-      next.set(key, serialize(newValue));
-      setSearchParams(next);
+      setSearchParams((prev) => {
+        const next = new URLSearchParams(prev);
+        next.set(key, serialize(newValue));
+        return next;
+      });
     },
-    [key, serialize, searchParams, setSearchParams]
+    [key, serialize, setSearchParams]
   );
 
   return [value, setValue] as const;
+}
+
+export function useUpdateQueryParams() {
+  const [, setSearchParams] = useSearchParams();
+
+  return useCallback(
+    (params: Record<string, string>) => {
+      setSearchParams((prev) => {
+        const next = new URLSearchParams(prev);
+        Object.entries(params).forEach(([key, value]) => {
+          next.set(key, value);
+        });
+        return next;
+      });
+    },
+    [setSearchParams]
+  );
 }
