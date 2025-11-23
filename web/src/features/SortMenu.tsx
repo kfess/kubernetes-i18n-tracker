@@ -20,7 +20,7 @@ interface Props {
 }
 
 const sortOptions: { mode: SortMode; label: string; icon: JSX.Element }[] = [
-  { mode: null, label: 'Default', icon: <IconHome size={14} /> },
+  { mode: 'default', label: 'Default', icon: <IconHome size={14} /> },
   { mode: 'views', label: 'Views', icon: <IconEye size={14} /> },
   { mode: 'newUsers', label: 'New Users', icon: <IconUsers size={14} /> },
   {

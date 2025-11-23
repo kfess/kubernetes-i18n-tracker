@@ -1,4 +1,5 @@
 import { IconRefresh } from '@tabler/icons-react';
+import { useNavigate } from 'react-router-dom';
 import {
   ActionIcon,
   Card,
@@ -17,7 +18,11 @@ import {
   type LanguageCodeWithAll,
 } from '@/features/language/languageCodes';
 import { SortMenu } from '@/features/SortMenu';
-import { type ArticleTranslation, type TranslationStatus } from '@/features/translations';
+import {
+  type ArticleCategory,
+  type ArticleTranslation,
+  type TranslationStatus,
+} from '@/features/translations';
 import {
   type IssueStatus,
   type PrStatus,
@@ -26,6 +31,7 @@ import {
 } from '@/features/types';
 
 interface Props {
+  selectedArticleCategory: ArticleCategory;
   articles: ArticleTranslation[];
   filteredArticles: ArticleTranslation[];
   activePage: number;
@@ -54,6 +60,7 @@ interface Props {
 }
 
 export const ArticleListControl = ({
+  selectedArticleCategory,
   articles,
   filteredArticles,
   activePage,
@@ -80,23 +87,17 @@ export const ArticleListControl = ({
   startIndex,
   endIndex,
 }: Props) => {
+  const navigate = useNavigate();
+
   const isMobile = useMediaQuery('(max-width: 768px)');
 
   const debouncedSearch = useDebouncedCallback((query: string) => {
     setDebouncedSearchQuery(query);
-    setActivePage(1);
   }, 500);
 
   const resetFilters = () => {
-    setStatusFilter('all');
-    setLanguageFilter('all');
-    setIssueFilter('all');
-    setPrFilter('all');
-    setSearchQuery('');
-    setDebouncedSearchQuery('');
-    setSortMode(null);
-    setSortDirection('desc');
-    setActivePage(1);
+    debouncedSearch('');
+    navigate({ pathname: `/`, search: `?category=${selectedArticleCategory}` });
   };
 
   const statusOptions = [
@@ -118,7 +119,6 @@ export const ArticleListControl = ({
   return (
     <Card withBorder radius="md" p="md">
       <Stack gap="md">
-        {/* Filter Controls */}
         <Group gap="xs" wrap="wrap" align="end">
           <Select
             label="Language"
@@ -127,7 +127,6 @@ export const ArticleListControl = ({
             value={languageFilter}
             onChange={(value) => {
               setLanguageFilter((value || 'all') as LanguageCodeWithAll);
-              setActivePage(1);
             }}
             data={languageOptions}
             w={180}
@@ -139,7 +138,6 @@ export const ArticleListControl = ({
             value={statusFilter}
             onChange={(value) => {
               setStatusFilter((value as TranslationStatus | 'all') || 'all');
-              setActivePage(1);
             }}
             data={statusOptions}
             w={180}
@@ -151,7 +149,6 @@ export const ArticleListControl = ({
             value={issueFilter}
             onChange={(value) => {
               setIssueFilter((value as IssueStatus) || 'all');
-              setActivePage(1);
             }}
             data={[
               { value: 'all', label: 'All Status' },
@@ -167,7 +164,6 @@ export const ArticleListControl = ({
             value={prFilter}
             onChange={(value) => {
               setPrFilter((value as PrStatus) || 'all');
-              setActivePage(1);
             }}
             data={[
               { value: 'all', label: 'All Status' },
@@ -224,7 +220,6 @@ export const ArticleListControl = ({
                 value={itemsPerPage}
                 onChange={(value) => {
                   setItemsPerPage(value as string);
-                  setActivePage(1);
                 }}
                 data={['30', '50', '100']}
                 allowDeselect={false}
