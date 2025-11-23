@@ -51,9 +51,8 @@ interface Props {
   debouncedSearchQuery: string;
   setDebouncedSearchQuery: (query: string) => void;
   sortMode: SortMode;
-  setSortMode: (mode: SortMode) => void;
   sortDirection: SortDirection;
-  setSortDirection: (direction: SortDirection) => void;
+  onSortChange: (mode: SortMode, direction: SortDirection) => void;
   selectedLanguages: LanguageCode[];
   startIndex: number;
   endIndex: number;
@@ -80,9 +79,8 @@ export const ArticleListControl = ({
   debouncedSearchQuery,
   setDebouncedSearchQuery,
   sortMode,
-  setSortMode,
   sortDirection,
-  setSortDirection,
+  onSortChange,
   selectedLanguages,
   startIndex,
   endIndex,
@@ -185,12 +183,7 @@ export const ArticleListControl = ({
             style={{ flexGrow: 1 }}
             maw={rem(180)}
           />
-          <SortMenu
-            sortMode={sortMode}
-            setSortMode={setSortMode}
-            sortDirection={sortDirection}
-            setSortDirection={setSortDirection}
-          />
+          <SortMenu sortMode={sortMode} sortDirection={sortDirection} onSortChange={onSortChange} />
           <ActionIcon
             variant="light"
             color="orange"
