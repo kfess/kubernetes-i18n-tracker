@@ -15,7 +15,6 @@ interface Issue {
   number: number;
   title: string;
   url: string;
-  labels: string[];
 }
 
 interface TranslationInfo {
