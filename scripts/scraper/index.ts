@@ -37,6 +37,12 @@ const scrape = async () => {
     await page.mouse.click(centerX, centerY, { button: "right" });
 
     try {
+      await page.locator("text=Export Graph").first().click();
+    } catch (err) {
+      await page.locator("text=グラフをエクスポート").first().click();
+    }
+
+    try {
       await page.locator("text=Export Data").first().click();
     } catch (err) {
       await page.locator("text=データのエクスポート").first().click();
