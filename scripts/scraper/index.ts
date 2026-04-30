@@ -37,15 +37,15 @@ const scrape = async () => {
     await page.mouse.click(centerX, centerY, { button: "right" });
 
     try {
-      await page.locator("text=Export Graph").first().click();
+      await page.locator("text=Export Graph").first().click({ timeout: 6000 });
     } catch (err) {
-      await page.locator("text=グラフをエクスポート").first().click();
+      await page.locator("text=グラフをエクスポート").first().click({ timeout: 6000 });
     }
 
     try {
-      await page.locator("text=Export Data").first().click();
+      await page.locator("text=Export Data").first().click({ timeout: 6000 });
     } catch (err) {
-      await page.locator("text=データのエクスポート").first().click();
+      await page.locator("text=データのエクスポート").first().click({ timeout: 6000 });
     }
 
     await page.waitForTimeout(1000);
