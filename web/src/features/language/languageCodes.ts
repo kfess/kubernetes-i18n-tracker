@@ -9,6 +9,7 @@ export const languageCodes = [
   { value: 'it', label: 'Italian' },
   { value: 'ja', label: 'Japanese' },
   { value: 'ko', label: 'Korean' },
+  { value: 'fa', label: 'Persian' },
   { value: 'pl', label: 'Polish' },
   { value: 'pt-br', label: 'Portuguese' },
   { value: 'ru', label: 'Russian' },
@@ -84,6 +85,10 @@ export const browserLanguageMap: Record<string, LanguageCode> = {
   ko: 'ko',
   'ko-KR': 'ko',
 
+  // Persian
+  fa: 'fa',
+  'fa-IR': 'fa',
+
   // Polish
   pl: 'pl',
   'pl-PL': 'pl',
@@ -156,6 +161,7 @@ export const getLanguageName = (langCode: LanguageCode): string => {
     it: 'Italian',
     ja: 'Japanese',
     ko: 'Korean',
+    fa: 'Persian',
     pl: 'Polish',
     'pt-br': 'Portuguese',
     ru: 'Russian',

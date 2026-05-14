@@ -10,7 +10,8 @@ func TestIsSupportedLanguage(t *testing.T) {
 	}{
 		{"Supported English", "en", true},
 		{"Supported Chinese", "zh-cn", true},
-		{"Supported Spanish", "ja", true},
+		{"Supported Japanese", "ja", true},
+		{"Supported Persian", "fa", true},
 		{"Unsupported Arabic", "ar", false},
 		{"Deprecated Norwegian", "no", false},
 		{"Empty string", "", false},

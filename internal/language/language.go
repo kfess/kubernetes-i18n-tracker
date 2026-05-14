@@ -16,6 +16,7 @@ const (
 	Hindi        Language = "hi"
 	Indonesian   Language = "id"
 	Italian      Language = "it"
+	Persian      Language = "fa"
 	Polish       Language = "pl"
 	PortugueseBR Language = "pt-br"
 	Russian      Language = "ru"
@@ -50,6 +51,7 @@ var SupportedLanguages = []Language{
 	Ukrainian,
 	Polish,
 	Bengali,
+	Persian,
 }
 
 var DeprecatedLanguages = []Language{
