@@ -29,7 +29,7 @@ jobs:
         run: go test -v -race -coverprofile=coverage.out ./internal/...
 
       - name: Upload coverage
-        uses: codecov/codecov-action@v6
+        uses: codecov/codecov-action@v7
         with:
           file: ./coverage.out
         if: github.event_name == 'push'
