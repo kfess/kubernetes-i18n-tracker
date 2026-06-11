@@ -1,4 +1,4 @@
-FROM golang:1.25-bookworm
+FROM golang:1.26-bookworm
 
 # Install system dependencies including Node.js and Python prerequisites
 RUN apt-get update && apt-get install -y \
