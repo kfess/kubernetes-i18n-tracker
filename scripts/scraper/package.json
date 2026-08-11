@@ -8,7 +8,7 @@
     "scrape": "tsx index.ts"
   },
   "devDependencies": {
-    "@types/node": "^26.1.2",
+    "@types/node": "^26.2.0",
     "tsx": "^4.23.11",
     "typescript": "^7.0.2"
   },
