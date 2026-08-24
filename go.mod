@@ -6,7 +6,7 @@ require (
 	github.com/goccy/go-yaml v1.19.2
 	github.com/google/go-github/v75 v75.0.0
 	github.com/joho/godotenv v1.5.1
-	github.com/sirupsen/logrus v1.9.4
+	github.com/sirupsen/logrus v1.10.1
 	golang.org/x/sync v0.22.0
 )
 
