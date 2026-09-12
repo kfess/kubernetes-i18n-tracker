@@ -35,11 +35,6 @@ func generateUrl(baseUrl string, p *path.Path, fm *FrontMatter, existingUrls map
 		if url != "" {
 			return url, nil
 		}
-	case "case-studies":
-		url := generateCaseStudyUrl(baseUrl, p, existingUrls)
-		if url != "" {
-			return url, nil
-		}
 	case "includes":
 		// includes files do not have URLs
 		return "", nil
@@ -69,32 +64,6 @@ func generateIndexUrl(baseUrl string, p *path.Path, existingUrls map[string]bool
 	remainder = strings.TrimSuffix(remainder, "/_index.html")
 	candidate := fmt.Sprintf("%s/%s%s/", baseUrl, langPrefix, remainder)
 
-	return matchUrl(candidate, existingUrls)
-}
-
-func generateCaseStudyUrl(baseUrl string, p *path.Path, existingUrls map[string]bool) string {
-	lang := string(p.Language())
-	langPrefix := ""
-	if lang != "en" {
-		langPrefix = lang + "/"
-	}
-
-	segments := p.Segments()
-
-	// If only "case-studies" (no subdirectories), return root URL
-	// e.g., content/en/case-studies/_index.md -> https://kubernetes.io/case-studies/
-	if len(segments) == 3 || (len(segments) == 4 && p.IsIndex()) {
-		candidate := fmt.Sprintf("%s/%scase-studies/", baseUrl, langPrefix)
-		return matchUrl(candidate, existingUrls)
-	}
-
-	// Remove last segment (filename) from path
-	// e.g., content/en/case-studies/example/index.html -> case-studies/example/
-	// Python: parts[1:-1] means skip first (after content/en) and last (filename)
-	pathSegments := segments[2 : len(segments)-1] // Skip "content", "lang", and last filename
-	casePath := strings.Join(pathSegments, "/")
-
-	candidate := fmt.Sprintf("%s/%s%s/", baseUrl, langPrefix, casePath)
 	return matchUrl(candidate, existingUrls)
 }
 

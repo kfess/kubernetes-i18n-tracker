@@ -1,6 +1,5 @@
 import blogArticles from '@/data/output/matrix/blog.json';
 import careerArticles from '@/data/output/matrix/careers.json';
-import caseStudiesArticles from '@/data/output/matrix/case-studies.json';
 import communityArticles from '@/data/output/matrix/community.json';
 import docsConceptsArticles from '@/data/output/matrix/docs_concepts.json';
 import docsContributionArticles from '@/data/output/matrix/docs_contribute.json';
@@ -23,7 +22,6 @@ import {
 
 const articles = {
   blog: blogArticles as TranslationStatusReport,
-  caseStudy: caseStudiesArticles as TranslationStatusReport,
   community: communityArticles as TranslationStatusReport,
   examples: examplesArticles as TranslationStatusReport,
   docsConcept: docsConceptsArticles as TranslationStatusReport,

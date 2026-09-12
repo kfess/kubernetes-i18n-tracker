@@ -40,19 +40,6 @@ func TestParse(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "Korean case studies path",
-			path: "content/ko/case-studies/example.md",
-			expected: &Path{
-				original:  "content/ko/case-studies/example.md",
-				language:  language.Korean,
-				category:  CaseStudy,
-				segments:  []string{"content", "ko", "case-studies", "example.md"},
-				filename:  "example",
-				extension: ".md",
-			},
-			wantErr: false,
-		},
-		{
 			name: "HTML file",
 			path: "content/en/docs/index.html",
 			expected: &Path{
@@ -174,7 +161,7 @@ func TestParse(t *testing.T) {
 func TestParseWithValidation(t *testing.T) {
 	validLangs := []language.Language{language.English, language.Japanese, language.Korean, language.Chinese}
 	validExts := []string{".md", ".html"}
-	validCategories := []Category{Docs, Blog, CaseStudy}
+	validCategories := []Category{Docs, Blog}
 
 	tests := []struct {
 		name    string
@@ -267,11 +254,6 @@ func TestPath_ToEnglishPath(t *testing.T) {
 			expected: "content/en/docs/setup.md",
 		},
 		{
-			name:     "Portuguese to English",
-			path:     "content/pt-br/case-studies/example.md",
-			expected: "content/en/case-studies/example.md",
-		},
-		{
 			name:     "Already English (no change)",
 			path:     "content/en/docs/overview.md",
 			expected: "content/en/docs/overview.md",
@@ -317,12 +299,6 @@ func TestPath_ToLanguagePath(t *testing.T) {
 			path:     "content/en/docs/setup.md",
 			lang:     language.Chinese,
 			expected: "content/zh-cn/docs/setup.md",
-		},
-		{
-			name:     "English to Portuguese BR",
-			path:     "content/en/case-studies/example.md",
-			lang:     language.PortugueseBR,
-			expected: "content/pt-br/case-studies/example.md",
 		},
 	}
 

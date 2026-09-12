@@ -57,7 +57,6 @@ export const articleCategories = [
   { value: 'docsHome', label: 'Docs / Home' },
   { value: 'blog', label: 'Blog' },
   { value: 'community', label: 'Community' },
-  { value: 'caseStudy', label: 'Case Study' },
   { value: 'examples', label: 'Examples' },
   { value: 'includes', label: 'Includes' },
   { value: 'release', label: 'Release' },

@@ -1,6 +1,5 @@
 import blogDiffs from '@/data/output/diff/blog_diff.json';
 import careerDiffs from '@/data/output/diff/careers_diff.json';
-import caseStudiesDiffs from '@/data/output/diff/case-studies_diff.json';
 import communityDiffs from '@/data/output/diff/community_diff.json';
 import docsConceptsDiffs from '@/data/output/diff/docs_concepts_diff.json';
 import docsContributionDiffs from '@/data/output/diff/docs_contribute_diff.json';
@@ -19,7 +18,6 @@ import { Diff } from '@/features/translations';
 
 const diffs: Record<string, Diff> = {
   blog: blogDiffs as Diff,
-  caseStudy: caseStudiesDiffs as Diff,
   community: communityDiffs as Diff,
   examples: examplesDiffs as Diff,
   docsConcept: docsConceptsDiffs as Diff,

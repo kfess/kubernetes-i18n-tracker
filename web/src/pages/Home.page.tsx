@@ -7,6 +7,7 @@ import { useFetchTranslationArticles } from '@/features/hooks/useFetchTranslatio
 import { type LanguageCode, type LanguageCodeWithAll } from '@/features/language/languageCodes';
 import { LocalizationPolicyWarning } from '@/features/LocalizationPolicyWarning';
 import { MobileTranslationStatusMatrix } from '@/features/MobileTranslationStatusMatrix';
+import { TemporaryNotification } from '@/features/TemporaryNotification';
 import { type ArticleCategory, type TranslationStatus } from '@/features/translations';
 import { TranslationStatusMatrix } from '@/features/TranslationStatusMatrix';
 import {
@@ -229,6 +230,7 @@ export function HomePage() {
 
   return (
     <Container fluid px={{ base: '0', sm: 'md' }} mt={{ base: 'xs', sm: 'md' }}>
+      <TemporaryNotification />
       <LocalizationPolicyWarning selectedLanguages={selectedLanguages} />
       <Stack gap="sm">
         <ArticleCategorySelector
