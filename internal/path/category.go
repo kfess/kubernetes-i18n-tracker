@@ -11,9 +11,6 @@ const (
 	// Blog represents the "blog" category.
 	Blog Category = "blog"
 
-	// CaseStudy represents the "case-studies" category.
-	CaseStudy Category = "case-studies"
-
 	// Career represents the "careers" category.
 	Career Category = "careers"
 
@@ -40,7 +37,7 @@ const (
 )
 
 var SupportedCategories = []Category{
-	Docs, Blog, CaseStudy, Career, Community,
+	Docs, Blog, Career, Community,
 	Example, Partner, Release, Training,
 	CommonResources, Includes,
 }
