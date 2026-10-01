@@ -4,6 +4,7 @@ import { basename } from './const';
 import { DetailPage } from './pages/DetailPage';
 import { HomePage } from './pages/Home.page';
 import { InformationPage } from './pages/InformationPage';
+import { SummaryPage } from './pages/SummaryPage';
 
 const router = createBrowserRouter(
   [
@@ -20,6 +21,14 @@ const router = createBrowserRouter(
       element: (
         <NavigationBar>
           <DetailPage />
+        </NavigationBar>
+      ),
+    },
+    {
+      path: '/summary',
+      element: (
+        <NavigationBar>
+          <SummaryPage />
         </NavigationBar>
       ),
     },

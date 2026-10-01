@@ -1,4 +1,9 @@
-import { IconBrandGithubFilled, IconHeartFilled, IconInfoCircle } from '@tabler/icons-react';
+import {
+  IconBrandGithubFilled,
+  IconChartBar,
+  IconHeartFilled,
+  IconInfoCircle,
+} from '@tabler/icons-react';
 import { Link } from 'react-router-dom';
 import { ActionIcon, Anchor, AppShell, Flex, Group, Image, Text, Tooltip } from '@mantine/core';
 import logo from '../assets/logo.svg';
@@ -22,6 +27,18 @@ export const NavigationBar = ({ children }: { children: React.ReactNode }) => {
               </Anchor>
             </Group>
             <Group gap={8}>
+              <ActionIcon
+                component={Link}
+                to="/summary"
+                variant="default"
+                radius="md"
+                size="lg"
+                aria-label="Translation summary"
+              >
+                <Tooltip label="Translation Summary" position="bottom" withArrow offset={10}>
+                  <IconChartBar size={20} />
+                </Tooltip>
+              </ActionIcon>
               {/* <ActionIcon
                 component="a"
                 href="/information"
