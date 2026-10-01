@@ -43,3 +43,10 @@ export const useFetchTranslationArticles = (
 ): ArticleTranslation[] => {
   return articles[articleCategory].articles;
 };
+
+export const useFetchAllTranslationArticles = (): Record<
+  ArticleCategory,
+  TranslationStatusReport
+> => {
+  return articles;
+};
