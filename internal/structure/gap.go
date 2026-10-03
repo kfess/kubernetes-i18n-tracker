@@ -12,7 +12,7 @@ type Gap struct {
 	MissingApiOrKind      int
 }
 
-func featureGap(en, l10n Features) Gap {
+func FeatureGap(en, l10n Features) Gap {
 	var lineRatio float64 = 1.0
 	if en.VisibleLines > 0 {
 		lineRatio = min(2.0, float64(l10n.VisibleLines)/float64(en.VisibleLines))
