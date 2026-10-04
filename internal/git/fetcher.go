@@ -22,9 +22,6 @@ type FetchOptions struct {
 	// Path to the git repository
 	RepoPath string
 
-	// Number of parallel workers for fetching history
-	Workers int
-
 	// Valid file extensions to consider
 	ValidExtensions []string
 }
@@ -66,9 +63,6 @@ type commitGraph struct {
 
 // NewFetcher creates a new Fetcher with the given options.
 func NewFetcher(options FetchOptions) *Fetcher {
-	if options.Workers <= 0 {
-		options.Workers = 4
-	}
 	return &Fetcher{
 		options: options,
 	}
