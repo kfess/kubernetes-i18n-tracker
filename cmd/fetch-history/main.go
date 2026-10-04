@@ -14,7 +14,6 @@ import (
 func main() {
 	repoPath := flag.String("repo", "./k8s-repo/website", "Path to the git repository")
 	outputFile := flag.String("output", "./data/master/git_history.jsonl", "Output JSONL file path")
-	workers := flag.Int("workers", 8, "Number of parallel workers")
 	skipUpdate := flag.Bool("skip-update", false, "Skip git pull")
 	flag.Parse()
 
@@ -36,7 +35,6 @@ func main() {
 	// Create fetcher
 	fetcher := git.NewFetcher(git.FetchOptions{
 		RepoPath: *repoPath,
-		Workers:  *workers, // Note: Workers not used in new approach
 	})
 
 	// Update repository
