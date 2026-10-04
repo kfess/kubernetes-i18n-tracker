@@ -9,10 +9,12 @@ import (
 	"github.com/kfess/kubernetes-i18n-tracker/internal/git"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/history"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/issue"
+	"github.com/kfess/kubernetes-i18n-tracker/internal/language"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/logger"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/pageview"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/path"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/pr"
+	"github.com/kfess/kubernetes-i18n-tracker/internal/structure"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/url"
 )
 
@@ -62,10 +64,12 @@ func NewTracker(
 }
 
 // GetTranslationStatus returns comprehensive translation status for a single file.
+// englishFeatures is the parsed English page, shared by every translation of
+// that page; pass nil when the English file could not be read.
 func (t *Tracker) GetTranslationStatus(
 	ctx context.Context,
 	translationPath string,
-	englishContent string,
+	englishFeatures *structure.Features,
 	translationContent string,
 ) (*TranslationStatus, error) {
 	pathInfo, err := path.Parse(translationPath)
@@ -84,7 +88,7 @@ func (t *Tracker) GetTranslationStatus(
 	}
 
 	// Build each component
-	history, err := t.buildHistory(ctx, englishPath, translationPath, englishContent, translationContent)
+	history, err := t.buildHistory(ctx, englishPath, translationPath, englishFeatures, translationContent)
 	if err != nil {
 		return nil, fmt.Errorf("build history for %s: %w", translationPath, err)
 	}
@@ -100,13 +104,68 @@ func (t *Tracker) GetTranslationStatus(
 	return translationStatus, nil
 }
 
-// buildHistory builds history by comparing English and translation file.
-func (t *Tracker) buildHistory(ctx context.Context, englishPath string, translationPath string, englishContent string, translationContent string) (*HistoryAnalysis, error) {
+// buildHistory analyzes a translation against its English page. Git history
+// decides which details are collected (commits behind, diff); the final status
+// also takes the structural comparison into account.
+func (t *Tracker) buildHistory(
+	ctx context.Context,
+	englishPath string,
+	translationPath string,
+	englishFeatures *structure.Features,
+	translationContent string,
+) (*HistoryAnalysis, error) {
 	pathInfo, err := path.Parse(translationPath)
 	if err != nil {
 		return nil, fmt.Errorf("parse path %s: %w", translationPath, err)
 	}
 
+	analysis, err := t.buildGitHistory(ctx, pathInfo, englishPath, translationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	analysis.GitStatus = analysis.Status
+	analysis.Structure = compareStructure(analysis.GitStatus, pathInfo.Language(), englishFeatures, translationContent)
+	analysis.Status = combineStatus(analysis.GitStatus, analysis.Structure)
+
+	if analysis.Status != analysis.GitStatus {
+		logger.Debugf("Structural signal %s for %s: %s -> %s",
+			analysis.Structure.Signal, translationPath, analysis.GitStatus, analysis.Status)
+	}
+
+	return analysis, nil
+}
+
+// compareStructure compares the translation with the English page. It returns
+// nil when there is nothing to compare: the page is English itself, no
+// translation exists according to git, or either file could not be read.
+func compareStructure(
+	gitStatus Status,
+	lang language.Language,
+	englishFeatures *structure.Features,
+	translationContent string,
+) *structure.Result {
+	if lang == language.English {
+		return nil
+	}
+	if gitStatus != StatusUpToDate && gitStatus != StatusOutdated {
+		return nil
+	}
+	if englishFeatures == nil || translationContent == "" {
+		return nil
+	}
+
+	result := structure.Compare(*englishFeatures, structure.Parse(translationContent), lang)
+	return &result
+}
+
+// buildGitHistory builds the analysis from git history alone.
+func (t *Tracker) buildGitHistory(
+	ctx context.Context,
+	pathInfo *path.Path,
+	englishPath string,
+	translationPath string,
+) (*HistoryAnalysis, error) {
 	englishCommits := t.history.GetCommits(englishPath)
 	translationCommits := t.history.GetCommits(translationPath)
 
@@ -114,8 +173,6 @@ func (t *Tracker) buildHistory(ctx context.Context, englishPath string, translat
 		string(pathInfo.Language()),
 		englishCommits,
 		translationCommits,
-		englishContent,
-		translationContent,
 	)
 
 	logger.Debugf("Translation status for %s: %s (EN commits: %d, Translation commits: %d)",
@@ -137,15 +194,6 @@ func (t *Tracker) buildHistory(ctx context.Context, englishPath string, translat
 
 	if status == StatusNotTranslated {
 		return t.buildNotTranslatedHistory(englishCommits, englishLatest), nil
-	}
-
-	if status == StatusPossiblyOutdated {
-		return t.buildPossiblyOutdatedHistory(
-			englishCommits,
-			englishLatest,
-			translationCommits,
-			translationLatest,
-		)
 	}
 
 	if status == StatusUpToDate {
@@ -219,29 +267,6 @@ func (t *Tracker) buildUpToDateHistory(
 		CommitsBehind:       0,
 		MissingCommits:      []*git.Commit{},
 	}
-}
-
-func (t *Tracker) buildPossiblyOutdatedHistory(
-	englishCommits []*git.Commit,
-	englishLatest *git.Commit,
-	translationCommits []*git.Commit,
-	translationLatest *git.Commit,
-) (*HistoryAnalysis, error) {
-	daysBehind := calculateDaysBehind(englishCommits, translationCommits)
-
-	return &HistoryAnalysis{
-		Status:              StatusPossiblyOutdated,
-		Severity:            SeverityCurrent,
-		LastModified:        &translationLatest.Date,
-		LatestCommit:        translationLatest,
-		CommitHistory:       translationCommits,
-		EnglishLastModified: &englishLatest.Date,
-		EnglishLatestCommit: englishLatest,
-		ReferenceCommit:     translationLatest,
-		DaysBehind:          daysBehind,
-		CommitsBehind:       0,
-		MissingCommits:      []*git.Commit{},
-	}, nil
 }
 
 // buildOutdatedHistory creates history analysis for outdated translations.

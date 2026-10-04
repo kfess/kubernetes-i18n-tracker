@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/kfess/kubernetes-i18n-tracker/internal/git"
+	"github.com/kfess/kubernetes-i18n-tracker/internal/structure"
 )
 
 func TestCalculateStatus(t *testing.T) {
@@ -79,8 +80,7 @@ func TestCalculateStatus(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// For unit tests, we pass empty strings for content to skip header checking
-			got := calculateStatus(tt.language, tt.englishCommits, tt.translationCommits, "", "")
+			got := calculateStatus(tt.language, tt.englishCommits, tt.translationCommits)
 			if got != tt.want {
 				t.Errorf("CalculateStatus() = %v, want %v", got, tt.want)
 			}
@@ -88,79 +88,31 @@ func TestCalculateStatus(t *testing.T) {
 	}
 }
 
-func TestCalculateStatusWithHeaderCheck(t *testing.T) {
-	now := time.Now()
-	yesterday := now.Add(-24 * time.Hour)
+func TestCombineStatus(t *testing.T) {
+	signal := func(s structure.Signal) *structure.Result {
+		return &structure.Result{Signal: s}
+	}
 
 	tests := []struct {
-		name               string
-		language           string
-		englishCommits     []*git.Commit
-		translationCommits []*git.Commit
-		englishContent     string
-		translationContent string
-		want               Status
+		name       string
+		gitStatus  Status
+		structural *structure.Result
+		want       Status
 	}{
-		{
-			name:     "Header mismatch marks as possibly_outdated",
-			language: "ja",
-			englishCommits: []*git.Commit{
-				{Date: yesterday, Message: "Add content"},
-			},
-			translationCommits: []*git.Commit{
-				{Date: now, Message: "Translate content"},
-			},
-			englishContent: `---
-title: Test
----
-# Header 1
-## Header 2
-### Header 3
-Content here
-`,
-			translationContent: `---
-title: Test
----
-# Header 1
-## Header 2
-Content here
-`,
-			want: StatusPossiblyOutdated,
-		},
-		{
-			name:     "Header match confirms up_to_date",
-			language: "ja",
-			englishCommits: []*git.Commit{
-				{Date: yesterday, Message: "Add content"},
-			},
-			translationCommits: []*git.Commit{
-				{Date: now, Message: "Update translation"},
-			},
-			englishContent: `---
-title: Test
----
-# Header 1
-## Header 2
-### Header 3
-Content here
-`,
-			translationContent: `---
-title: テスト
----
-# ヘッダー 1
-## ヘッダー 2
-### ヘッダー 3
-翻訳内容
-`,
-			want: StatusUpToDate,
-		},
+		{"up to date, no comparison", StatusUpToDate, nil, StatusUpToDate},
+		{"up to date, no signal", StatusUpToDate, signal(structure.SignalNone), StatusUpToDate},
+		{"up to date, moderate signal", StatusUpToDate, signal(structure.SignalModerate), StatusPossiblyOutdated},
+		{"up to date, strong signal", StatusUpToDate, signal(structure.SignalStrong), StatusPossiblyOutdated},
+		{"outdated stays outdated without a signal", StatusOutdated, signal(structure.SignalNone), StatusOutdated},
+		{"outdated stays outdated with a signal", StatusOutdated, signal(structure.SignalStrong), StatusOutdated},
+		{"not translated is untouched", StatusNotTranslated, nil, StatusNotTranslated},
+		{"no English version is untouched", StatusNoEnglishVersion, signal(structure.SignalStrong), StatusNoEnglishVersion},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := calculateStatus(tt.language, tt.englishCommits, tt.translationCommits, tt.englishContent, tt.translationContent)
-			if got != tt.want {
-				t.Errorf("CalculateStatus() = %v, want %v", got, tt.want)
+			if got := combineStatus(tt.gitStatus, tt.structural); got != tt.want {
+				t.Errorf("combineStatus() = %v, want %v", got, tt.want)
 			}
 		})
 	}

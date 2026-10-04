@@ -51,7 +51,7 @@ export const OutdatedStatusCell = ({ article, langCode, category }: OutdatedStat
       {translation.totalChangeLines > 0 && (
         <Text size="sm">{translation.totalChangeLines.toLocaleString()} lines changed</Text>
       )}
-      {translation.daysBehind && (
+      {translation.daysBehind > 0 && (
         <Text size="xs" c="dimmed">
           {translation.commitsBehind.toLocaleString()} commit
           {translation.commitsBehind > 1 ? 's' : ''} / {translation.daysBehind.toLocaleString()} day

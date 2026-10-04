@@ -2,6 +2,7 @@ import { IconRefresh } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
 import {
   ActionIcon,
+  Badge,
   Card,
   Group,
   Pagination,
@@ -10,8 +11,10 @@ import {
   Stack,
   Text,
   TextInput,
+  Tooltip,
 } from '@mantine/core';
 import { useDebouncedCallback, useMediaQuery } from '@mantine/hooks';
+import { useDetectionMode } from '@/features/hooks/useDetectionMode';
 import {
   getSortedLangCodes,
   type LanguageCode,
@@ -24,6 +27,8 @@ import {
   type TranslationStatus,
 } from '@/features/translations';
 import {
+  defaultDetectionMode,
+  detectionModeLabels,
   type IssueStatus,
   type PrStatus,
   type SortDirection,
@@ -114,6 +119,8 @@ export const ArticleListControl = ({
 
   const totalPages = Math.ceil(filteredArticles.length / parseInt(itemsPerPage, 10));
 
+  const [selectedDetectionMode] = useDetectionMode();
+
   return (
     <Card withBorder radius="md" p="md">
       <Stack gap="md">
@@ -197,15 +204,27 @@ export const ArticleListControl = ({
 
         {/* Pagination Controls */}
         <Group justify="space-between" wrap="wrap">
-          <Text size="sm" c="dimmed">
-            Showing {startIndex + 1}-{endIndex} of {filteredArticles.length} articles
-            {(statusFilter !== 'all' || languageFilter !== 'all' || debouncedSearchQuery) && (
-              <Text span c="blue">
-                {' '}
-                (filtered from {articles.length} total)
-              </Text>
+          <Group gap="xs">
+            <Text size="sm" c="dimmed">
+              Showing {startIndex + 1}-{endIndex} of {filteredArticles.length} articles
+              {(statusFilter !== 'all' || languageFilter !== 'all' || debouncedSearchQuery) && (
+                <Text span c="blue">
+                  {' '}
+                  (filtered from {articles.length} total)
+                </Text>
+              )}
+            </Text>
+            {selectedDetectionMode !== defaultDetectionMode && (
+              <Tooltip
+                label="Statuses use a non-default detection mode. Change it from the header."
+                withArrow
+              >
+                <Badge color="orange" variant="light" size="sm" tt="none">
+                  {detectionModeLabels[selectedDetectionMode]}
+                </Badge>
+              </Tooltip>
             )}
-          </Text>
+          </Group>
           <Group gap="md">
             <Group gap="xs" align="center">
               <Select

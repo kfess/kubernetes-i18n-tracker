@@ -336,3 +336,5 @@ cython_debug/
 .cursorindexingignore
 
 data/
+
+web/src/__fixtures__
