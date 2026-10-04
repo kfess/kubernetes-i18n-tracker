@@ -1,12 +1,8 @@
-import {
-  IconBrandGithubFilled,
-  IconChartBar,
-  IconHeartFilled,
-  IconInfoCircle,
-} from '@tabler/icons-react';
+import { IconBrandGithubFilled, IconChartBar, IconHeartFilled } from '@tabler/icons-react';
 import { Link } from 'react-router-dom';
 import { ActionIcon, Anchor, AppShell, Flex, Group, Image, Text, Tooltip } from '@mantine/core';
 import logo from '../assets/logo.svg';
+import { DetectionModeSelector } from './DetectionModeSelector';
 import { Footer } from './Footer';
 import { LanguageSelector } from './language/LanguageSelector';
 
@@ -39,19 +35,6 @@ export const NavigationBar = ({ children }: { children: React.ReactNode }) => {
                   <IconChartBar size={20} />
                 </Tooltip>
               </ActionIcon>
-              {/* <ActionIcon
-                component="a"
-                href="/information"
-                target="_blank"
-                variant="default"
-                radius="md"
-                size="lg"
-                aria-label="GitHub"
-              >
-                <Tooltip label="Information" position="bottom" withArrow offset={10}>
-                  <IconInfoCircle size={20} />
-                </Tooltip>
-              </ActionIcon> */}
               <ActionIcon
                 component="a"
                 href="https://github.com/kfess/kubernetes-i18n-tracker"
@@ -84,6 +67,7 @@ export const NavigationBar = ({ children }: { children: React.ReactNode }) => {
                   <IconHeartFilled size={20} />
                 </Tooltip>
               </ActionIcon>
+              <DetectionModeSelector />
               <LanguageSelector />
             </Group>
           </Group>

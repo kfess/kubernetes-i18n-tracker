@@ -2,6 +2,23 @@ import { type LanguageCode } from '@/features/language/languageCodes';
 
 export type TranslationStatus = 'up_to_date' | 'outdated' | 'not_translated' | 'possibly_outdated';
 
+export type StructuralSignal = 'none' | 'moderate' | 'strong';
+export type Gap = {
+  lineRatio: number;
+  bodyWordRatio: number;
+  missingH2: number;
+  missingH3: number;
+  missingCodeBlocks: number;
+  missingAnchors: number;
+  missingNewVersions: number;
+  missingFeatureState: number;
+  missingApiOrKind: number;
+};
+export type Structure = {
+  signal: StructuralSignal;
+  gap: Gap;
+};
+
 type Severity = 'current' | 'minor' | 'moderate' | 'significant' | 'critical';
 
 interface PullRequest {
@@ -17,8 +34,17 @@ interface Issue {
   url: string;
 }
 
-interface TranslationInfo {
+export interface TranslationInfo {
+  // Overall translation status. Rewritten by the selected detection mode when loaded.
   status: TranslationStatus;
+
+  // Status from git history alone. Missing in data exported before detection modes.
+  gitStatus?: TranslationStatus;
+
+  // Structural comparison with the English page.
+  // Null when nothing was compared (English itself, no translation, unreadable file).
+  structure?: Structure | null;
+
   severity: Severity;
   daysBehind: number;
   commitsBehind: number;

@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import blogArticles from '@/data/output/matrix/blog.json';
 import careerArticles from '@/data/output/matrix/careers.json';
 import communityArticles from '@/data/output/matrix/community.json';
@@ -13,7 +14,8 @@ import includesArticles from '@/data/output/matrix/includes.json';
 import partnerArticles from '@/data/output/matrix/partners.json';
 import releaseArticles from '@/data/output/matrix/releases.json';
 import trainingArticles from '@/data/output/matrix/training.json';
-
+import { applyDetectionMode } from '@/features/deriveStatus';
+import { useDetectionMode } from '@/features/hooks/useDetectionMode';
 import {
   ArticleCategory,
   ArticleTranslation,
@@ -38,15 +40,34 @@ const articles = {
   career: careerArticles as TranslationStatusReport,
 };
 
+// Both hooks return the data with each translation's status decided by the
+// selected detection mode, so consumers can keep reading `status` directly.
+
 export const useFetchTranslationArticles = (
   articleCategory: ArticleCategory
 ): ArticleTranslation[] => {
-  return articles[articleCategory].articles;
+  const [detectionMode] = useDetectionMode();
+
+  return useMemo(
+    () => applyDetectionMode(articles[articleCategory].articles, detectionMode),
+    [articleCategory, detectionMode]
+  );
 };
 
 export const useFetchAllTranslationArticles = (): Record<
   ArticleCategory,
   TranslationStatusReport
 > => {
-  return articles;
+  const [detectionMode] = useDetectionMode();
+
+  return useMemo(
+    () =>
+      Object.fromEntries(
+        Object.entries(articles).map(([category, report]) => [
+          category,
+          { ...report, articles: applyDetectionMode(report.articles, detectionMode) },
+        ])
+      ) as Record<ArticleCategory, TranslationStatusReport>,
+    [detectionMode]
+  );
 };
