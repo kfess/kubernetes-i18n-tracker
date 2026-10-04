@@ -22,12 +22,12 @@ type Gap struct {
 // ignored. An empty localized page reports no missing feature-state or API
 // tokens, since it is graded as an empty stub instead.
 func featureGap(en, l10n Features) Gap {
-	var lineRatio float64 = 1.0
+	var lineRatio = 1.0
 	if en.VisibleLines > 0 {
 		lineRatio = min(2.0, float64(l10n.VisibleLines)/float64(en.VisibleLines))
 	}
 
-	var bodyWordRatio float64 = 1.0
+	var bodyWordRatio = 1.0
 	if en.BodyWords > 0 {
 		bodyWordRatio = float64(l10n.BodyWords) / float64(en.BodyWords)
 	}
