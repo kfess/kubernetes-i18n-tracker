@@ -12,6 +12,7 @@ import (
 
 	"github.com/kfess/kubernetes-i18n-tracker/internal/language"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/logger"
+	"github.com/kfess/kubernetes-i18n-tracker/internal/structure"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/translation"
 )
 
@@ -41,22 +42,24 @@ type MatrixIssue struct {
 
 // MatrixTranslation represents translation status for a specific language in the matrix.
 type MatrixTranslation struct {
-	Status                  string        `json:"status"`
-	Severity                string        `json:"severity"`
-	DaysBehind              int           `json:"daysBehind"`
-	CommitsBehind           int           `json:"commitsBehind"`
-	TotalChangeLines        int           `json:"totalChangeLines"`
-	TargetLatestDate        *string       `json:"targetLatestDate"`
-	EnglishLatestDate       *string       `json:"englishLatestDate"`
-	TranslationUrl          *string       `json:"translationUrl"`
-	Views                   int           `json:"views"`
-	NewUsers                int           `json:"newUsers"`
-	AverageSessionDuration  float64       `json:"averageSessionDuration"`
-	Issues                  []MatrixIssue `json:"issues"`
-	PRs                     []MatrixPR    `json:"prs"`
-	EnglishLatestCommitHash string        `json:"englishLatestCommitHash"`
-	RefEnglishCommitHash    *string       `json:"refEnglishCommitHash"`
-	RefEnglishCommitDate    *string       `json:"refEnglishCommitDate"`
+	Status                  string            `json:"status"`
+	GitStatus               string            `json:"gitStatus"`
+	Structure               *structure.Result `json:"structure"`
+	Severity                string            `json:"severity"`
+	DaysBehind              int               `json:"daysBehind"`
+	CommitsBehind           int               `json:"commitsBehind"`
+	TotalChangeLines        int               `json:"totalChangeLines"`
+	TargetLatestDate        *string           `json:"targetLatestDate"`
+	EnglishLatestDate       *string           `json:"englishLatestDate"`
+	TranslationUrl          *string           `json:"translationUrl"`
+	Views                   int               `json:"views"`
+	NewUsers                int               `json:"newUsers"`
+	AverageSessionDuration  float64           `json:"averageSessionDuration"`
+	Issues                  []MatrixIssue     `json:"issues"`
+	PRs                     []MatrixPR        `json:"prs"`
+	EnglishLatestCommitHash string            `json:"englishLatestCommitHash"`
+	RefEnglishCommitHash    *string           `json:"refEnglishCommitHash"`
+	RefEnglishCommitDate    *string           `json:"refEnglishCommitDate"`
 }
 
 // MatrixArticle represents a single article in the matrix format.
@@ -170,7 +173,7 @@ func (e *Exporter) exportDiffs(byCategory map[string]map[string]*translation.Tra
 
 		for path, status := range statuses {
 			if status.History != nil &&
-				(status.History.Status == translation.StatusOutdated || status.History.Status == translation.StatusNotTranslated) &&
+				(status.History.GitStatus == translation.StatusOutdated || status.History.GitStatus == translation.StatusNotTranslated) &&
 				status.History.Diff != nil {
 				refCommit := ""
 				if status.History.ReferenceCommit != nil {
@@ -275,6 +278,8 @@ func (e *Exporter) buildMatrixTranslation(status *translation.TranslationStatus)
 
 	mt := MatrixTranslation{
 		Status:                 string(status.History.Status),
+		GitStatus:              string(status.History.GitStatus),
+		Structure:              status.History.Structure,
 		Severity:               string(status.History.Severity),
 		DaysBehind:             status.History.DaysBehind,
 		CommitsBehind:          status.History.CommitsBehind,

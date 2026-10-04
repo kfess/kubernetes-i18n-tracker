@@ -9,6 +9,7 @@ import (
 
 	"github.com/kfess/kubernetes-i18n-tracker/internal/git"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/language"
+	"github.com/kfess/kubernetes-i18n-tracker/internal/structure"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/translation"
 )
 
@@ -76,8 +77,9 @@ func TestExportDiffs(t *testing.T) {
 				Language:    language.Japanese,
 				Category:    "blog",
 				History: &translation.HistoryAnalysis{
-					Status:   translation.StatusOutdated,
-					Severity: translation.SeverityMinor,
+					Status:    translation.StatusOutdated,
+					GitStatus: translation.StatusOutdated,
+					Severity:  translation.SeverityMinor,
 					ReferenceCommit: &git.Commit{
 						Hash: "abc123",
 						Date: now,
@@ -193,5 +195,70 @@ func TestExportMatrices(t *testing.T) {
 
 	if matrix.LastUpdated == "" {
 		t.Error("LastUpdated should not be empty")
+	}
+}
+
+func TestBuildMatrixTranslationStructure(t *testing.T) {
+	e := NewExporter(ExportOptions{})
+
+	tests := []struct {
+		name     string
+		history  *translation.HistoryAnalysis
+		wantJSON string
+	}{
+		{
+			name: "structural comparison is exported with the git status",
+			history: &translation.HistoryAnalysis{
+				Status:    translation.StatusPossiblyOutdated,
+				GitStatus: translation.StatusUpToDate,
+				Severity:  translation.SeverityCurrent,
+				Structure: &structure.Result{
+					Signal: structure.SignalModerate,
+					Gap: structure.Gap{
+						L10nToEnLineRatio:     0.6,
+						L10nToEnBodyWordRatio: 0.7,
+						MissingH2:             2,
+						MissingCodeBlocks:     1,
+					},
+				},
+			},
+			wantJSON: `{"signal":"moderate","gap":{"lineRatio":0.6,"bodyWordRatio":0.7,"missingH2":2,"missingH3":0,` +
+				`"missingCodeBlocks":1,"missingAnchors":0,"missingNewVersions":0,"missingFeatureState":0,"missingApiOrKind":0}}`,
+		},
+		{
+			name: "no comparison is exported as null",
+			history: &translation.HistoryAnalysis{
+				Status:    translation.StatusNotTranslated,
+				GitStatus: translation.StatusNotTranslated,
+				Severity:  translation.SeverityCritical,
+			},
+			wantJSON: `null`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mt := e.buildMatrixTranslation(&translation.TranslationStatus{History: tt.history})
+
+			if mt.Status != string(tt.history.Status) || mt.GitStatus != string(tt.history.GitStatus) {
+				t.Errorf("status = %q, gitStatus = %q, want %q and %q",
+					mt.Status, mt.GitStatus, tt.history.Status, tt.history.GitStatus)
+			}
+
+			data, err := json.Marshal(mt)
+			if err != nil {
+				t.Fatalf("json.Marshal() error = %v", err)
+			}
+			var fields map[string]json.RawMessage
+			if err := json.Unmarshal(data, &fields); err != nil {
+				t.Fatalf("json.Unmarshal() error = %v", err)
+			}
+			if got := string(fields["structure"]); got != tt.wantJSON {
+				t.Errorf("structure JSON = %s, want %s", got, tt.wantJSON)
+			}
+			if _, ok := fields["gitStatus"]; !ok {
+				t.Error("gitStatus is missing from the JSON")
+			}
+		})
 	}
 }

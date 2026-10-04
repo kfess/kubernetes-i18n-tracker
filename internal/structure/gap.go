@@ -1,15 +1,20 @@
 package structure
 
+// Gap describes what a localized page lacks compared with the English one.
 type Gap struct {
-	L10nToEnLineRatio     float64
-	L10nToEnBodyWordRatio float64
-	MissingH2             int
-	MissingH3             int
-	MissingCodeBlocks     int
-	MissingAnchors        int
-	MissingNewVersions    int
-	MissingFeatureState   int
-	MissingApiOrKind      int
+	// Localized-to-English ratio of visible lines, capped at 2.
+	L10nToEnLineRatio float64 `json:"lineRatio"`
+	// Localized-to-English ratio of prose words.
+	L10nToEnBodyWordRatio float64 `json:"bodyWordRatio"`
+
+	MissingH2         int `json:"missingH2"`
+	MissingH3         int `json:"missingH3"`
+	MissingCodeBlocks int `json:"missingCodeBlocks"`
+	MissingAnchors    int `json:"missingAnchors"`
+	// English version references newer than the newest one the localized page mentions.
+	MissingNewVersions  int `json:"missingNewVersions"`
+	MissingFeatureState int `json:"missingFeatureState"`
+	MissingApiOrKind    int `json:"missingApiOrKind"`
 }
 
 // featureGap measures what the localized page lacks compared with the English

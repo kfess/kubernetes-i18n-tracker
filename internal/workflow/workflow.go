@@ -15,6 +15,7 @@ import (
 	"github.com/kfess/kubernetes-i18n-tracker/internal/pageview"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/path"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/pr"
+	"github.com/kfess/kubernetes-i18n-tracker/internal/structure"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/translation"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/url"
 )
@@ -203,13 +204,15 @@ func (w *Workflow) analyzeTranslations(
 			continue
 		}
 
-		// Read English content once for all translations
+		// Read and parse the English page once for all translations
+		var englishFeatures *structure.Features
 		englishContentBytes, err := os.ReadFile(filepath.Join(w.config.RepoPath, englishPath))
 		if err != nil {
 			logger.Warnf("Failed to read English file %s: %v", englishPath, err)
-			englishContentBytes = []byte{}
+		} else {
+			features := structure.Parse(string(englishContentBytes))
+			englishFeatures = &features
 		}
-		englishContent := string(englishContentBytes)
 
 		for _, lang := range language.SupportedLanguages {
 			translationPath := pathInfo.ToLanguagePath(language.Language(lang))
@@ -220,7 +223,7 @@ func (w *Workflow) analyzeTranslations(
 			}
 			translationContent := string(translationContentBytes)
 
-			status, err := tracker.GetTranslationStatus(ctx, translationPath, englishContent, translationContent)
+			status, err := tracker.GetTranslationStatus(ctx, translationPath, englishFeatures, translationContent)
 			if err != nil {
 				logger.Errorf("Failed to get status for %s: %v", translationPath, err)
 				continue

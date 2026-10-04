@@ -9,6 +9,7 @@ import (
 	"github.com/kfess/kubernetes-i18n-tracker/internal/pageview"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/path"
 	"github.com/kfess/kubernetes-i18n-tracker/internal/pr"
+	"github.com/kfess/kubernetes-i18n-tracker/internal/structure"
 )
 
 // TranslationStatus holds comprehensive information about a translation file.
@@ -46,8 +47,15 @@ type TranslationStatus struct {
 
 // HistoryAnalysis contains git history analysis results.
 type HistoryAnalysis struct {
-	// Translation status
+	// Translation status: the git-based status combined with the structural comparison
 	Status Status `json:"status"`
+
+	// Status derived from git history alone
+	GitStatus Status `json:"git_status"`
+
+	// Structural comparison with the English page.
+	// Nil when there is nothing to compare (English itself, no translation, unreadable file).
+	Structure *structure.Result `json:"structure,omitempty"`
 
 	// Severity of being out-of-date
 	Severity Severity `json:"severity"`
