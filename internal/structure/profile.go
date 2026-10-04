@@ -41,8 +41,8 @@ type LocaleProfile struct {
 	Note string
 }
 
-// defaultLocaleProfile holds the values upstream uses for every field a locale
-// does not override.
+// defaultLocaleProfile returns the profile used for every field a locale does
+// not override.
 func defaultLocaleProfile() LocaleProfile {
 	return LocaleProfile{
 		Script:                 "unknown",
@@ -54,9 +54,8 @@ func defaultLocaleProfile() LocaleProfile {
 	}
 }
 
-// getLocaleProfile returns the calibration for a locale. It mirrors
-// _LOCALE_PROFILES in l10n-outdatedness-triage.py; locales upstream does not
-// list get the default profile.
+// getLocaleProfile returns the calibration for a locale. Locales without a
+// specific calibration get the default profile.
 func getLocaleProfile(lang language.Language) LocaleProfile {
 	p := defaultLocaleProfile()
 

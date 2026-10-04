@@ -1,8 +1,24 @@
 package structure
 
 import (
+	"regexp"
 	"strconv"
 	"strings"
+)
+
+var (
+	versionExpr             = regexp.MustCompile(`(?:^|[^A-Za-z0-9])v([0-9]+)\.([0-9]{1,3})`)
+	featureStateVersionExpr = regexp.MustCompile(`for_k8s_version="(v\d+\.\d+)"`)
+	featureStateGateExpr    = regexp.MustCompile(`feature_gate_name="([A-Za-z_][A-Za-z0-9_]*)"`)
+	anchorExpr              = regexp.MustCompile(`\{#([^}]+)\}`)
+	frontMatterExpr         = regexp.MustCompile(`(?s)^---\s*\n.*?\n---\s*\n`)
+	codeExpr                = regexp.MustCompile("(?s)```.*?```")
+	commentExpr             = regexp.MustCompile(`(?s)<!--.*?-->`)
+	inlineExpr              = regexp.MustCompile("`[^`\n]+`")
+	bodyWordExpr            = regexp.MustCompile(`[\p{L}\p{N}]{2,}`)
+	paragraphSplitExpr      = regexp.MustCompile(`\n{2,}`)
+	apiVersionLineExpr      = regexp.MustCompile(`(?m)^[ \t]*-?[ \t]*apiVersion:\s*\"?([A-Za-z0-9./_-]+)\"?\s*$`)
+	kindLineExpr            = regexp.MustCompile(`(?m)^[ \t]*-?[ \t]*kind:\s*\"?([A-Z][A-Za-z0-9]+)\"?\s*$`)
 )
 
 type Features struct {
@@ -19,7 +35,7 @@ type Features struct {
 
 // Parse extracts the structural features of a Markdown page.
 func Parse(content string) Features {
-	// Python reads files in text mode, which turns CRLF and lone CR into LF.
+	// Normalize line endings so CRLF files are parsed like LF files.
 	content = strings.ReplaceAll(content, "\r\n", "\n")
 	content = strings.ReplaceAll(content, "\r", "\n")
 
@@ -62,9 +78,9 @@ func extractVersions(content string) map[[2]int]struct{} {
 	return versions
 }
 
-// countVisibleLines counts the number of visible lines.
+// countVisibleLines counts the non-blank lines outside the front matter and
+// HTML comments. Code-block lines count: code volume is legitimate content.
 func countVisibleLines(content string) int {
-	// Code-block contents kept: code volume is legitimate content.
 	loc := frontMatterExpr.FindStringIndex(content)
 	if loc != nil {
 		content = content[loc[1]:]
@@ -80,9 +96,10 @@ func countVisibleLines(content string) int {
 	return visibleLines
 }
 
+// countBodyWords counts the words of prose, leaving out front matter, HTML
+// comments, code blocks and inline code. It tells a fully translated page
+// that merely wraps its lines differently from one that lost content.
 func countBodyWords(content string) int {
-	// For the Latin-compactness check: separates loose-wrapped full
-	// translations from thinned content.
 	loc := frontMatterExpr.FindStringIndex(content)
 	if loc != nil {
 		content = content[loc[1]:]
@@ -119,9 +136,12 @@ func isIndentedCodeBlock(paragraph string) bool {
 	return hasNonBlank
 }
 
+// extractStructure returns the number of H2 headings, H3 headings and code
+// blocks, and the set of heading anchors ({#id}, lowercased). Headings and
+// anchors inside code blocks are skipped.
 func extractStructure(content string) (int, int, int, map[string]struct{}) {
 	// Strip comments first: some localization teams add comments, e.g., zh-cn uses
-	// `<!-- -->` blocks to record the English original, which would desync `in_code`.
+	// `<!-- -->` blocks to record the English original, which would desync inCode.
 	// Toggle on 0-3-space fences (CommonMark); only count column-0 fences.
 	content = commentExpr.ReplaceAllString(content, "")
 	lines := strings.Split(content, "\n")
@@ -159,11 +179,12 @@ func extractStructure(content string) (int, int, int, map[string]struct{}) {
 	return h2, h3, fences / 2, anchors
 }
 
+// extractFeatureStateTokens collects the version and feature gate named by
+// feature-state shortcodes, as "version:v1.31" and "gate:Name" tokens.
 func extractFeatureStateTokens(content string) map[string]struct{} {
 	// Strip comments first: some localization teams add comments, e.g.,
 	// zh-cn uses `<!-- -->` blocks to record the English original, which
 	// would mask token drift.
-	// Prefixes keep version/gate name spaces from colliding.
 	content = commentExpr.ReplaceAllString(content, "")
 	tokens := make(map[string]struct{})
 	matches := featureStateVersionExpr.FindAllStringSubmatch(content, -1)
@@ -178,9 +199,10 @@ func extractFeatureStateTokens(content string) map[string]struct{} {
 	return tokens
 }
 
+// extractApiKindTokens collects the apiVersion and kind values of YAML
+// examples, as "api:apps/v1" and "kind:Deployment" tokens.
 func extractApiKindTokens(content string) map[string]struct{} {
-	// Same comment-stripping rationale as feature_state. Prefixes keep
-	// apiVersion and kind value spaces separate.
+	// Comments are stripped for the same reason as in extractFeatureStateTokens.
 	content = commentExpr.ReplaceAllString(content, "")
 	tokens := make(map[string]struct{})
 	matches := apiVersionLineExpr.FindAllStringSubmatch(content, -1)

@@ -12,7 +12,11 @@ type Gap struct {
 	MissingApiOrKind      int
 }
 
-func FeatureGap(en, l10n Features) Gap {
+// featureGap measures what the localized page lacks compared with the English
+// one. Counts are one-directional: extra content on the localized side is
+// ignored. An empty localized page reports no missing feature-state or API
+// tokens, since it is graded as an empty stub instead.
+func featureGap(en, l10n Features) Gap {
 	var lineRatio float64 = 1.0
 	if en.VisibleLines > 0 {
 		lineRatio = min(2.0, float64(l10n.VisibleLines)/float64(en.VisibleLines))
