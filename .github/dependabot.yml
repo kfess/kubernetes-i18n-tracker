@@ -39,3 +39,13 @@ updates:
     labels:
       - "dependencies"
       - "github-actions"
+
+  # Docker base image for devcontainer
+  - package-ecosystem: "docker"
+    directory: "/.devcontainer"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "docker"
