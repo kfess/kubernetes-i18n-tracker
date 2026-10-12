@@ -230,7 +230,7 @@ export function HomePage() {
 
   return (
     <Container fluid px={{ base: '0', sm: 'md' }} mt={{ base: 'xs', sm: 'md' }}>
-      <TemporaryNotification />
+      <TemporaryNotification selectedLanguages={selectedLanguages} />
       <LocalizationPolicyWarning selectedLanguages={selectedLanguages} />
       <Stack gap="sm">
         <ArticleCategorySelector
