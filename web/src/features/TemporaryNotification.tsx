@@ -1,6 +1,6 @@
 import { IconInfoCircle } from '@tabler/icons-react';
 import { Alert, Anchor } from '@mantine/core';
-import { getLanguageName, LanguageCode } from '@/features/language/languageCodes';
+import { LanguageCode } from '@/features/language/languageCodes';
 
 interface Props {
   selectedLanguages: LanguageCode[];
@@ -8,8 +8,8 @@ interface Props {
 
 const CASE_STUDIES_REMOVAL_PR_URL = 'https://github.com/kubernetes/website/pull/57043';
 
-// Languages that still have `content/<lang>/case-studies/` on main (as of 2026-10-12).
-// en, ja, fa, pt-br, uk have already removed it.
+// Languages whose `content/<lang>/case-studies/` had not yet been removed on main
+// when this notice was added (2026-10-12). Used only to decide whether to show the notice.
 const LANGUAGES_WITH_CASE_STUDIES: ReadonlySet<LanguageCode> = new Set<LanguageCode>([
   'bn',
   'de',
@@ -34,8 +34,6 @@ export const TemporaryNotification = ({ selectedLanguages }: Props) => {
     return null;
   }
 
-  const languageNames = matchedLanguages.map((l) => getLanguageName(l)).join(', ');
-
   return (
     <Alert
       withCloseButton
@@ -49,8 +47,7 @@ export const TemporaryNotification = ({ selectedLanguages }: Props) => {
       <Anchor href={CASE_STUDIES_REMOVAL_PR_URL} size="sm" target="_blank" rel="noopener">
         kubernetes/website#57043
       </Anchor>
-      ), so it is no longer tracked here. The following selected languages still have localized
-      case studies: {languageNames}. Please consider removing them as well.
+      ), so it is no longer tracked here. Please consider removing the localized versions as well.
     </Alert>
   );
 };
