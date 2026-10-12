@@ -9,6 +9,9 @@ updates:
     labels:
       - "dependencies"
       - "go"
+    cooldown:
+      default-days: 7
+      semver-major-days: 14
 
   # npm dependencies for web frontend
   - package-ecosystem: "npm"
@@ -19,6 +22,9 @@ updates:
     labels:
       - "dependencies"
       - "npm"
+    cooldown:
+      default-days: 14
+      semver-major-days: 30
 
   # npm dependencies for scraper
   - package-ecosystem: "npm"
@@ -29,6 +35,9 @@ updates:
     labels:
       - "dependencies"
       - "npm"
+    cooldown:
+      default-days: 14
+      semver-major-days: 30
 
   # GitHub Actions
   - package-ecosystem: "github-actions"
@@ -39,6 +48,8 @@ updates:
     labels:
       - "dependencies"
       - "github-actions"
+    cooldown:
+      default-days: 7
 
   # Docker base image for devcontainer
   - package-ecosystem: "docker"
@@ -49,3 +60,5 @@ updates:
     labels:
       - "dependencies"
       - "docker"
+    cooldown:
+      default-days: 7
