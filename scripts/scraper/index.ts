@@ -23,18 +23,11 @@ const scrape = async () => {
 
   try {
     await page.goto(url);
-    await page.waitForTimeout(10000);
 
-    const mainArea = page.locator("body");
-    const box = await mainArea.boundingBox();
-
-    if (!box) {
-      throw new Error("Bounding box not found");
-    }
-
-    const centerX = box.x + box.width / 2;
-    const centerY = box.y + box.height / 2;
-    await page.mouse.click(centerX, centerY, { button: "right" });
+    // テーブルの描画を待ってから、テーブル上で右クリックしてメニューを開く
+    const tableHeader = page.getByText("Page path", { exact: true }).first();
+    await tableHeader.waitFor({ state: "visible", timeout: 60000 });
+    await tableHeader.click({ button: "right" });
 
     try {
       await page.locator("text=Export Graph").first().click({ timeout: 6000 });
@@ -48,11 +41,10 @@ const scrape = async () => {
       await page.locator("text=データのエクスポート").first().click({ timeout: 6000 });
     }
 
-    await page.waitForTimeout(1000);
-
+    // 「エクスポート」を押してからダウンロード開始まで 20 秒以上かかることがある
     const [download] = await Promise.all([
-      page.waitForEvent("download", { timeout: 15000 }),
-      page.locator("text=エクスポート").last().click(),
+      page.waitForEvent("download", { timeout: 60000 }),
+      page.getByRole("button", { name: /^(Export|エクスポート)$/ }).click(),
     ]);
 
     await download.saveAs(savePath);
